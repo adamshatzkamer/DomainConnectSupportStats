@@ -13,10 +13,10 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
       template card shows the export's supporters `since` (no duplicate column); "Supported since"
       footnote on DNS provider and template cards; REQUIREMENTS.md F-1a, F-1c; version 0.18.0 +
       CHANGELOG
-- [~] Step 2 (#59): templates list from `service_templates.supporting_providers`; drop
+- [x] Step 2 (#59): templates list from `service_templates.supporting_providers`; drop
       `deriveTemplates()`, `templatesSupport()`, `templateSupporters()`, `withSince()`, types,
       tests; docs (issue #59 "Do" list)
-- [ ] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
+- [~] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
       `deriveStacks()`, `stacksSupport()`, `withStackSupport()`, `templateShares()`, types, tests,
       e2e route; compare the export's definition with F-2.21 (issue #61 "Do" list)
 - [ ] Step 4 (#62): `unsupported_templates`, `undetermined_templates` on DNS provider card, list,
@@ -57,9 +57,11 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
   check:version clean. `withSince()` and its tests are gone; `Template.svelte` shows the export's
   supporters table as is. Footnote `data-testid="since-caveat"`, shared `.caveat` class in
   `styles.css`.
-- Still to remove in step 2: `deriveTemplates()` still writes the per-template files and
-  `templates.json`; `ExportClient.templateSupporters()` is now unused; REQUIREMENTS.md F-4.5 no
-  longer mentions the per-template files. Real release for checks: clone
+- Step 2 done: `withSupport(source, total)` reads `supporting_providers` (output keys
+  `supporting_dns_providers`, `not_supporting_dns_providers` kept); `deriveTemplates()`,
+  `templatesSupport()`, `templateSupporters()` and their types/tests gone; docs updated.
+  `npx vitest run` 381 passed; `npm run test:e2e` 371 passed, 5 skipped; lint, check clean. Real
+  release: `supporting_providers` equals the old derived count on 1781 of 1781 templates. Real release for checks: clone
   `https://github.com/pawel-kow/DomainConnectSupportStatsData` (release in `statsdata/providers`).
 
 ## Corrections

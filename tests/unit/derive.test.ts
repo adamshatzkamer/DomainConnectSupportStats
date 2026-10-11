@@ -2,12 +2,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  deriveEcosystem,
-  deriveLeaderboards,
-  deriveStacks,
-  deriveTemplates,
-} from '../../scripts/derive';
+import { deriveEcosystem, deriveLeaderboards, deriveStacks } from '../../scripts/derive';
 import { EXAMPLE_DIR } from '../fixtures';
 
 describe('deriveLeaderboards on the example export', () => {
@@ -90,89 +85,6 @@ describe('deriveLeaderboards on an edited copy', () => {
     json.generated_at = '2026-09-01T00:00:00Z';
     writeFileSync(join(dir, rel), JSON.stringify(json));
     expect(() => deriveLeaderboards(dir)).toThrow(/dns-providers\/3\.json: generated_at/);
-  });
-});
-
-describe('deriveTemplates on the example export', () => {
-  const derived = deriveTemplates(EXAMPLE_DIR);
-
-  it('counts the supporting DNS providers of every template, in list order', () => {
-    expect(derived.list).toEqual({
-      generated_at: '2026-10-01T00:00:00Z',
-      templates: [
-        {
-          service_provider_id: 'exampleservice.domainconnect.org',
-          service_id: 'template1',
-          supporting_dns_providers: 3,
-        },
-        {
-          service_provider_id: 'mail.acme.example',
-          service_id: 'verify',
-          supporting_dns_providers: 2,
-        },
-        {
-          service_provider_id: 'mail.acme.example',
-          service_id: 'mail',
-          supporting_dns_providers: 2,
-        },
-        { service_provider_id: 'unnamed.example', service_id: 'x', supporting_dns_providers: 0 },
-        {
-          service_provider_id: 'exampleservice.domainconnect.org',
-          service_id: 'template2',
-          supporting_dns_providers: 0,
-        },
-      ],
-    });
-  });
-
-  it("writes each template's supporters with since at the template card's path", () => {
-    expect([...derived.cards.keys()]).toEqual([
-      'templates/exampleservice.domainconnect.org/template1.json',
-      'templates/mail.acme.example/verify.json',
-      'templates/mail.acme.example/mail.json',
-      'templates/unnamed.example/x.json',
-      'templates/exampleservice.domainconnect.org/template2.json',
-    ]);
-    expect(derived.cards.get('templates/mail.acme.example/verify.json')).toEqual({
-      generated_at: '2026-10-01T00:00:00Z',
-      supporters: [
-        { dns_provider_id: 1, since: '2026-04-01 03:00:00' },
-        { dns_provider_id: 5, since: '2026-09-02 03:00:00' },
-      ],
-    });
-    expect(derived.cards.get('templates/unnamed.example/x.json')?.supporters).toEqual([]);
-  });
-});
-
-describe('deriveTemplates on an edited copy', () => {
-  let dir: string;
-  afterEach(() => rmSync(dir, { recursive: true, force: true }));
-  const edit = (rel: string, change: (json: { tables: Record<string, unknown> }) => void) => {
-    const json = JSON.parse(readFileSync(join(dir, rel), 'utf8'));
-    change(json);
-    writeFileSync(join(dir, rel), JSON.stringify(json));
-  };
-
-  it('keeps an unrecorded since as null and skips a card without supported_templates', () => {
-    dir = mkdtempSync(join(tmpdir(), 'release-'));
-    cpSync(EXAMPLE_DIR, dir, { recursive: true });
-    edit('dns-providers/1.json', (j) => {
-      const rows = (j.tables.supported_templates as { rows: Record<string, unknown>[] }).rows;
-      for (const r of rows) r.since = null;
-    });
-    edit('dns-providers/5.json', (j) => delete j.tables.supported_templates);
-    const derived = deriveTemplates(dir);
-    expect(derived.cards.get('templates/mail.acme.example/verify.json')?.supporters).toEqual([
-      { dns_provider_id: 1, since: null },
-    ]);
-    expect(derived.list.templates[0]?.supporting_dns_providers).toBe(2);
-  });
-
-  it('refuses a release whose card has another generated_at', () => {
-    dir = mkdtempSync(join(tmpdir(), 'release-'));
-    cpSync(EXAMPLE_DIR, dir, { recursive: true });
-    edit('dns-providers/2.json', (j) => Object.assign(j, { generated_at: '2026-09-01T00:00:00Z' }));
-    expect(() => deriveTemplates(dir)).toThrow(/dns-providers\/2\.json: generated_at/);
   });
 });
 

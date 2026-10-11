@@ -29,8 +29,8 @@ publish step ─────────push──▶   statsdata/providers/ (on
 - Only tagged site versions are published. The deployed version is the **latest GitHub Release**.
 - A release that fails validation is not published; Pages keeps the last good deploy.
 - Only files reachable from the release's manifest are published (`scripts/bundle-data.ts`).
-- Derived data (`data/derived/`: `leaderboards.json`, `ecosystem.json`, `stacks.json`, `templates.json`, one file per template at
-  its card's path; `scripts/derive-data.ts`) is computed from the bundled release on every deploy.
+- Derived data (`data/derived/`: `leaderboards.json`, `ecosystem.json`, `stacks.json`;
+  `scripts/derive-data.ts`) is computed from the bundled release on every deploy.
 - Only valid registry entries and their logos are published, at `registry/<a>/<b>/<encoded file
 name>`, with `registry/registry.json` `{repository, commit}` (`scripts/bundle-registry.ts`). An
   invalid registry is not published.

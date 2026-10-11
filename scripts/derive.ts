@@ -11,19 +11,11 @@ import {
   type FirstSupport,
   type Leaderboards,
   type StacksSupport,
-  type SupporterSince,
   type Sweep,
-  type TemplateSupporters,
-  type TemplatesSupport,
 } from '../src/lib/data/derived.ts';
 import { cardPath, type DataFile, type FileKind, type Manifest } from './export-release.ts';
 
-export {
-  ECOSYSTEM_FILE,
-  LEADERBOARDS_FILE,
-  STACKS_FILE,
-  TEMPLATES_FILE,
-} from '../src/lib/data/derived.ts';
+export { ECOSYSTEM_FILE, LEADERBOARDS_FILE, STACKS_FILE } from '../src/lib/data/derived.ts';
 
 interface HistoryRow extends Sweep {
   supported_templates: number | null;
@@ -99,58 +91,6 @@ export function deriveLeaderboards(dir: string): Leaderboards {
             : -1,
       ),
   };
-}
-
-export interface DerivedTemplates {
-  /** `templates.json`. */
-  list: TemplatesSupport;
-  /** Per template, by its card's release-relative path. */
-  cards: Map<string, TemplateSupporters>;
-}
-
-/**
- * Derive each template's supporting DNS providers and since when they support it from the DNS
- * provider cards' `supported_templates`. Throws on a file of another release.
- */
-export function deriveTemplates(dir: string): DerivedTemplates {
-  const { manifest, file, cards } = release(dir);
-  const providers = cards('dns_provider');
-  const templates = cards('template');
-
-  const key = (spid: unknown, sid: unknown) => JSON.stringify([spid, sid]);
-  const since = new Map<string, SupporterSince[]>();
-  for (const row of providers.rows) {
-    const path = cardPath(providers.card, row);
-    if (Array.isArray(path)) continue;
-    for (const t of file(path).tables.supported_templates?.rows ?? []) {
-      const k = key(t.service_provider_id, t.service_id);
-      const supporter = {
-        dns_provider_id: row.dns_provider_id as number,
-        since: typeof t.since === 'string' ? t.since : null,
-      };
-      since.set(k, [...(since.get(k) ?? []), supporter]);
-    }
-  }
-
-  const keys = templates.card.keys ?? {};
-  const list: TemplatesSupport = { generated_at: manifest.generated_at, templates: [] };
-  const cardFiles = new Map<string, TemplateSupporters>();
-  for (const row of templates.rows) {
-    const spid = row[keys.service_provider_id ?? 'service_provider_id'] as string;
-    const sid = row[keys.service_id ?? 'service_id'] as string;
-    const supporters = (since.get(key(spid, sid)) ?? []).sort(
-      (a, b) => a.dns_provider_id - b.dns_provider_id,
-    );
-    list.templates.push({
-      service_provider_id: spid,
-      service_id: sid,
-      supporting_dns_providers: supporters.length,
-    });
-    const path = cardPath(templates.card, row);
-    if (!Array.isArray(path))
-      cardFiles.set(path, { generated_at: manifest.generated_at, supporters });
-  }
-  return { list, cards: cardFiles };
 }
 
 /**

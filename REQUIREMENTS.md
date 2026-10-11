@@ -156,7 +156,7 @@ a probe first saw support of any version; new versions and gaps don't move it; a
 ### F-1d Templates list
 
 - Columns: service provider (card link); template name (card link) with its service id below;
-  added; supported: DNS providers supporting any version (derived, F-4.5); not supported: the
+  added; supported: DNS providers supporting any version (`supporting_providers`); not supported: the
   other DNS providers supporting at least one template, not yet determined included; both with
   their share (F-2.19); reach (F-2.18). Sorted by the counts. Phone width: service provider,
   template, supported and reach. Paginated (F-2.10).
@@ -337,13 +337,10 @@ Page `leaderboards.html` with every board; each says what it ranks, of what, and
   `generated_at`; left out when that sweep is the export's first or started before the scanner
   start date. All of them, newest first, one row per DNS provider.
 - F-4.5 Derived data: `scripts/derive.ts` collects F-4.4 from the cards into
-  `derived/leaderboards.json` next to the export at deploy, and from the DNS provider cards'
-  `supported_templates` each template's supporting DNS providers into `derived/templates.json` and
-  and from the DNS providers list each stack's
+  `derived/leaderboards.json` next to the export at deploy, from the DNS providers list each stack's
   template support (F-2.21) into `derived/stacks.json`, and from the DNS provider cards'
   `support_history` and the DNS providers list F-1h into `derived/ecosystem.json`; the site rejects a derived file when its
-  `generated_at` differs from the manifest's. Without them, the templates list's supported columns
-  are `–`. A board whose data fails to load (missing, another release) says "Not available at the moment", without technical details; the rest of the page shows.
+  `generated_at` differs from the manifest's. A board whose data fails to load (missing, another release) says "Not available at the moment", without technical details; the rest of the page shows.
 - F-4.6 The overview shows F-4.4 and the most improved top 5 (since the previous sweep) below the chart, side by side on desktop, with a link to the page.
 
 ## 2. Constraints

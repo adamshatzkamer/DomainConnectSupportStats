@@ -93,30 +93,6 @@ describe('ExportClient', () => {
     await expect(client.leaderboards()).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  it('reads the derived templates support of the same release', async () => {
-    const support = { generated_at: '2026-10-01T00:00:00Z', templates: [] };
-    const fetchFn = exampleFetch({ 'derived/templates.json': support });
-    await expect(new ExportClient(BASE, fetchFn).templatesSupport()).resolves.toEqual(support);
-  });
-
-  it("reads a template's derived supporters at its card's encoded path under derived/", async () => {
-    const supporters = { generated_at: '2026-10-01T00:00:00Z', supporters: [] };
-    const fetchFn = exampleFetch({ 'derived/templates/~41cme.example/a~20b.json': supporters });
-    await expect(
-      new ExportClient(BASE, fetchFn).templateSupporters('Acme.example', 'a b'),
-    ).resolves.toEqual(supporters);
-  });
-
-  it('rejects derived template supporters of another release', async () => {
-    const client = new ExportClient(
-      BASE,
-      exampleFetch({
-        'derived/templates/a/b.json': { generated_at: '2027-01-01T00:00:00Z', supporters: [] },
-      }),
-    );
-    await expect(client.templateSupporters('a', 'b')).rejects.toBeInstanceOf(ReleaseMismatchError);
-  });
-
   it('reads the derived stacks support of the same release', async () => {
     const support = { generated_at: '2026-10-01T00:00:00Z', stacks: [] };
     const fetchFn = exampleFetch({ 'derived/stacks.json': support });

@@ -31,36 +31,6 @@ export interface Leaderboards {
   first_support: FirstSupport[];
 }
 
-export const TEMPLATES_FILE = 'templates.json';
-
-/** Supporting DNS providers of one template, counted once whatever their versions. */
-export interface TemplateSupport {
-  service_provider_id: string;
-  service_id: string;
-  supporting_dns_providers: number;
-}
-
-/** `templates.json`: one row per row of the export's templates list, in its order. */
-export interface TemplatesSupport {
-  generated_at: string;
-  templates: TemplateSupport[];
-}
-
-export interface SupporterSince {
-  dns_provider_id: number;
-  /** When its current unbroken period of support began; `null` if not recorded. */
-  since: string | null;
-}
-
-/**
- * One file per template, at the template card's path under `derived/`: when each supporting DNS
- * provider's support began, from its card's `supported_templates`. Ordered by `dns_provider_id`.
- */
-export interface TemplateSupporters {
-  generated_at: string;
-  supporters: SupporterSince[];
-}
-
 export const STACKS_FILE = 'stacks.json';
 
 /** A stack's template support distribution over its deployments, each as % of every template. */
