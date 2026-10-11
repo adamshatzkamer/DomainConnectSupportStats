@@ -11,6 +11,7 @@ interface Node {
   type?: string | string[];
   properties?: Record<string, Node>;
   items?: Node;
+  enum?: unknown[];
 }
 
 const ROOT = schema as unknown as Node & { $defs: Record<string, Node> };
@@ -47,6 +48,29 @@ export function label(path: string): Label {
     title: node?.title ?? path.slice(path.lastIndexOf('.') + 1),
     description: node?.description ?? null,
   };
+}
+
+/**
+ * Text per value of the enum at `path`, from its description written as
+ * `value1: text. value2: text.`; a value the description lacks maps to itself.
+ */
+export function enumTexts(path: string): Record<string, string> {
+  const node = nodeAt(path);
+  const description = node?.description ?? '';
+  const values = (node?.enum ?? []).filter((v): v is string => typeof v === 'string');
+  const starts = values
+    .map((value) => ({ value, at: description.indexOf(`${value}: `) }))
+    .filter(({ at }) => at >= 0)
+    .sort((a, b) => a.at - b.at);
+  const texts: Record<string, string> = Object.fromEntries(values.map((v) => [v, v]));
+  starts.forEach(({ value, at }, i) => {
+    const text = description
+      .slice(at + value.length + 2, starts[i + 1]?.at ?? description.length)
+      .trim()
+      .replace(/\.$/, '');
+    if (text) texts[value] = text.charAt(0).toUpperCase() + text.slice(1);
+  });
+  return texts;
 }
 
 export interface Feature extends Label {

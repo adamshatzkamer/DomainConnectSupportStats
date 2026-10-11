@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FEATURE_GROUPS, FEATURES, label } from '../../src/lib/registry/schema';
+import { enumTexts, FEATURE_GROUPS, FEATURES, label } from '../../src/lib/registry/schema';
 
 describe('label', () => {
   it('reads title and description, through arrays and $ref', () => {
@@ -42,6 +42,29 @@ describe('FEATURE_GROUPS', () => {
     expect(FEATURES.find((f) => f.key === 'settings.windowSize')).toMatchObject({
       title: 'Window size',
       list: false,
+    });
+  });
+});
+
+describe('enumTexts', () => {
+  it('maps each value to its text in the description', () => {
+    expect(enumTexts('onboarding.mode')).toEqual({
+      automatic: 'Templates merged into the Templates repository are deployed without a request',
+      'on-request': 'Service providers request onboarding through the onboarding contacts',
+      other: 'Described in the mode description',
+    });
+  });
+
+  it('is empty for a field without an enum', () => {
+    expect(enumTexts('onboarding.unknownField')).toEqual({});
+  });
+
+  it('reads an enum through arrays and $ref', () => {
+    expect(enumTexts('contacts.technical.type')).toEqual({
+      email: 'Value is an e-mail address',
+      url: 'Value is a web page',
+      form: 'Value is the URL of an online request form',
+      other: 'Free text',
     });
   });
 });

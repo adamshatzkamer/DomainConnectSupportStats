@@ -60,9 +60,9 @@
 - Bundled entry is the site's own format: `logo` rewritten to the published file name.
 - URL logo download: https only, 10 s timeout, ≤ 1 MB, content type `image/svg+xml`,
   `image/png` or `image/jpeg` (extension from it).
-- Schema descriptions on hover; mode values shown raw, the mode description on hover.
+- Schema descriptions on hover.
 - `links`, `consent` not shown.
-- Mode shown raw (`on-request`); feature labels are the schema titles (e.g. "Asynchronous flow").
+- Mode shown as its text from the schema description (`enumTexts`), the raw value on hover; feature labels are the schema titles (e.g. "Asynchronous flow").
 - Step 3 docs: add `RegistryTerm`, `schema.ts`, `settingsUrl` to CLAUDE.md.
 
 ## Corrections
@@ -70,3 +70,4 @@
 - The fixture has no HTML in notes any more (real data); the component test uses an inline entry.
 
 ## Open questions
+- Mode shown raw → maintainer: human-friendly text from the schema's mode description.

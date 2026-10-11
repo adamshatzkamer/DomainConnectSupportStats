@@ -142,7 +142,9 @@ describe('Registry', () => {
       stack: null,
     });
     expect(screen.getByRole('heading', { name: 'Registry' })).toBeInTheDocument();
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('on-request');
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'Service providers request onboarding through the onboarding contacts',
+    );
     expect(feature('Synchronous flow')).toBe('yes');
     expect(feature('Asynchronous flow')).toBe('no');
     expect(feature('Revert in the asynchronous flow')).toBeNull();
@@ -161,7 +163,12 @@ describe('Registry', () => {
       'title',
       expect.stringContaining('on-request: service providers request onboarding'),
     );
-    expect(value('Mode')).toBe('on-request');
+    expect(value('Mode')).toBe(
+      'Service providers request onboarding through the onboarding contacts',
+    );
+    expect(
+      onboarding.getByText('Service providers request onboarding through the onboarding contacts'),
+    ).toHaveAttribute('title', 'on-request');
     expect(value('Charged')).toBe('no');
     expect(value('Contract, agreement or T&C acceptance required')).toBe('yes');
     expect(onboarding.getByRole('link', { name: /domain-connect\/terms/ })).toHaveAttribute(
@@ -185,7 +192,9 @@ describe('Registry', () => {
   it('shows the update schedule of mode automatic', () => {
     render(Registry, { entry: example('d/o/domainchief.json'), fileUrl: null, stack: null });
     const onboarding = screen.getByTestId('registry-onboarding');
-    expect(onboarding).toHaveTextContent('automatic');
+    expect(onboarding).toHaveTextContent(
+      'Templates merged into the Templates repository are deployed without a request',
+    );
     expect(onboarding).toHaveTextContent(/Update schedule\s*Compatible templates are imported/);
   });
 
@@ -205,7 +214,9 @@ describe('Registry', () => {
       stack: null,
     });
     const onboarding = screen.getByTestId('registry-onboarding');
-    expect(onboarding).toHaveTextContent(/Mode\s*other\s*Description\s*Ask your account manager\./);
+    expect(onboarding).toHaveTextContent(
+      /Mode\s*Described in the mode description\s*Description\s*Ask your account manager\./,
+    );
     expect(onboarding).toHaveTextContent(/Charged\s*yes\s*Details\s*Per template\./);
   });
 
@@ -279,7 +290,9 @@ describe('Registry', () => {
       screen.getByRole('heading', { name: 'Registry entry of stack Plesk' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /registry repository/ })).toBeNull();
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('on-request');
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'Service providers request onboarding through the onboarding contacts',
+    );
     expect(screen.queryByText('Charged')).toBeNull();
     expect(feature('Asynchronous flow')).toBe('no');
     expect(feature('Revert in the asynchronous flow')).toBeNull();

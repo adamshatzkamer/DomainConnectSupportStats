@@ -145,7 +145,9 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await page.goto('dns-provider.html?id=5');
     const registry = page.getByTestId('registry');
     await expect(registry.getByRole('heading', { name: 'Registry' })).toBeVisible();
-    await expect(registry.getByTestId('registry-onboarding')).toContainText('on-request');
+    await expect(registry.getByTestId('registry-onboarding')).toContainText(
+      'Service providers request onboarding',
+    );
     await expect(registry.getByTestId('registry-features')).not.toContainText('Revert');
     await expect(page.getByTestId('registry-contact')).not.toContainText('Technical contacts');
     await expect(

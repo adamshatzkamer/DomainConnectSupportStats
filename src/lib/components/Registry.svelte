@@ -2,7 +2,7 @@
   import { formatFlag } from '../format';
   import { links } from '../links';
   import type { Flag, RegistryEntry } from '../registry/entry';
-  import { FEATURE_GROUPS, label } from '../registry/schema';
+  import { enumTexts, FEATURE_GROUPS, label } from '../registry/schema';
   import ContactList from './ContactList.svelte';
   import ExternalLink from './ExternalLink.svelte';
   import RegistryTerm from './RegistryTerm.svelte';
@@ -19,6 +19,7 @@
 
   let { entry, fileUrl, stack, settingsUrl = null }: Props = $props();
   const onboarding = $derived(entry.onboarding);
+  const MODES = enumTexts('onboarding.mode');
 
   /** Requirement flags with a known value. */
   const requirements = $derived(
@@ -96,7 +97,7 @@
       <dl class="record" data-testid="registry-onboarding">
         {#if onboarding.mode}
           <RegistryTerm path="onboarding.mode" />
-          <dd>{onboarding.mode}</dd>
+          <dd title={onboarding.mode}>{MODES[onboarding.mode] ?? onboarding.mode}</dd>
         {/if}
         {@render textRow('onboarding.updateSchedule', onboarding.updateSchedule)}
         {@render textRow('onboarding.modeDescription', onboarding.modeDescription)}
