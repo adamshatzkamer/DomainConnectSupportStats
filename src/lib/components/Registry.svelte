@@ -1,6 +1,6 @@
 <script lang="ts">
   import { formatFlag } from '../format';
-  import { links } from '../links';
+  import { links, ONBOARDING_CONTACTS } from '../links';
   import type { Flag, Mode, RegistryEntry } from '../registry/entry';
   import { enumTexts, FEATURE_GROUPS, label } from '../registry/schema';
   import ContactList from './ContactList.svelte';
@@ -103,7 +103,13 @@
       <dl class="record" data-testid="registry-onboarding">
         {#if onboarding.mode}
           <RegistryTerm path="onboarding.mode" />
-          <dd title={MODE_DETAILS[onboarding.mode]}>{MODES[onboarding.mode]}</dd>
+          <dd title={MODE_DETAILS[onboarding.mode]}>
+            {#if onboarding.mode === 'on-request' && onboarding.contacts.length}
+              On request, through the <a href="#{ONBOARDING_CONTACTS}">onboarding contacts</a>
+            {:else}
+              {MODES[onboarding.mode]}
+            {/if}
+          </dd>
         {/if}
         {@render textRow('onboarding.updateSchedule', onboarding.updateSchedule)}
         {@render textRow('onboarding.modeDescription', onboarding.modeDescription)}

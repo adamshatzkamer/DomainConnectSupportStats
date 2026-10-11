@@ -36,6 +36,9 @@ export const links = {
   methodology: (section?: string) => page('methodology') + (section ? `#${section}` : ''),
 };
 
+/** Anchor of the onboarding contacts in a card's contact block. */
+export const ONBOARDING_CONTACTS = 'onboarding-contacts';
+
 /** Top navigation: the landing page, the four lists and the leaderboards. */
 export const NAV = [
   { page: 'index', label: 'Overview', href: links.overview() },

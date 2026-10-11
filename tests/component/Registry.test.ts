@@ -79,6 +79,7 @@ describe('RegistryContact', () => {
       }),
     ).toHaveAttribute('href', 'https://partners.provider.example/domain-connect/request');
     expect(screen.getByText('Existing partners: Partner account manager')).toBeInTheDocument();
+    expect(screen.getByText('Onboarding contacts')).toHaveAttribute('id', 'onboarding-contacts');
   });
 
   it('labels fields with the schema titles, descriptions on hover', () => {
@@ -164,9 +165,13 @@ describe('Registry', () => {
       expect.stringContaining('on-request: service providers request onboarding'),
     );
     expect(value('Mode')).toBe('On request, through the onboarding contacts');
-    expect(onboarding.getByText('On request, through the onboarding contacts')).toHaveAttribute(
+    expect(onboarding.getByText('Mode').nextElementSibling).toHaveAttribute(
       'title',
       'Service providers request onboarding through the onboarding contacts',
+    );
+    expect(onboarding.getByRole('link', { name: 'onboarding contacts' })).toHaveAttribute(
+      'href',
+      '#onboarding-contacts',
     );
     expect(value('Charged')).toBe('no');
     expect(value('Contract, agreement or T&C acceptance required')).toBe('yes');
@@ -186,6 +191,19 @@ describe('Registry', () => {
     );
     expect(value('Signed templates only')).toBe('yes');
     expect(value('warnPhishing rejected')).toBe('yes');
+  });
+
+  it('shows mode on-request without a link when there are no onboarding contacts', () => {
+    const entry = example('p/r/provider.example.json');
+    render(Registry, {
+      entry: { ...entry, onboarding: { ...entry.onboarding, contacts: [] } },
+      fileUrl: null,
+      stack: null,
+    });
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'On request, through the onboarding contacts',
+    );
+    expect(screen.queryByRole('link', { name: 'onboarding contacts' })).toBeNull();
   });
 
   it('shows the update schedule of mode automatic', () => {

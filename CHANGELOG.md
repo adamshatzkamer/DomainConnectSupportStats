@@ -11,7 +11,8 @@ fixes, styling and dependencies.
 - Reads the current DNS provider registry format: logos embedded or as https URL, published as
   files at deploy.
 - DNS provider and stack cards: registry fields labelled with the schema titles, descriptions on
-  hover; features grouped as in the schema; onboarding mode as a short text.
+  hover; features grouped as in the schema; onboarding mode as a short text, on request with a
+  link to the onboarding contacts.
 - The request form link is gone (no longer in the registry).
 
 ### Added

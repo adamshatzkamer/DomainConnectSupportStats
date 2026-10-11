@@ -109,7 +109,8 @@ Both cards share one layout, top to bottom:
 5. Registry details: example domain (DNS provider card without a stack: with a link to its
    settings response), onboarding facts in schema order, partners, features grouped as in the
    schema, notes, link to the entry. Labels are the schema titles, descriptions on hover; the
-   onboarding mode is a short text, the schema's text on hover. `links` and `consent` are not
+   onboarding mode is a short text, the schema's text on hover;
+   mode on-request links to the onboarding contacts. `links` and `consent` are not
    shown.
 6. Settings, notes, owned URLs.
 

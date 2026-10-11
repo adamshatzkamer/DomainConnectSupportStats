@@ -6,16 +6,22 @@
     path: string;
     /** Shown instead of the schema title. */
     text?: string;
+    id?: string;
   }
 
-  let { path, text }: Props = $props();
+  let { path, text, id }: Props = $props();
   const field = $derived(label(path));
 </script>
 
-<dt class:hint={field.description !== null} title={field.description}>{text ?? field.title}</dt>
+<dt {id} class:hint={field.description !== null} title={field.description}>
+  {text ?? field.title}
+</dt>
 
 <style>
   .hint {
     cursor: help;
+  }
+  dt[id] {
+    scroll-margin-top: 2rem;
   }
 </style>

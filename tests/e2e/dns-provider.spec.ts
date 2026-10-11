@@ -148,6 +148,8 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(registry.getByTestId('registry-onboarding')).toContainText(
       'On request, through the onboarding contacts',
     );
+    await registry.getByRole('link', { name: 'onboarding contacts' }).click();
+    await expect(page.locator('#onboarding-contacts')).toBeInViewport();
     await expect(registry.getByTestId('registry-features')).not.toContainText('Revert');
     await expect(page.getByTestId('registry-contact')).not.toContainText('Technical contacts');
     await expect(

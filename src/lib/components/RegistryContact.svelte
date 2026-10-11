@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { links } from '../links';
+  import { links, ONBOARDING_CONTACTS } from '../links';
   import type { RegistryEntry } from '../registry/entry';
   import { label } from '../registry/schema';
   import ContactList from './ContactList.svelte';
@@ -54,7 +54,7 @@
         <dd><ContactList contacts={entry.technicalContacts} /></dd>
       {/if}
       {#if onboarding.contacts.length}
-        <RegistryTerm path="onboarding.contacts" />
+        <RegistryTerm path="onboarding.contacts" id={ONBOARDING_CONTACTS} />
         <dd><ContactList contacts={onboarding.contacts} /></dd>
       {/if}
       {#if onboarding.documentationUrl}
