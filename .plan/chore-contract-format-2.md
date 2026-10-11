@@ -51,6 +51,8 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 - "First scan" badge (F-2.13) text unchanged: a pre-start `since` still means supported on the
   first scan.
 
+## Progress
+
 - Step 1 done: `npx vitest run` 388 passed; `npm run test:e2e` 371 passed, 5 skipped; lint, check,
   check:version clean. `withSince()` and its tests are gone; `Template.svelte` shows the export's
   supporters table as is. Footnote `data-testid="since-caveat"`, shared `.caveat` class in
