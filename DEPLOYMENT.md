@@ -8,10 +8,11 @@ the DNS provider registry.
 ## 1. Operating model
 
 ```
-Scanner host (cron)                     data repo (DATA_REPO)            this repo
-───────────────────                     ─────────────────────            ─────────
-export.py → OUT_DIR/current/  ──push──▶  one release (manifest.json …)
-                              ──repository_dispatch (export-published)──▶ deploy.yml
+Scanner                         data repo (DATA_REPO)                     this repo
+───────                         ─────────────────────                     ─────────
+publish step ─────────push──▶   statsdata/providers/ (one release)
+                                notify-site.yml (on push)
+                                  ──workflow_dispatch (SITE_DEPLOY_TOKEN)──▶ deploy.yml
                                                                           ├ pick site version (tag)
                                                                           ├ checkout tag + data repo
                                                                           │   + registry repo
@@ -41,9 +42,8 @@ name>`, with `registry/registry.json` `{repository, commit}` (`scripts/bundle-re
 | -------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------- |
 | `push` to `main`, new `package.json` version | `v<version>` (new) | tag + prerelease → approval in environment `release` → deploy → release marked latest |
 | `push` to `main`, version already tagged     | —                  | nothing deployed                                                                      |
-| `repository_dispatch` `export-published`     | latest release     | deploy                                                                                |
 | `schedule` daily 07:30 UTC                   | latest release     | deploy (covers a lost dispatch)                                                       |
-| `workflow_dispatch`                          | latest release     | deploy                                                                                |
+| `workflow_dispatch`                          | latest release     | deploy (the data repo's `notify-site` after each data push, or by hand)               |
 
 Release notes are the version's [CHANGELOG.md](CHANGELOG.md) section. A rejected or failed approval
 leaves the prerelease unpublished; data deploys keep using the previous latest release. Deploys run
@@ -59,13 +59,13 @@ one at a time (`concurrency: pages`).
 2. **Settings → Environments → New environment `release`** → Required reviewers: the maintainer.
 3. **Settings → Secrets and variables → Actions → Variables:**
 
-   | Variable        | Required | Default | Meaning                                            |
-   | --------------- | -------- | ------- | -------------------------------------------------- |
-   | `DATA_REPO`     | yes      | —       | `owner/name` of the data repo                      |
-   | `DATA_REF`      | no       | `main`  | Branch or tag of the data repo                     |
-   | `DATA_PATH`     | no       | `.`     | Directory in the data repo holding `manifest.json` |
-   | `REGISTRY_REPO` | yes      | —       | `owner/name` of the DNS provider registry (public) |
-   | `REGISTRY_REF`  | no       | `main`  | Branch or tag of the registry                      |
+   | Variable        | Required | Default | Meaning                                                                    |
+   | --------------- | -------- | ------- | -------------------------------------------------------------------------- |
+   | `DATA_REPO`     | yes      | —       | `owner/name` of the data repo                                              |
+   | `DATA_REF`      | no       | `main`  | Branch or tag of the data repo                                             |
+   | `DATA_PATH`     | no       | `.`     | Directory in the data repo holding `manifest.json` (`statsdata/providers`) |
+   | `REGISTRY_REPO` | yes      | —       | `owner/name` of the DNS provider registry (public)                         |
+   | `REGISTRY_REF`  | no       | `main`  | Branch or tag of the registry                                              |
 
 4. **Secret `DATA_REPO_TOKEN`**, only for a private data repo: fine-grained token, _Contents:
    read_ on the data repo.
@@ -75,22 +75,35 @@ one at a time (`concurrency: pages`).
 
 ### 2.2 The data repo
 
-Created by the maintainer, any name (`DATA_REPO`), public recommended. With `DATA_PATH=.`:
+Created by the maintainer, any name (`DATA_REPO`), public. One directory per dataset under
+`statsdata/`; the site reads the Scanner export from `DATA_PATH=statsdata/providers`:
 
 ```
 <data repo>/
-  manifest.json
-  overview.json
-  dns-providers.json
-  dns-providers/{id}.json
-  stacks.json, stacks/…
-  service-providers.json, service-providers/…
-  templates.json, templates/…/…
-  README.md            optional; never published
+  README.md                     never published
+  .github/workflows/notify-site.yml
+  statsdata/providers/
+    manifest.json
+    overview.json
+    dns-providers.json
+    dns-providers/{id}.json
+    stacks.json, stacks/…
+    service-providers.json, service-providers/…
+    templates.json, templates/…/…
 ```
 
-The contents of the Scanner's `OUT_DIR/current/` (one release, symlink resolved), replaced in full
-on every push. No workflows, no Pages.
+`statsdata/providers/` holds the contents of the Scanner's `OUT_DIR/current/` (one release,
+symlink resolved), replaced in full on every push. No Pages.
+
+`notify-site.yml` runs on every push to `main` that touches `statsdata/**` and dispatches this
+repo's `deploy.yml` (`workflow_dispatch`, `ref: main`), which deploys the latest site release with
+the current data. It has no permissions of its own and reads no event data.
+
+- **Secret `SITE_DEPLOY_TOKEN`** in the data repo: fine-grained token, resource owner the owner
+  of this repo, only this repo, _Actions: read and write_, with an expiry. It can trigger, rerun
+  and cancel workflows here; it cannot change code, tags or releases.
+- **Ruleset on `main`:** blocks force pushes and deletion; no PR required (the publish step pushes
+  directly).
 
 ### 2.3 The registry repo
 
@@ -102,42 +115,16 @@ deploy (daily, or Deploy by hand).
 
 ### 2.4 The Scanner side (publish step)
 
-The Scanner host needs:
+The Scanner's publish step pushes each export release to `statsdata/providers/` of the data repo
+(no commit when `generated_at` is already published). Setup: the Scanner's documentation.
 
-- push access to the data repo (deploy key with write access, or fine-grained token with
-  _Contents: read and write_ on the data repo only);
-- a fine-grained token with _Contents: read and write_ on **this** repo, used only for the
-  `repository_dispatch`, stored outside the Scanner checkout, readable only by the cron user.
+- It needs a fine-grained token on the data repo only: _Contents: read and write_, no _Workflows_
+  permission, with an expiry. Without _Workflows_ it cannot change `notify-site.yml` or read
+  `SITE_DEPLOY_TOKEN`.
+- It needs no credential for this repo; the deploy trigger is `SITE_DEPLOY_TOKEN` in the data repo
+  (§2.2).
 
-Publish step, run after each export:
-
-```bash
-#!/usr/bin/env bash
-# Publish the newest export release to the data repo, then trigger the site deploy.
-set -euo pipefail
-OUT_DIR=/var/lib/dcscanner-export          # export.py --out-dir
-DATA_CHECKOUT=/var/lib/dcstats-data         # clone of the data repo
-SITE_REPO=pawel-kow/DomainConnectSupportStats
-
-git -C "$DATA_CHECKOUT" pull --ff-only
-# Mirror the release (dereferencing the `current` symlink), keeping the repo's own files.
-rsync -a --delete --exclude .git --exclude README.md "$OUT_DIR/current/" "$DATA_CHECKOUT/"
-generated_at=$(jq -r .generated_at "$DATA_CHECKOUT/manifest.json")
-git -C "$DATA_CHECKOUT" add -A
-if git -C "$DATA_CHECKOUT" diff --cached --quiet; then
-  echo "release $generated_at already published"; exit 0
-fi
-git -C "$DATA_CHECKOUT" commit -q -m "Export release $generated_at"
-git -C "$DATA_CHECKOUT" push -q
-
-curl -fsS -X POST \
-  -H "Authorization: Bearer $(cat /etc/dcstats/dispatch-token)" \
-  -H "Accept: application/vnd.github+json" \
-  "https://api.github.com/repos/$SITE_REPO/dispatches" \
-  -d "{\"event_type\":\"export-published\",\"client_payload\":{\"generated_at\":\"$generated_at\"}}"
-```
-
-A failed dispatch is picked up by the daily deploy.
+A lost dispatch is picked up by the daily deploy.
 
 ---
 
@@ -187,6 +174,7 @@ Deploy run (Actions → Deploy → Review deployments).
 | `No site release yet`                            | Data deploy before the first approved site release                  | Release a site version (§4.2)                                                                           |
 | `Release notes`                                  | No CHANGELOG section for the version                                | Add it via PR with a patch bump                                                                         |
 | Data repo checkout                               | Wrong `DATA_REPO`/`DATA_REF`, or private without `DATA_REPO_TOKEN`  | Fix variable/secret                                                                                     |
+| `notify-site` fails in the data repo's Actions   | `SITE_DEPLOY_TOKEN` unset, expired or revoked                       | Renew the secret (§2.2); the daily deploy covers meanwhile                                              |
 | `npm test`                                       | The tagged version is broken                                        | Fix via PR with a patch bump                                                                            |
 | `Validate and bundle the release`, schema errors | Format changed beyond the vendored contract, or a corrupt release   | Compare with `contract/export/`: new contract copy (contract/README.md), or re-publish from the Scanner |
 | … `missing` / `generated_at` errors              | Partial or mixed release pushed                                     | Re-run the Scanner's publish step                                                                       |
@@ -206,5 +194,5 @@ The site keeps serving the last good deploy.
 ### 4.5 Data repo growth
 
 Each release replaces several thousand small JSON files; history grows with each one. History can
-be dropped (force-push a single-commit branch) after agreement with the maintainer; deploys use
-only the tip.
+be dropped (lift the ruleset's force-push block, force-push a single-commit branch) after
+agreement with the maintainer; deploys use only the tip.
