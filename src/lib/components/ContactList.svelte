@@ -6,7 +6,7 @@
 
   function href(c: Contact): string | null {
     if (c.type === 'email') return safeMailto(c.value);
-    return c.type === 'url' ? safeUrl(c.value) : null;
+    return c.type === 'url' || c.type === 'form' ? safeUrl(c.value) : null;
   }
 </script>
 

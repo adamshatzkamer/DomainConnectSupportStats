@@ -14,13 +14,22 @@
     `registry.json`)
   - `parseEntry` without `formUrl`, `partner`; tests read the golden copy through
     `servedRegistryFile` (the site's input)
-- [~] Step 2: cards
-  - [ ] Labels and descriptions from the vendored schema (build time); features from the schema
-  - [ ] Onboarding details (mode other, update schedule, cost details, agreement, partners)
-  - [ ] Settings response group (non-standard list, empty = none); contact type `form`
-  - [ ] Example domain: text; settings link on a DNS provider card with its own entry and `api_url`
-  - [ ] Component and e2e tests
-- [ ] Step 3: docs (REQUIREMENTS F-1a/F-3.6, CLAUDE.md, DEPLOYMENT.md, TESTING.md,
+- [x] Step 2: cards
+  - `src/lib/registry/schema.ts`: `label(path)` (title, description; through `items`, `$ref`),
+    `FEATURE_GROUPS`/`FEATURES` from the schema (flags under `features` first, no group header;
+    then one group per object; arrays with `items.properties.key` are list features)
+  - `parseEntry`: `exampleDomain`, mode `other`, `updateSchedule`, `modeDescription`,
+    `costDetails`, `agreementRequired`/`agreementUrl`, `partners`, contact type `form`,
+    `features` (flags) and `featureLists` (null unknown, [] none)
+  - `RegistryTerm.svelte`: `<dt>` with schema title, description as `title`
+  - `Registry`: example domain (+ "settings response" link via `settingsUrl` prop), onboarding
+    rows in schema order, partners, feature groups with descriptions on hover, list feature
+    `key: description` or "none"; `RegistryContact`: schema titles ("Onboarding process
+    documentation" composed)
+  - `links.settingsUrl(apiUrl, domain)`; DnsProvider passes it only when `r.stack` is null
+  - Tests: component, unit (`registry-schema.test.ts`), e2e (settings link on DNS provider 1,
+    none on the stack card)
+- [~] Step 3: docs (REQUIREMENTS F-1a/F-3.6, CLAUDE.md, DEPLOYMENT.md, TESTING.md,
       contract/README.md), minor version, CHANGELOG, real-release check, screenshots, PR
 - [ ] Promote findings, delete this file
 
@@ -39,6 +48,7 @@
 
 - `npm run bundle:registry` on upstream `1be4041`: 25 entries, 36 files, no warnings.
 - `npm test` 382 passed; `npm run test:e2e` 371 passed, 5 skipped (after step 1).
+- After step 2: `npm test` 400 passed; `npm run test:e2e` 373 passed, 5 skipped.
 - Ajv never checked formats (no ajv-formats); now `validateFormats: false` silences the
   warnings; patterns do the checking.
 
@@ -52,6 +62,8 @@
   `image/png` or `image/jpeg` (extension from it).
 - Schema descriptions on hover; mode values shown raw, the mode description on hover.
 - `links`, `consent` not shown.
+- Mode shown raw (`on-request`); feature labels are the schema titles (e.g. "Asynchronous flow").
+- Step 3 docs: add `RegistryTerm`, `schema.ts`, `settingsUrl` to CLAUDE.md.
 
 ## Corrections
 

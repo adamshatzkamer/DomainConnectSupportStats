@@ -68,3 +68,10 @@ export function safeMailto(value: string | null | undefined): string | null {
   const address = value?.trim();
   return address && EMAIL.test(address) ? `mailto:${address}` : null;
 }
+
+/** The Domain Connect settings response of `domain` at API `apiUrl`, both from the data. */
+export function settingsUrl(apiUrl: string | null, domain: string | null): string | null {
+  const api = safeUrl(apiUrl);
+  if (!api || !domain) return null;
+  return safeUrl(`${api.replace(/\/+$/, '')}/v2/${encodeURIComponent(domain)}/settings`);
+}

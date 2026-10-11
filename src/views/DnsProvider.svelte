@@ -21,7 +21,7 @@
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatAxisPct, formatCount, formatPct, UNKNOWN } from '../lib/format';
-  import { links } from '../lib/links';
+  import { links, settingsUrl } from '../lib/links';
   import { integerParam } from '../lib/params';
   import { defaultRegistryClient, entryFileUrl } from '../lib/registry/load';
   import { importSeries, sweepSeries } from '../lib/series';
@@ -280,7 +280,16 @@
       {/if}
 
       {#await reg then r}
-        {#if r}<Registry entry={r.entry} fileUrl={r.fileUrl} stack={r.stack} />{/if}
+        {#if r}
+          <Registry
+            entry={r.entry}
+            fileUrl={r.fileUrl}
+            stack={r.stack}
+            settingsUrl={r.stack
+              ? null
+              : settingsUrl(text(provider, 'api_url'), r.entry.exampleDomain)}
+          />
+        {/if}
       {:catch}
         <section class="panel" data-testid="registry">
           <h2>Registry</h2>

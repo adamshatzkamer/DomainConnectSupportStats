@@ -71,6 +71,8 @@ test.describe('Stack card (stack.html)', () => {
     ).toBeVisible();
     const registry = page.getByTestId('registry');
     await expect(registry.getByRole('heading', { name: 'Registry', exact: true })).toBeVisible();
+    await expect(registry.getByTestId('registry-example')).toContainText('cloudflare.com');
+    await expect(registry.getByTestId('registry-example').getByRole('link')).toHaveCount(0);
     await expect(
       registry.getByRole('link', { name: 'Entry in the registry repository' }),
     ).toBeVisible();

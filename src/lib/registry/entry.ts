@@ -4,10 +4,12 @@
  * ignored, and a flag that is not `true` or `false` is unknown (`null`).
  */
 
+import { FEATURES } from './schema';
+
 export type Flag = boolean | null;
 
 export interface Contact {
-  type: 'email' | 'url' | 'other';
+  type: 'email' | 'url' | 'form' | 'other';
   value: string;
   label: string | null;
 }
@@ -17,19 +19,40 @@ export interface Link {
   url: string;
 }
 
+export interface Partner {
+  name: string;
+  url: string | null;
+  contacts: Contact[];
+}
+
+/** An item of a list feature, e.g. a non-standard settings property. */
+export interface ListItem {
+  key: string;
+  description: string | null;
+}
+
+export type Mode = 'automatic' | 'on-request' | 'other';
+
 export interface RegistryEntry {
   providerId: string;
   name: string;
   url: string | null;
+  exampleDomain: string | null;
   logo: string | null;
   documentation: Link[];
   technicalContacts: Contact[];
   onboarding: {
-    mode: 'automatic' | 'on-request' | null;
+    mode: Mode | null;
+    updateSchedule: string | null;
+    modeDescription: string | null;
     documentationUrl: string | null;
     contacts: Contact[];
-    usesPartner: Flag;
     cost: Flag;
+    costDetails: string | null;
+    agreementRequired: Flag;
+    agreementUrl: string | null;
+    usesPartner: Flag;
+    partners: Partner[];
     requirements: {
       signedTemplatesOnly: Flag;
       warnPhishingRejected: Flag;
@@ -37,31 +60,12 @@ export interface RegistryEntry {
     };
     notes: string | null;
   };
-  features: Record<FeatureKey, Flag>;
+  /** Flag features by dotted path under `features` (schema `FEATURES`). */
+  features: Record<string, Flag>;
+  /** List features by dotted path; null = unknown, empty = none. */
+  featureLists: Record<string, ListItem[] | null>;
   notes: string | null;
 }
-
-/** Feature flags in display order: dotted path under `features`, label, group. */
-export const FEATURES = [
-  ['syncFlow', 'Synchronous flow', 'Flows'],
-  ['syncRedirectUri', 'redirect_uri in the synchronous flow', 'Flows'],
-  ['asyncFlow', 'Asynchronous flow (OAuth)', 'Flows'],
-  ['asyncRevert', 'Revert in the asynchronous flow', 'Flows'],
-  ['templateStateTracking', 'Applied templates tracked', 'Flows'],
-  ['templates.txtConflictMatching', 'txtConflictMatchingMode / Prefix', 'Templates'],
-  ['templates.variablesInNumberFields', 'Variables in TTL, priority, weight, port', 'Templates'],
-  ['templates.multiInstance', 'multiInstance', 'Templates'],
-  ['templates.sharedNames', 'sharedProviderName / sharedServiceName', 'Templates'],
-  ['templates.essential', 'Record attribute essential', 'Templates'],
-  ['recordTypes.spfm', 'SPFM', 'Record types'],
-  ['recordTypes.custom', 'Custom RR types', 'Record types'],
-  ['recordTypes.apexCname', 'APEXCNAME', 'Record types'],
-  ['recordTypes.redir301', 'REDIR301', 'Record types'],
-  ['recordTypes.redir302', 'REDIR302', 'Record types'],
-  ['nonStandard.cnameFlattening', 'CNAME flattening (CNAME on the apex)', 'Non-standard'],
-] as const;
-
-export type FeatureKey = (typeof FEATURES)[number][0];
 
 /** The entry is not an object with a string `providerId` and `name`. */
 export class InvalidEntryError extends Error {
@@ -94,7 +98,8 @@ function contacts(v: unknown): Contact[] {
   return v.flatMap((c) => {
     const o = obj(c);
     const value = str(o.value);
-    const type = o.type === 'email' || o.type === 'url' ? o.type : 'other';
+    const type =
+      o.type === 'email' || o.type === 'url' || o.type === 'form' ? o.type : 'other';
     return value ? [{ type, value, label: str(o.label) }] : [];
   });
 }
@@ -107,6 +112,26 @@ function links(v: unknown): Link[] {
     return url ? [{ title: str(o.title) ?? url, url }] : [];
   });
 }
+
+function partners(v: unknown): Partner[] {
+  if (!Array.isArray(v)) return [];
+  return v.flatMap((p) => {
+    const o = obj(p);
+    const name = str(o.name);
+    return name ? [{ name, url: str(o.url), contacts: contacts(o.contacts) }] : [];
+  });
+}
+
+function listItems(v: unknown): ListItem[] | null {
+  if (!Array.isArray(v)) return null;
+  return v.flatMap((i) => {
+    const o = obj(i);
+    const key = str(o.key);
+    return key ? [{ key, description: str(o.description) }] : [];
+  });
+}
+
+const MODES: readonly unknown[] = ['automatic', 'on-request', 'other'] satisfies Mode[];
 
 export function parseEntry(json: unknown): RegistryEntry {
   const root = obj(json);
@@ -123,18 +148,22 @@ export function parseEntry(json: unknown): RegistryEntry {
     providerId,
     name,
     url: str(root.url),
+    exampleDomain: str(root.exampleDomain),
     logo: str(root.logo),
     documentation: links(root.documentation),
     technicalContacts: contacts(obj(root.contacts).technical),
     onboarding: {
-      mode:
-        onboarding.mode === 'automatic' || onboarding.mode === 'on-request'
-          ? onboarding.mode
-          : null,
+      mode: MODES.includes(onboarding.mode) ? (onboarding.mode as Mode) : null,
+      updateSchedule: str(onboarding.updateSchedule),
+      modeDescription: str(onboarding.modeDescription),
       documentationUrl: str(onboarding.documentationUrl),
       contacts: contacts(onboarding.contacts),
-      usesPartner: flag(onboarding.usesPartner),
       cost: flag(onboarding.cost),
+      costDetails: str(onboarding.costDetails),
+      agreementRequired: flag(onboarding.agreementRequired),
+      agreementUrl: str(onboarding.agreementUrl),
+      usesPartner: flag(onboarding.usesPartner),
+      partners: partners(onboarding.partners),
       requirements: {
         signedTemplatesOnly: flag(requirements.signedTemplatesOnly),
         warnPhishingRejected: flag(requirements.warnPhishingRejected),
@@ -142,10 +171,12 @@ export function parseEntry(json: unknown): RegistryEntry {
       },
       notes: str(onboarding.notes),
     },
-    features: Object.fromEntries(FEATURES.map(([key]) => [key, flag(at(features, key))])) as Record<
-      FeatureKey,
-      Flag
-    >,
+    features: Object.fromEntries(
+      FEATURES.filter((f) => !f.list).map(({ key }) => [key, flag(at(features, key))]),
+    ),
+    featureLists: Object.fromEntries(
+      FEATURES.filter((f) => f.list).map(({ key }) => [key, listItems(at(features, key))]),
+    ),
     notes: str(root.notes),
   };
 }

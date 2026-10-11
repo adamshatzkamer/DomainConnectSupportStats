@@ -23,6 +23,26 @@ describe('parseEntry', () => {
     expect(entry.features.asyncRevert).toBe(false);
     expect(entry.features['templates.essential']).toBeNull();
     expect(entry.features['nonStandard.cnameFlattening']).toBe(false);
+    expect(entry.features['settings.urlControlPanel']).toBe(true);
+    expect(entry.featureLists['settings.nonStandard']).toEqual([
+      {
+        key: 'redirectSupported',
+        description: 'Boolean; true when REDIR301/REDIR302 records can be applied for the domain.',
+      },
+    ]);
+    expect(entry.exampleDomain).toBe('provider.example');
+    expect(entry.onboarding.contacts[0]?.type).toBe('form');
+    expect(entry.onboarding.agreementRequired).toBe(true);
+    expect(entry.onboarding.agreementUrl).toBe(
+      'https://partners.provider.example/domain-connect/terms',
+    );
+    expect(entry.onboarding.partners).toEqual([
+      {
+        name: 'Example Onboarding Partner',
+        url: 'https://www.partner.example',
+        contacts: [{ type: 'email', value: 'onboarding@partner.example', label: null }],
+      },
+    ]);
     expect(entry).not.toHaveProperty('links');
     expect(entry).not.toHaveProperty('consent');
   });
@@ -33,6 +53,33 @@ describe('parseEntry', () => {
     expect(entry.onboarding.cost).toBeNull();
     expect(entry.features.asyncRevert).toBeNull();
     expect(entry.documentation).toEqual([]);
+  });
+
+  it('reads mode other with its description, an empty list as none, an absent one as unknown', () => {
+    const entry = parseEntry({
+      providerId: 'x',
+      name: 'X',
+      onboarding: { mode: 'other', modeDescription: 'By phone.', updateSchedule: 'daily' },
+      features: { settings: { nonStandard: [] } },
+    });
+    expect(entry.onboarding.mode).toBe('other');
+    expect(entry.onboarding.modeDescription).toBe('By phone.');
+    expect(entry.onboarding.updateSchedule).toBe('daily');
+    expect(entry.featureLists['settings.nonStandard']).toEqual([]);
+    expect(
+      parseEntry({ providerId: 'x', name: 'X' }).featureLists['settings.nonStandard'],
+    ).toBeNull();
+  });
+
+  it('drops partners without a name and list items without a key', () => {
+    const entry = parseEntry({
+      providerId: 'x',
+      name: 'X',
+      onboarding: { partners: [{ url: 'https://p.example' }, { name: 'P' }] },
+      features: { settings: { nonStandard: [{ description: 'd' }, { key: 'k' }] } },
+    });
+    expect(entry.onboarding.partners).toEqual([{ name: 'P', url: null, contacts: [] }]);
+    expect(entry.featureLists['settings.nonStandard']).toEqual([{ key: 'k', description: null }]);
   });
 
   it('reads a flag that is not a boolean, and an unknown mode, as unknown', () => {

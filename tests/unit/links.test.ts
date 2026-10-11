@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { links, safeMailto, safeUrl } from '../../src/lib/links';
+import { links, safeMailto, safeUrl, settingsUrl } from '../../src/lib/links';
 
 describe('links', () => {
   it('carries raw ids in query parameters, URL-encoded by URLSearchParams', () => {
@@ -68,5 +68,24 @@ describe('safeMailto', () => {
 
   it.each([null, '', 'no-at', 'a@b@c', 'a@b?cc=x@y', 'javascript:x@y'])('rejects %j', (v) => {
     expect(safeMailto(v)).toBeNull();
+  });
+});
+
+describe('settingsUrl', () => {
+  it('appends /v2/{domain}/settings to the API URL', () => {
+    expect(
+      settingsUrl('https://api.cloudflare.com/client/v4/dns/domainconnect', 'cloudflare.com'),
+    ).toBe('https://api.cloudflare.com/client/v4/dns/domainconnect/v2/cloudflare.com/settings');
+    expect(settingsUrl('https://dc.host.example/', 'host.example')).toBe(
+      'https://dc.host.example/v2/host.example/settings',
+    );
+  });
+
+  it.each([
+    [null, 'host.example'],
+    ['https://dc.host.example', null],
+    ['javascript:alert(1)', 'host.example'],
+  ])('is null for %s and %s', (api, domain) => {
+    expect(settingsUrl(api, domain)).toBeNull();
   });
 });

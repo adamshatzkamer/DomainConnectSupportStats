@@ -1,8 +1,10 @@
 <script lang="ts">
   import { links } from '../links';
   import type { RegistryEntry } from '../registry/entry';
+  import { label } from '../registry/schema';
   import ContactList from './ContactList.svelte';
   import ExternalLink from './ExternalLink.svelte';
+  import RegistryTerm from './RegistryTerm.svelte';
 
   interface Props {
     entry: RegistryEntry;
@@ -19,6 +21,8 @@
       onboarding.contacts.length > 0 ||
       onboarding.documentationUrl !== null,
   );
+  /** The nested title names the onboarding process only together with its section. */
+  const processLabel = `${label('onboarding').title} ${label('onboarding.documentationUrl').title.toLowerCase()}`;
 </script>
 
 {#if known}
@@ -32,11 +36,11 @@
     </h2>
     <dl class="record">
       {#if entry.url}
-        <dt>Website</dt>
+        <RegistryTerm path="url" />
         <dd><ExternalLink url={entry.url} /></dd>
       {/if}
       {#if entry.documentation.length}
-        <dt>Documentation</dt>
+        <RegistryTerm path="documentation" />
         <dd>
           <ul class="plain">
             {#each entry.documentation as doc, i (i)}
@@ -46,15 +50,15 @@
         </dd>
       {/if}
       {#if entry.technicalContacts.length}
-        <dt>Technical contact</dt>
+        <RegistryTerm path="contacts.technical" />
         <dd><ContactList contacts={entry.technicalContacts} /></dd>
       {/if}
       {#if onboarding.contacts.length}
-        <dt>Onboarding contact</dt>
+        <RegistryTerm path="onboarding.contacts" />
         <dd><ContactList contacts={onboarding.contacts} /></dd>
       {/if}
       {#if onboarding.documentationUrl}
-        <dt>Onboarding process</dt>
+        <RegistryTerm path="onboarding.documentationUrl" text={processLabel} />
         <dd><ExternalLink url={onboarding.documentationUrl} /></dd>
       {/if}
     </dl>
