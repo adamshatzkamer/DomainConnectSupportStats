@@ -1,6 +1,7 @@
 /**
- * Copy a validated DNS provider registry checkout into the built site, at `<distDir>/registry/`,
- * with `registry.json` naming its repository and commit. Refuses an invalid registry.
+ * Publish a validated DNS provider registry checkout into the built site, at `<distDir>/registry/`,
+ * logos decoded or downloaded, with `registry.json` naming its repository and commit. Refuses an
+ * invalid registry; a logo that cannot be downloaded is left out with a warning.
  * Usage: node scripts/bundle-registry.ts <registryDir> <distDir> <owner/name> <commit>
  */
 import { existsSync } from 'node:fs';
@@ -31,7 +32,11 @@ if (errors.length) {
   console.error(`refusing to bundle ${registryDir}: ${errors.length} error(s)`);
   process.exit(1);
 }
-const published = bundleRegistry(registryDir, entries, distDir, { repository, commit });
+const { published, warnings } = await bundleRegistry(registryDir, entries, distDir, {
+  repository,
+  commit,
+});
+for (const warning of warnings) console.warn(`warning: ${warning}`);
 console.log(
   `bundled ${published.length} file(s) from ${registryDir} into ${join(distDir, 'registry')}`,
 );
