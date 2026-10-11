@@ -27,9 +27,7 @@ export interface RegistryEntry {
   onboarding: {
     mode: 'automatic' | 'on-request' | null;
     documentationUrl: string | null;
-    formUrl: string | null;
     contacts: Contact[];
-    partner: { name: string; url: string | null } | null;
     usesPartner: Flag;
     cost: Flag;
     requirements: {
@@ -119,8 +117,6 @@ export function parseEntry(json: unknown): RegistryEntry {
 
   const onboarding = obj(root.onboarding);
   const requirements = obj(onboarding.requirements);
-  const partner = obj(onboarding.partner);
-  const partnerName = str(partner.name);
   const features = obj(root.features);
 
   return {
@@ -136,9 +132,7 @@ export function parseEntry(json: unknown): RegistryEntry {
           ? onboarding.mode
           : null,
       documentationUrl: str(onboarding.documentationUrl),
-      formUrl: str(onboarding.formUrl),
       contacts: contacts(onboarding.contacts),
-      partner: partnerName ? { name: partnerName, url: str(partner.url) } : null,
       usesPartner: flag(onboarding.usesPartner),
       cost: flag(onboarding.cost),
       requirements: {

@@ -98,9 +98,11 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(logo).toBeVisible();
     expect(await logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
     const contact = page.getByTestId('registry-contact');
-    await expect(contact.getByRole('link', { name: 'Community forum' })).toBeVisible();
+    await expect(
+      contact.getByRole('link', { name: 'domain-connect@cloudflare.com' }),
+    ).toBeVisible();
     const registry = page.getByTestId('registry');
-    await expect(registry.getByTestId('registry-notes')).toContainText('<script>alert(1)</script>');
+    await expect(registry.getByTestId('registry-onboarding')).toContainText('syncBlock');
     await expect(
       registry.getByRole('link', { name: 'Entry in the registry repository' }),
     ).toHaveAttribute(
@@ -134,13 +136,13 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     const registry = page.getByTestId('registry');
     await expect(registry.getByRole('heading', { name: 'Registry' })).toBeVisible();
     await expect(registry.getByTestId('registry-onboarding')).toContainText('On request');
-    await expect(registry.getByRole('heading', { name: 'Features' })).toHaveCount(0);
+    await expect(registry.getByTestId('registry-features')).not.toContainText('Revert');
     await expect(page.getByTestId('registry-contact')).not.toContainText('Technical contact');
     await expect(
       page
         .getByTestId('registry-contact')
-        .getByRole('link', { name: 'domain_connect_admin@ionos.example' }),
-    ).toHaveAttribute('href', 'mailto:domain_connect_admin@ionos.example');
+        .getByRole('link', { name: 'domain_connect_admin@domain.ionos.com' }),
+    ).toHaveAttribute('href', 'mailto:domain_connect_admin@domain.ionos.com');
   });
 
   for (const id of [2, 3]) {

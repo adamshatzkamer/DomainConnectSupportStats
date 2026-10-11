@@ -1,17 +1,16 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import CardTitle from '../../src/lib/components/CardTitle.svelte';
 import Registry from '../../src/lib/components/Registry.svelte';
 import RegistryContact from '../../src/lib/components/RegistryContact.svelte';
+import { EXAMPLE_REGISTRY_DIR, servedRegistryFile } from '../../scripts/registry';
 import { parseEntry } from '../../src/lib/registry/entry';
 
-const EXAMPLES = resolve(import.meta.dirname, '../../contract/registry/examples/providers');
+/** A golden-copy entry as the deploy bundles it. */
 const example = (path: string) =>
-  parseEntry(JSON.parse(readFileSync(resolve(EXAMPLES, path), 'utf8')));
+  parseEntry(JSON.parse(servedRegistryFile(EXAMPLE_REGISTRY_DIR, path)!.body.toString()));
 
 function feature(label: string): string | null {
   const row = within(screen.getByTestId('registry-features')).queryByText(label)?.closest('tr');
@@ -57,22 +56,22 @@ describe('CardTitle', () => {
 
 describe('RegistryContact', () => {
   it('shows links and contacts', () => {
-    render(RegistryContact, { entry: example('c/l/cloudflare.com.json'), stack: null });
+    render(RegistryContact, { entry: example('p/r/provider.example.json'), stack: null });
     expect(screen.getByRole('heading', { name: 'Contact' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'https://www.cloudflare.example' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'https://www.provider.example' })).toHaveAttribute(
       'rel',
       'nofollow noopener noreferrer',
     );
-    expect(screen.getByRole('link', { name: 'dc-tech@cloudflare.example' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'DNS engineering' })).toHaveAttribute(
       'href',
-      'mailto:dc-tech@cloudflare.example',
+      'mailto:dns-engineering@provider.example',
     );
-    expect(screen.getByRole('link', { name: 'Community forum' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Domain Connect' })).toHaveAttribute(
       'href',
-      'https://community.cloudflare.example/c/dns',
+      'https://docs.provider.example/domain-connect',
     );
     expect(
-      screen.getByRole('link', { name: 'https://forms.cloudflare.example/domain-connect' }),
+      screen.getByRole('link', { name: 'domainconnect@provider.example' }),
     ).toBeInTheDocument();
   });
 
@@ -95,7 +94,6 @@ describe('RegistryContact', () => {
     expect(screen.getByText('Onboarding contact')).toBeInTheDocument();
     expect(screen.queryByText('Documentation')).toBeNull();
     expect(screen.queryByText('Technical contact')).toBeNull();
-    expect(screen.queryByText('Onboarding request form')).toBeNull();
     expect(screen.queryByText('–')).toBeNull();
   });
 
@@ -141,7 +139,12 @@ describe('Registry', () => {
 
   it('shows HTML in notes as text', () => {
     const { container } = render(Registry, {
-      entry: example('c/l/cloudflare.com.json'),
+      entry: parseEntry({
+        providerId: 'x',
+        name: 'X',
+        notes: 'Use <script>alert(1)</script>',
+        onboarding: { notes: 'Templates must <b>not</b> overwrite' },
+      }),
       fileUrl: null,
       stack: null,
     });
@@ -160,17 +163,20 @@ describe('Registry', () => {
       screen.getByRole('heading', { name: 'Registry entry of stack Plesk' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /registry repository/ })).toBeNull();
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(/Automatic/);
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('On request');
     expect(screen.queryByText('Charged')).toBeNull();
-    expect(feature('Asynchronous flow (OAuth)')).toBe('yes');
-    expect(feature('SPFM')).toBeNull();
-    expect(screen.queryByText('Record types')).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Notes' })).toBeNull();
+    expect(feature('Asynchronous flow (OAuth)')).toBe('no');
+    expect(feature('Revert in the asynchronous flow')).toBeNull();
+    expect(screen.queryByText('Template features')).toBeNull();
   });
 
-  it('leaves out the Features heading when no feature is known', () => {
-    render(Registry, { entry: example('i/o/ionos.com.json'), fileUrl: null, stack: null });
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('On request');
+  it('leaves out onboarding and Features when nothing is known', () => {
+    render(Registry, {
+      entry: parseEntry({ providerId: 'x', name: 'X', notes: 'n', features: { syncFlow: null } }),
+      fileUrl: null,
+      stack: null,
+    });
+    expect(screen.queryByTestId('registry-onboarding')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Features' })).toBeNull();
     expect(screen.queryByTestId('registry-features')).toBeNull();
   });

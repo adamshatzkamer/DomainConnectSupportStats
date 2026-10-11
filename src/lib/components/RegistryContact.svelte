@@ -17,7 +17,6 @@
       entry.documentation.length > 0 ||
       entry.technicalContacts.length > 0 ||
       onboarding.contacts.length > 0 ||
-      onboarding.formUrl !== null ||
       onboarding.documentationUrl !== null,
   );
 </script>
@@ -53,10 +52,6 @@
       {#if onboarding.contacts.length}
         <dt>Onboarding contact</dt>
         <dd><ContactList contacts={onboarding.contacts} /></dd>
-      {/if}
-      {#if onboarding.formUrl}
-        <dt>Onboarding request form</dt>
-        <dd><ExternalLink url={onboarding.formUrl} /></dd>
       {/if}
       {#if onboarding.documentationUrl}
         <dt>Onboarding process</dt>

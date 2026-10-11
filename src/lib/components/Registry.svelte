@@ -2,7 +2,6 @@
   import { formatFlag } from '../format';
   import { links } from '../links';
   import { FEATURES, type Flag, type RegistryEntry } from '../registry/entry';
-  import ExternalLink from './ExternalLink.svelte';
 
   interface Props {
     entry: RegistryEntry;
@@ -33,10 +32,7 @@
     ).filter(([, value]) => value !== null),
   );
   const hasOnboarding = $derived(
-    onboarding.mode !== null ||
-      onboarding.partner !== null ||
-      flags.length > 0 ||
-      onboarding.notes !== null,
+    onboarding.mode !== null || flags.length > 0 || onboarding.notes !== null,
   );
 
   /** Feature groups with their features of known value; groups without any left out. */
@@ -75,10 +71,6 @@
           <dt>{label}</dt>
           <dd>{@render flag(value)}</dd>
         {/each}
-        {#if onboarding.partner}
-          <dt>Partner</dt>
-          <dd><ExternalLink url={onboarding.partner.url} text={onboarding.partner.name} /></dd>
-        {/if}
         {#if onboarding.notes}
           <dt>Notes</dt>
           <dd class="verbatim">{onboarding.notes}</dd>
