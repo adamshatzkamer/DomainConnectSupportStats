@@ -31,49 +31,6 @@ export interface Leaderboards {
   first_support: FirstSupport[];
 }
 
-export const STACKS_FILE = 'stacks.json';
-
-/** A stack's template support distribution over its deployments, each as % of every template. */
-export interface StackSupport {
-  provider_id: string;
-  min_templates_pct: number | null;
-  median_templates_pct: number | null;
-  max_templates_pct: number | null;
-}
-
-/** `stacks.json`: one row per row of the export's stacks list, in its order. */
-export interface StacksSupport {
-  generated_at: string;
-  stacks: StackSupport[];
-}
-
-type Deployment = Record<string, unknown>;
-
-const count = (row: Deployment, key: string): number =>
-  typeof row[key] === 'number' ? (row[key] as number) : 0;
-
-/**
- * Min, median and max of `supported_templates` / `templates` over the deployments with at least one
- * probe answer (supported or not supported); null without such a deployment or templates.
- */
-export function templateShares(
-  deployments: Deployment[],
-  templates: number | null,
-): Omit<StackSupport, 'provider_id'> {
-  const shares = deployments
-    .filter((d) => count(d, 'supported_count') + count(d, 'unsupported_count') > 0)
-    .map((d) => (count(d, 'supported_templates') / (templates ?? 0)) * 100)
-    .sort((a, b) => a - b);
-  if (!templates || !shares.length)
-    return { min_templates_pct: null, median_templates_pct: null, max_templates_pct: null };
-  const mid = Math.floor(shares.length / 2);
-  return {
-    min_templates_pct: shares[0]!,
-    median_templates_pct: shares.length % 2 ? shares[mid]! : (shares[mid - 1]! + shares[mid]!) / 2,
-    max_templates_pct: shares.at(-1)!,
-  };
-}
-
 export const ECOSYSTEM_FILE = 'ecosystem.json';
 
 /** One full sweep of `overview.json` `ecosystem`, with support weighted by domain share. */

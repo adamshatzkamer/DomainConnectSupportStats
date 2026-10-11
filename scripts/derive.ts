@@ -6,16 +6,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  templateShares,
   type Ecosystem,
   type FirstSupport,
   type Leaderboards,
-  type StacksSupport,
   type Sweep,
 } from '../src/lib/data/derived.ts';
 import { cardPath, type DataFile, type FileKind, type Manifest } from './export-release.ts';
 
-export { ECOSYSTEM_FILE, LEADERBOARDS_FILE, STACKS_FILE } from '../src/lib/data/derived.ts';
+export { ECOSYSTEM_FILE, LEADERBOARDS_FILE } from '../src/lib/data/derived.ts';
 
 interface HistoryRow extends Sweep {
   supported_templates: number | null;
@@ -90,25 +88,6 @@ export function deriveLeaderboards(dir: string): Leaderboards {
             ? 1
             : -1,
       ),
-  };
-}
-
-/**
- * Derive each stack's template support distribution from its deployments in the DNS providers list,
- * as shares of every template (the templates list's rows). Throws on a file of another release.
- */
-export function deriveStacks(dir: string): StacksSupport {
-  const { manifest, list } = release(dir);
-  const templates = manifest.files.templates?.rows?.service_templates ?? null;
-  const byStack = new Map<unknown, Row[]>();
-  for (const row of list('dns_providers', 'dns_providers'))
-    byStack.set(row.provider_id, [...(byStack.get(row.provider_id) ?? []), row]);
-  return {
-    generated_at: manifest.generated_at,
-    stacks: list('stacks', 'stacks').map((stack) => ({
-      provider_id: stack.provider_id as string,
-      ...templateShares(byStack.get(stack.provider_id) ?? [], templates),
-    })),
   };
 }
 

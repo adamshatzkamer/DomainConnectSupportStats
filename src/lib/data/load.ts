@@ -3,10 +3,8 @@ import {
   DERIVED_DIR,
   ECOSYSTEM_FILE,
   LEADERBOARDS_FILE,
-  STACKS_FILE,
   type Ecosystem,
   type Leaderboards,
-  type StacksSupport,
 } from './derived';
 import { assertSupportedFormat, filePath } from './manifest';
 import type { ExportFile, FileKindName, Manifest } from './types';
@@ -94,11 +92,6 @@ export class ExportClient {
   /** The derived `ecosystem.json`: support weighted by domain share per full sweep. */
   ecosystem(): Promise<Ecosystem> {
     return this.derived(() => ECOSYSTEM_FILE);
-  }
-
-  /** The derived `stacks.json`: template support distribution per stack. */
-  stacksSupport(): Promise<StacksSupport> {
-    return this.derived(() => STACKS_FILE);
   }
 }
 

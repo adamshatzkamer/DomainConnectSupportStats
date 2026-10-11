@@ -12,25 +12,21 @@
   import DomainShare from '../lib/components/DomainShare.svelte';
   import type { Scan } from '../lib/domains';
   import { overviewFacts } from '../lib/overview-facts';
-  import { supportLabel, supportRange, withStackSupport } from '../lib/stacks';
+  import { MIN_KEY, supportLabel, supportRange } from '../lib/stacks';
   import { templateCount } from '../lib/supporting';
 
   const client = defaultClient();
   let manifest = $state<Manifest | null>(null);
   /** The domain-share import, for the hover text of domain shares. */
   let scan = $state<Scan | null>(null);
-  const loading = client.manifest().then(async (m) => {
+  const loading = client.manifest().then((m) => {
     manifest = m;
     void overviewFacts(client, m).then((f) => (scan = f.scan));
-    const [file, support] = await Promise.all([
-      client.file('stacks'),
-      client.stacksSupport().catch(() => null),
-    ]);
-    return { file, support };
+    return client.file('stacks');
   });
 
   // One column shows the range; it sorts by its lowest value.
-  const KEYS = ['name', 'deployments', 'min_templates_pct', 'domains'];
+  const KEYS = ['name', 'deployments', MIN_KEY, 'domains'];
   const CUSTOM_KEYS = KEYS;
 
   function num(row: Row, key: string): number | null {
@@ -55,7 +51,7 @@
     {@const n = num(row, 'deployments')}
     {#if id && n}<a href={links.dnsProviders({ stack: id })}>{formatCount(n)}</a
       >{:else}{formatCount(n)}{/if}
-  {:else if column.key === 'min_templates_pct'}
+  {:else if column.key === MIN_KEY}
     {@const range = supportRange(row)}
     <span class="count">{supportLabel(row)}</span>
     {#if range}
@@ -72,7 +68,7 @@
 <Layout current="stacks" {manifest}>
   {#await loading}
     <p class="no-data">Loading…</p>
-  {:then { file, support }}
+  {:then file}
     {@const source = findTable(file, 'stacks')}
     {#if source}
       <Panel id="stacks" title="Stacks" context="Stacks">
@@ -80,8 +76,9 @@
         <DataTable
           table={{
             ...source,
-            columns: [...source.columns, { key: 'min_templates_pct', header: 'SUPPORT' }],
-            rows: withStackSupport(source.rows, support),
+            columns: source.columns.map((c) =>
+              c.key === MIN_KEY ? { ...c, header: 'SUPPORT' } : c,
+            ),
           }}
           keys={KEYS}
           customKeys={CUSTOM_KEYS}

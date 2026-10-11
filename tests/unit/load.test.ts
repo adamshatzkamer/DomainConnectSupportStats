@@ -93,12 +93,6 @@ describe('ExportClient', () => {
     await expect(client.leaderboards()).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  it('reads the derived stacks support of the same release', async () => {
-    const support = { generated_at: '2026-10-01T00:00:00Z', stacks: [] };
-    const fetchFn = exampleFetch({ 'derived/stacks.json': support });
-    await expect(new ExportClient(BASE, fetchFn).stacksSupport()).resolves.toEqual(support);
-  });
-
   it('reads the derived ecosystem of the same release', async () => {
     const ecosystem = { generated_at: '2026-10-01T00:00:00Z', ecosystem: [] };
     const fetchFn = exampleFetch({ 'derived/ecosystem.json': ecosystem });

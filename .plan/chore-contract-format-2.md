@@ -16,10 +16,10 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 - [x] Step 2 (#59): templates list from `service_templates.supporting_providers`; drop
       `deriveTemplates()`, `templatesSupport()`, `templateSupporters()`, `withSince()`, types,
       tests; docs (issue #59 "Do" list)
-- [~] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
+- [x] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
       `deriveStacks()`, `stacksSupport()`, `withStackSupport()`, `templateShares()`, types, tests,
       e2e route; compare the export's definition with F-2.21 (issue #61 "Do" list)
-- [ ] Step 4 (#62): `unsupported_templates`, `undetermined_templates` on DNS provider card, list,
+- [~] Step 4 (#62): `unsupported_templates`, `undetermined_templates` on DNS provider card, list,
       stack deployments; caveats; F-1a, F-1b, F-2.21 (issue #62 "Do" list)
 - [ ] Real-release check, screenshots (desktop + phone) of every affected page, `npm run verify`
 - [ ] Promote findings, close issues via PR, `git rm -r .plan`
@@ -63,6 +63,13 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
   `npx vitest run` 381 passed; `npm run test:e2e` 371 passed, 5 skipped; lint, check clean. Real
   release: `supporting_providers` equals the old derived count on 1781 of 1781 templates. Real release for checks: clone
   `https://github.com/pawel-kow/DomainConnectSupportStatsData` (release in `statsdata/providers`).
+- Step 3 done: stacks list and stack card read `min_`/`median_`/`max_supported_templates_pct`
+  (`MIN_KEY` etc. in `src/lib/stacks.ts`; list column header overridden to `SUPPORT`);
+  `deriveStacks()`, `stacksSupport()`, `withStackSupport()`, `templateShares()`, `StacksSupport`,
+  `StackSupport`, `STACKS_FILE`, `tests/unit/derived.test.ts` gone. Export definition equals
+  F-2.21 (deployments with a probe answer); real release: export equals the old derivation on 25
+  of 25 stacks. No CHANGELOG entry (no visible change). `npx vitest run` 374 passed;
+  `npm run test:e2e` 371 passed, 5 skipped; lint, check clean.
 
 ## Corrections
 
