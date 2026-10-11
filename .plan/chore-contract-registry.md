@@ -29,8 +29,9 @@
   - `links.settingsUrl(apiUrl, domain)`; DnsProvider passes it only when `r.stack` is null
   - Tests: component, unit (`registry-schema.test.ts`), e2e (settings link on DNS provider 1,
     none on the stack card)
-- [~] Step 3: docs (REQUIREMENTS F-1a/F-3.6, CLAUDE.md, DEPLOYMENT.md, TESTING.md,
-      contract/README.md), minor version, CHANGELOG, real-release check, screenshots, PR
+- [x] Step 3: docs (REQUIREMENTS F-1a/F-3.6, CLAUDE.md, DEPLOYMENT.md, TESTING.md,
+      contract/README.md), 0.19.0, CHANGELOG, real-release check
+- [~] Screenshots to the maintainer, PR (draft until accepted)
 - [ ] Promote findings, delete this file
 
 ## Findings
@@ -49,6 +50,8 @@
 - `npm run bundle:registry` on upstream `1be4041`: 25 entries, 36 files, no warnings.
 - `npm test` 382 passed; `npm run test:e2e` 371 passed, 5 skipped (after step 1).
 - After step 2: `npm test` 400 passed; `npm run test:e2e` 373 passed, 5 skipped.
+- Real release `b50ca63` (2026-10-11T05:00:02Z) + registry `1be4041`: bundle, derive and
+  bundle:registry clean (36 files); cards of 2725 (Vercel), 16 (Domain Chief), stack plesk.com render.
 - Ajv never checked formats (no ajv-formats); now `validateFormats: false` silences the
   warnings; patterns do the checking.
 
