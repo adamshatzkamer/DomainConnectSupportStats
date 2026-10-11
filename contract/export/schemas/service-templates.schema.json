@@ -27,10 +27,11 @@
                 { "properties": { "key": { "const": "pending_pct" } } },
                 { "properties": { "key": { "const": "failed_count" } } },
                 { "properties": { "key": { "const": "failed_pct" } } },
+                { "properties": { "key": { "const": "supporting_providers" } } },
                 { "properties": { "key": { "const": "reach_domains" } } },
                 { "properties": { "key": { "const": "reach_pct" } } }
               ],
-              "minItems": 16,
+              "minItems": 17,
               "items": false
             },
             "rows": {
@@ -70,6 +71,10 @@
           "description": "Probe combinations (DNS provider x template version) on record for this template; 0 when it has not been probed yet.",
           "$ref": "common.schema.json#/$defs/count"
         },
+        "supporting_providers": {
+          "description": "DNS providers supporting the template in any version, each counted once (GitHub issue #249) - the providers reach_domains weighs, and the supporting_providers of the service provider card's templates table.",
+          "$ref": "common.schema.json#/$defs/count"
+        },
         "reach_domains": {
           "description": "Domains behind the DNS providers counted in supported_count, in the selected import; null without a domain share.",
           "$ref": "common.schema.json#/$defs/nullableCount"
@@ -86,6 +91,7 @@
         "service_id",
         "added_at",
         "total",
+        "supporting_providers",
         "reach_domains",
         "reach_pct"
       ]

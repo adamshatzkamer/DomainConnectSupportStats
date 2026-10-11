@@ -35,6 +35,9 @@ test.describe('Stack card (stack.html)', () => {
     await page.goto('stack.html?id=plesk.com');
     const deployments = section(page, 'Deployments');
     await expect(deployments.locator('tbody tr')).toHaveCount(2);
+    await expect(deployments.locator('tbody tr').first()).toContainText(
+      /2\s*40.0%\s*2\s*40.0%\s*1\s*20.0%/,
+    );
     await deployments.getByRole('link', { name: 'Plesk' }).first().click();
     await expect(page).toHaveURL(/dns-provider\.html\?id=2$/);
   });

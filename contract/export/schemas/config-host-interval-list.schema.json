@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/config-host-interval-list.schema.json",
+  "title": "config.py host-interval list --output-mode json",
+  "description": "Every per-endpoint minimum request interval an operator has set (host_settings, GitHub issue #244), one row per endpoint, ordered by host. An endpoint not listed uses the post-processing default (0.5 s), named in the note.",
+  "$ref": "common.schema.json#/$defs/report",
+  "properties": {
+    "notes": {
+      "description": "One note naming the default interval of endpoints not listed.",
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 1
+    },
+    "tables": {
+      "properties": {
+        "host_intervals": {
+          "properties": {
+            "title": { "type": "string" },
+            "columns": {
+              "prefixItems": [
+                { "properties": { "key": { "const": "host" } } },
+                { "properties": { "key": { "const": "min_interval_seconds" } } },
+                { "properties": { "key": { "const": "note" } } },
+                { "properties": { "key": { "const": "updated_at" } } }
+              ],
+              "minItems": 4,
+              "items": false
+            },
+            "rows": {
+              "description": "Ordered by host. Empty when no endpoint has an override.",
+              "items": { "$ref": "#/$defs/row" }
+            },
+            "footer": { "type": "null" }
+          }
+        }
+      },
+      "required": ["host_intervals"],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "The endpoint's throttle key (scheme, host[:port] and the first two path segments of its URL), as in host_activity.",
+          "type": "string",
+          "minLength": 1
+        },
+        "min_interval_seconds": {
+          "description": "Minimum interval between requests to the endpoint, from all post-processing workers together, replacing the default in either direction.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "note": {
+          "description": "Why the override exists; null when none was given.",
+          "$ref": "common.schema.json#/$defs/nullableString"
+        },
+        "updated_at": {
+          "description": "When the override was last set, UTC.",
+          "$ref": "common.schema.json#/$defs/timestamp"
+        }
+      },
+      "required": ["host", "min_interval_seconds", "note", "updated_at"],
+      "additionalProperties": false
+    }
+  }
+}

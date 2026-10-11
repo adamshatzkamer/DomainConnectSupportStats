@@ -3,10 +3,13 @@ import type { Row, Table } from '../../src/lib/data/types';
 import {
   dnsProviderList,
   isHiddenByDefault,
-  NOT_SUPPORTED_KEY,
   statusBadge,
   SUPPORTED_PCT_KEY,
   templateSupport,
+  templateTotal,
+  UNDETERMINED_PCT_KEY,
+  UNSUPPORTED_PCT_KEY,
+  withTemplateSupportColumns,
 } from '../../src/lib/dns-providers';
 import { exampleJson } from '../fixtures';
 
@@ -14,20 +17,50 @@ const providers = () => exampleJson('dns-providers.json').tables.dns_providers a
 const ids = (rows: Row[]) => rows.map((r) => r.dns_provider_id);
 
 describe('templateSupport', () => {
-  it('is supported and the rest as shares of every template', () => {
-    expect(templateSupport(1, 4)).toEqual({
+  const row: Row = { supported_templates: 1, unsupported_templates: 2, undetermined_templates: 1 };
+
+  it('is each template answer as a share of the three together', () => {
+    expect(templateTotal(row)).toBe(4);
+    expect(templateSupport(row)).toEqual({
       supportedPct: 25,
-      notSupported: 3,
-      notSupportedPct: 75,
+      unsupportedPct: 50,
+      undeterminedPct: 25,
     });
   });
 
-  it('is unknown when a count is unknown, or supported exceeds the templates', () => {
-    const unknown = { supportedPct: null, notSupported: null, notSupportedPct: null };
-    expect(templateSupport(null, 4)).toEqual(unknown);
-    expect(templateSupport(1, null)).toEqual(unknown);
-    expect(templateSupport(0, 0)).toEqual(unknown);
-    expect(templateSupport(5, 4)).toEqual(unknown);
+  it('is unknown when a count is unknown, or there are no templates', () => {
+    const unknown = { supportedPct: null, unsupportedPct: null, undeterminedPct: null };
+    expect(templateTotal({ ...row, undetermined_templates: null })).toBeNull();
+    expect(templateSupport({ ...row, undetermined_templates: null })).toEqual(unknown);
+    expect(templateSupport({ supported_templates: 1, undetermined_templates: 1 })).toEqual(unknown);
+    expect(
+      templateSupport({
+        supported_templates: 0,
+        unsupported_templates: 0,
+        undetermined_templates: 0,
+      }),
+    ).toEqual(unknown);
+    expect(templateSupport(undefined)).toEqual(unknown);
+  });
+});
+
+describe('withTemplateSupportColumns', () => {
+  it('renames the template answers, each followed by its share', () => {
+    const columns = withTemplateSupportColumns([
+      { key: 'name', header: 'NAME' },
+      { key: 'supported_templates', header: 'TEMPLATES' },
+      { key: 'unsupported_templates', header: 'NOT SUPP. TEMPLATES' },
+      { key: 'undetermined_templates', header: 'UNDETERMINED TEMPLATES' },
+    ]);
+    expect(columns.map((c) => c.header)).toEqual([
+      'NAME',
+      'SUPPORTED',
+      'SUPPORTED %',
+      'NOT SUPP.',
+      'NOT SUPP. %',
+      'UNDETERMINED',
+      'UNDETERMINED %',
+    ]);
   });
 });
 
@@ -72,12 +105,13 @@ describe('dnsProviderList', () => {
     expect(dnsProviderList(providers(), { stack: 'nope', showAll: true }).table.rows).toEqual([]);
   });
 
-  it('adds template support out of every template after supported_templates', () => {
-    const { table } = dnsProviderList(providers(), { stack: null, showAll: true }, 5);
+  it('adds the shares of the template answers, never probed included', () => {
+    const { table } = dnsProviderList(providers(), { stack: null, showAll: true });
     const keys = table.columns.map((c) => c.key);
     expect(keys.indexOf(SUPPORTED_PCT_KEY)).toBe(keys.indexOf('supported_templates') + 1);
-    expect(table.rows.map((r) => r[NOT_SUPPORTED_KEY])).toEqual([2, 3, 3, 5, null, 5]);
-    expect(table.rows[0]![SUPPORTED_PCT_KEY]).toBe(60);
+    expect(table.rows.map((r) => r[SUPPORTED_PCT_KEY])).toEqual([60, 40, 40, 0, 0, 0]);
+    expect(table.rows.map((r) => r[UNSUPPORTED_PCT_KEY])).toEqual([20, 0, 40, 0, 0, 20]);
+    expect(table.rows.map((r) => r[UNDETERMINED_PCT_KEY])).toEqual([20, 60, 20, 100, 100, 80]);
   });
 
   it('keeps unknown columns and keys', () => {

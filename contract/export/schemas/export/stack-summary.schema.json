@@ -38,10 +38,12 @@
             { "properties": { "key": { "const": "supported_templates" } } },
             { "properties": { "key": { "const": "supported_templates_change" } } },
             { "properties": { "key": { "const": "supported_templates_change_90d" } } },
+            { "properties": { "key": { "const": "unsupported_templates" } } },
+            { "properties": { "key": { "const": "undetermined_templates" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "domains_pct" } } }
           ],
-          "minItems": 15,
+          "minItems": 17,
           "items": false
         },
         "rows": {

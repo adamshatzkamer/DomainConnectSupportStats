@@ -107,10 +107,11 @@
             { "properties": { "key": { "const": "provider_id" } } },
             { "properties": { "key": { "const": "api_host" } } },
             { "properties": { "key": { "const": "versions" } } },
+            { "properties": { "key": { "const": "since" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "reach_pct" } } }
           ],
-          "minItems": 7,
+          "minItems": 8,
           "items": false
         },
         "rows": {
@@ -139,10 +140,14 @@
                 "allOf": [{ "$ref": "common.schema.json#/$defs/versions" }],
                 "minItems": 1
               },
+              "since": {
+                "description": "When this provider first supported any version of the template (support_history), as report.py dns-provider-summary's supported_templates since: version changes and gaps do not restart it. null if the event log has no record of it.",
+                "$ref": "common.schema.json#/$defs/nullableTimestamp"
+              },
               "domains": { "$ref": "common.schema.json#/$defs/nullableCount" },
               "reach_pct": { "$ref": "common.schema.json#/$defs/nullablePercentage" }
             },
-            "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "domains", "reach_pct"],
+            "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "since", "domains", "reach_pct"],
             "additionalProperties": false
           }
         },
@@ -155,10 +160,11 @@
             "provider_id": { "type": "null" },
             "api_host": { "type": "null" },
             "versions": { "type": "null" },
+            "since": { "type": "null" },
             "domains": { "$ref": "common.schema.json#/$defs/nullableCount" },
             "reach_pct": { "$ref": "common.schema.json#/$defs/nullablePercentage" }
           },
-          "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "domains", "reach_pct"],
+          "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "since", "domains", "reach_pct"],
           "additionalProperties": false
         }
       }

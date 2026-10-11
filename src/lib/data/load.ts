@@ -3,13 +3,8 @@ import {
   DERIVED_DIR,
   ECOSYSTEM_FILE,
   LEADERBOARDS_FILE,
-  STACKS_FILE,
-  TEMPLATES_FILE,
   type Ecosystem,
   type Leaderboards,
-  type StacksSupport,
-  type TemplateSupporters,
-  type TemplatesSupport,
 } from './derived';
 import { assertSupportedFormat, filePath } from './manifest';
 import type { ExportFile, FileKindName, Manifest } from './types';
@@ -97,23 +92,6 @@ export class ExportClient {
   /** The derived `ecosystem.json`: support weighted by domain share per full sweep. */
   ecosystem(): Promise<Ecosystem> {
     return this.derived(() => ECOSYSTEM_FILE);
-  }
-
-  /** The derived `stacks.json`: template support distribution per stack. */
-  stacksSupport(): Promise<StacksSupport> {
-    return this.derived(() => STACKS_FILE);
-  }
-
-  /** The derived `templates.json`: supporting DNS providers per template. */
-  templatesSupport(): Promise<TemplatesSupport> {
-    return this.derived(() => TEMPLATES_FILE);
-  }
-
-  /** A template's derived supporters, at its card's path under `derived/`. */
-  templateSupporters(serviceProviderId: string, serviceId: string): Promise<TemplateSupporters> {
-    return this.derived((m) =>
-      filePath(m, 'template', { service_provider_id: serviceProviderId, service_id: serviceId }),
-    );
   }
 }
 

@@ -50,6 +50,7 @@ test.describe('Template card (template.html)', () => {
     await expect(supporters.locator('tfoot')).toContainText('TOTAL');
     await expect(supporters.locator('tfoot')).toContainText('57.5%');
     await expect(supporters.locator('thead')).toContainText(/supported since/i);
+    await expect(supporters.getByTestId('since-caveat')).toContainText('first saw');
     const ionos = supporters.locator('tbody tr', { hasText: 'IONOS' });
     await expect(ionos.getByText('First scan')).toHaveAttribute('title', /02-06-2026/);
     // The stack column is hidden at phone width.

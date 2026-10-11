@@ -127,6 +127,21 @@
       },
       "required": ["supported_templates", "supported_templates_change", "supported_templates_change_90d"]
     },
+    "templateAnswerColumns": {
+      "description": "A DNS provider's answer per template, any version counted once (GitHub issue #252): supported_templates (supported in any version), unsupported_templates and undetermined_templates sum to every stored template - the rows of report.py service-templates / the export's templates.json.",
+      "type": "object",
+      "properties": {
+        "unsupported_templates": {
+          "description": "Templates no version of which is supported, and every stored version of which the latest probe answered not supported.",
+          "$ref": "#/$defs/count"
+        },
+        "undetermined_templates": {
+          "description": "Templates neither supported nor not supported: never probed, pending, retrying or failed, or mixed - some version answered not supported while another has no answer yet (e.g. v1 not supported, v2 pending).",
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": ["unsupported_templates", "undetermined_templates"]
+    },
     "sweepHistoryRow": {
       "description": "One support sweep (support_probe_job_generator_runs row), oldest first.",
       "type": "object",

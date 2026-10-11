@@ -217,6 +217,9 @@ follows:
 - **Not supported**: HTTP status 404.
 - **Not yet determined**: any other answer, a failed connection, or no probe yet.
 
+The identifiers are sent exactly as they appear in the repository, including upper-case
+letters, since the specification defines them as case-sensitive.
+
 The query names the template, not a version of it; the published statistics accordingly
 treat a template as supported by a DNS provider when any of its versions is.
 
@@ -226,6 +229,13 @@ addition, every change between *supported* and *not supported* is recorded with 
 which it was observed. These records form the published history. A change is observed at
 the time of the first probe after it occurred, so the temporal resolution of the history
 equals the probing interval of the respective combination (Section 5.3).
+
+The date from which a DNS provider supports a template ("supported since") is the first
+recorded change to *supported* of any version of the template. It is stated only while the
+template is currently supported. A new version of the template does not move it, and
+neither does an interruption: a template that was not supported for a time and then
+supported again keeps its original date. It therefore states since when support has
+existed at all, not how long it has lasted without interruption.
 
 ### 5.3 Probing runs
 
@@ -263,6 +273,20 @@ The number of templates a DNS provider supports counts each template once, irres
 the number of its supported versions. For a stack, it is the number of templates supported
 by at least one of its DNS providers.
 
+The templates a DNS provider does not support are counted the same way: a template counts
+as not supported when none of its versions is supported and the current state of every one
+of its versions is *not supported*. Every other template counts as not yet determined for
+that DNS provider, including a template whose versions disagree - for example one version
+not supported and another not yet determined - since the open version may still turn out
+to be supported. The supported, not supported and not yet determined templates of a DNS
+provider add up to the number of templates.
+
+For a stack, the share of templates each of its DNS providers supports (supported
+templates divided by the number of templates) is given as its lowest, median and highest
+value across the stack's DNS providers that have answered at least one probe with
+*supported* or *not supported*. A distribution rather than an average is given because
+support often varies widely between DNS providers of the same stack.
+
 The change of this number is derived from the recorded history (Section 5.2), not from
 repeated current-state counts. The history is replayed up to the start of each run, and
 the number of supported templates after a run is compared with the number after an
@@ -293,8 +317,8 @@ failure and the time of the last successful contact.
 |---|---|---|
 | `ok` | settings, support | The endpoint answered conclusively: a usable settings answer, or a support answer of *supported* or *not supported*. |
 | `http_error` | settings | The endpoint answered, but the answer was unusable: an HTTP status other than 200, a body that is not valid JSON, or a missing or invalid `urlAPI`. |
-| `error` | support | The endpoint answered with an HTTP status other than 200 or 404, or no answer was obtained (connection failure). |
-| `connection_error` | settings | No answer was obtained: time-out, refused or reset connection, or a protocol error. Such failures are presumed transient. |
+| `error` | support | The endpoint answered with an HTTP status other than 200 or 404 (including an overload answer, Section 6.2), or no answer was obtained (connection failure). |
+| `connection_error` | settings | No answer was obtained (time-out, refused or reset connection, or a protocol error), or the endpoint answered that it is overloaded (Section 6.2). Such failures are presumed transient. |
 | `dead` | settings, support | The endpoint is considered unreachable for the current run (Section 6.3). |
 
 ### 6.2 Repetition after failures
@@ -306,18 +330,32 @@ Two kinds of failure are distinguished, and they are repeated differently.
   alternative domains of Section 4.1 are exhausted) or six times (support), with the
   waiting time doubling from 5 seconds (5 s, 10 s, 20 s, ...), in total for a few minutes.
   If every repetition fails, the result remains undetermined until the next run that
-  covers it.
+  covers it. A support probe answered with HTTP status 400 (bad request) is not repeated:
+  the same request is rejected again, so the result remains undetermined until the next run.
 - **Connection failures** concern the endpoint as a whole. After such a failure, no request
   of any kind is sent to the endpoint for a pause that starts at 30 seconds and doubles with
   every consecutive failure, up to 24 hours. Any answer from the endpoint, even an error
-  status, ends the series of failures and the pause.
+  status, ends the series of failures and the pause, except an overload answer.
+- **Overload answers.** An answer with HTTP status 429 (too many requests), 503 (service
+  unavailable) or 444 (connection closed without response, sent by some web application
+  firewalls before they stop answering a client entirely), and an HTTP/2 connection closed
+  gracefully before answering (a GOAWAY frame without error, by which some endpoints ask
+  their clients to slow down), counts as a connection failure:
+  it extends the series of failures and the pause, and the request is repeated after the
+  pause without counting as one of its own repetitions. If the answer states how long to
+  wait (a `Retry-After` header, or a rate-limit header giving when the quota resets), the
+  pause lasts at least that long, up to the 24-hour maximum.
+- **Exhausted quotas.** An answer of any kind whose rate-limit header says that no requests
+  remain until a reset pauses all requests to the endpoint until that reset, without
+  counting as a failure.
 
 ### 6.3 Abandonment
 
 An endpoint is marked `dead`, and its outstanding requests in the current run are
 abandoned, in two cases:
 
-- its consecutive connection failures have extended the pause to the 24-hour maximum,
+- its consecutive connection failures (including overload answers) have extended the
+  pause to the 24-hour maximum,
   which occurs after 13 consecutive failures spread over roughly a day and a half; or
 - a single failure is permanent by nature, namely an invalid TLS certificate (expired,
   self-signed or issued for another name) or an API address that cannot be requested at
@@ -332,11 +370,18 @@ state, which counts only conclusive answers.
 
 The measurement limits the rate of requests to every endpoint. An endpoint is identified by
 its host name, port and the leading segments of its path, so that independent
-installations sharing one host name are treated separately. Each measuring process leaves
-at least 0.5 seconds between two requests to the same endpoint; with the two processes
-operated per request type, an endpoint receives at most about four requests per second, and
-pending requests are interleaved across endpoints, so that the rate typically remains well
-below this bound. Connection failures pause all requests to the endpoint (Section 6.2).
+installations sharing one host name are treated separately. At least 0.5 seconds pass
+between two requests to the same endpoint, across all measuring processes together, so an
+endpoint receives at most two requests per second. An endpoint known to tolerate less (for
+example one behind a firewall that blocks clients at about one request per second) is given
+a longer interval, and one known to cope with more may be given a shorter one; this changes
+only how fast its answers are collected, never which answers count. Pending requests are
+interleaved across endpoints, so that the rate typically remains well below the bound.
+Connection failures, overload answers and exhausted quotas pause all requests to the
+endpoint (Section 6.2); a rate-limit header never makes requests faster than the bound.
+
+Every request identifies the measurement by its HTTP `User-Agent` header, which names the
+software and its public project page and carries an identifier of the measuring process.
 
 In absolute terms, a full sweep sends each DNS provider one request per template version,
 of the order of 1,400 requests per month at the time of writing, spread over at least

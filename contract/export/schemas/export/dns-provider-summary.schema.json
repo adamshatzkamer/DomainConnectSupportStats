@@ -68,9 +68,12 @@
             { "properties": { "key": { "const": "supported_count" } } },
             { "properties": { "key": { "const": "supported_pct" } } },
             { "properties": { "key": { "const": "unsupported_count" } } },
-            { "properties": { "key": { "const": "unsupported_pct" } } }
+            { "properties": { "key": { "const": "unsupported_pct" } } },
+            { "properties": { "key": { "const": "supported_templates" } } },
+            { "properties": { "key": { "const": "unsupported_templates" } } },
+            { "properties": { "key": { "const": "undetermined_templates" } } }
           ],
-          "minItems": 5,
+          "minItems": 8,
           "items": false
         },
         "rows": {

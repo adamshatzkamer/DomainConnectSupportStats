@@ -56,12 +56,12 @@ test.describe('Stacks list (stacks.html)', () => {
   });
 
   test('shows unknown support as a dash without a bar, sorted last', async ({ page }) => {
-    await page.route('**/data/derived/stacks.json', async (route) => {
+    await page.route('**/data/stacks.json', async (route) => {
       const file = await (await route.fetch()).json();
-      Object.assign(file.stacks[0], {
-        min_templates_pct: null,
-        median_templates_pct: null,
-        max_templates_pct: null,
+      Object.assign(file.tables.stacks.rows[0], {
+        min_supported_templates_pct: null,
+        median_supported_templates_pct: null,
+        max_supported_templates_pct: null,
       });
       await route.fulfill({ json: file });
     });

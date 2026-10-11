@@ -23,10 +23,11 @@
                 { "properties": { "key": { "const": "supported_pct" } } },
                 { "properties": { "key": { "const": "unsupported_count" } } },
                 { "properties": { "key": { "const": "unsupported_pct" } } },
+                { "properties": { "key": { "const": "supporting_providers" } } },
                 { "properties": { "key": { "const": "reach_domains" } } },
                 { "properties": { "key": { "const": "reach_pct" } } }
               ],
-              "minItems": 12,
+              "minItems": 13,
               "items": false
             },
             "rows": {

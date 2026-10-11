@@ -53,8 +53,9 @@ describe('filePath', () => {
 });
 
 describe('assertSupportedFormat', () => {
-  it('accepts format_version 1 and rejects others', () => {
-    expect(() => assertSupportedFormat({ format_version: 1 })).not.toThrow();
-    expect(() => assertSupportedFormat({ format_version: 2 })).toThrow(UnsupportedFormatError);
+  it('accepts format_version 2 and rejects others', () => {
+    expect(() => assertSupportedFormat({ format_version: 2 })).not.toThrow();
+    expect(() => assertSupportedFormat({ format_version: 1 })).toThrow(UnsupportedFormatError);
+    expect(() => assertSupportedFormat({ format_version: 3 })).toThrow(UnsupportedFormatError);
   });
 });

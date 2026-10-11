@@ -13,7 +13,7 @@ test.describe('DNS providers list (dns-providers.html)', () => {
     const cloudflare = page.locator('tbody tr', { hasText: 'Cloudflare' });
     await expect(cloudflare).toContainText('api.cloudflare.com');
     await expect(cloudflare).toContainText(/3\s*60.0%/);
-    await expect(cloudflare).toContainText(/2\s*40.0%/);
+    await expect(cloudflare).toContainText(/1\s*20.0%\s*1\s*20.0%/);
     await expect(cloudflare).not.toContainText('4,000');
     await expect(
       cloudflare.getByTitle('4,000 of 12K scanned domains in the partial scan of 01-06-2026'),
@@ -191,7 +191,7 @@ test.describe('DNS providers list (dns-providers.html)', () => {
         .evaluate((w) => w.scrollWidth - w.clientWidth);
       expect(overflow).toBeLessThanOrEqual(0);
     } else {
-      await expect(headers).toHaveCount(7);
+      await expect(headers).toHaveCount(8);
     }
   });
 

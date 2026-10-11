@@ -1,4 +1,3 @@
-import type { TemplatesSupport } from './data/derived';
 import type { Row, Table } from './data/types';
 import { ofSupporting } from './supporting';
 
@@ -37,21 +36,11 @@ export function templateList(
 }
 
 /**
- * The list with each template's supporting DNS providers (derived) and the rest of the `total`
- * supporting DNS providers, each also as a share of `total`. Unknown when the derived data lacks
- * the template, `total` is unknown, or the rest would be negative.
+ * The list with each template's supporting DNS providers (`supporting_providers`) and the rest of
+ * the `total` supporting DNS providers, each also as a share of `total`. Unknown when the row
+ * lacks the count, `total` is unknown, or the rest would be negative.
  */
-export function withSupport(
-  source: Table,
-  support: TemplatesSupport | null,
-  total: number | null,
-): Table {
-  const counts = new Map(
-    (support?.templates ?? []).map((t) => [
-      JSON.stringify([t.service_provider_id, t.service_id]),
-      t.supporting_dns_providers,
-    ]),
-  );
+export function withSupport(source: Table, total: number | null): Table {
   return {
     ...source,
     columns: [
@@ -60,7 +49,7 @@ export function withSupport(
       { key: 'not_supporting_dns_providers', header: 'NOT SUPP.' },
     ],
     rows: source.rows.map((row) => {
-      const n = counts.get(JSON.stringify([row.provider_id, row.service_id])) ?? null;
+      const n = typeof row.supporting_providers === 'number' ? row.supporting_providers : null;
       const rest = n === null || total === null || n > total ? null : total - n;
       return {
         ...row,

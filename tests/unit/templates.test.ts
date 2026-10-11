@@ -7,7 +7,6 @@ import {
   recordsTable,
   RECORD_DETAILS_KEY,
   tableTitle,
-  withSince,
 } from '../../src/lib/templates';
 import { exampleJson } from '../fixtures';
 
@@ -125,29 +124,5 @@ describe('tableTitle', () => {
 
   it('keeps a title without the prefix', () => {
     expect(tableTitle('Records', 'a.example', 'x')).toBe('Records');
-  });
-});
-
-describe('withSince', () => {
-  const supporters = () =>
-    exampleJson('templates/mail.acme.example/verify.json').tables[
-      'mail.acme.example/verify/supporters'
-    ] as Table;
-
-  it("adds each supporter's since from the derived data, after versions", () => {
-    const table = withSince(supporters(), {
-      generated_at: '2026-10-01T00:00:00Z',
-      supporters: [{ dns_provider_id: 5, since: '2026-09-02 03:00:00' }],
-    });
-    const keys = table.columns.map((c) => c.key);
-    expect(keys.indexOf('since')).toBe(keys.indexOf('versions') + 1);
-    expect(table.rows.map((r) => [r.dns_provider_id, r.since])).toEqual([
-      [1, null],
-      [5, '2026-09-02 03:00:00'],
-    ]);
-  });
-
-  it('leaves since unknown without the derived data', () => {
-    expect(withSince(supporters(), null).rows.map((r) => r.since)).toEqual([null, null]);
   });
 });

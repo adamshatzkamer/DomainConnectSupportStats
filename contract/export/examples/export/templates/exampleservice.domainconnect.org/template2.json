@@ -4,8 +4,8 @@
 ], "footer": null},
 "exampleservice.domainconnect.org/template2/records": {"title": "exampleservice.domainconnect.org/template2 - Records", "columns": [], "rows": [
 ], "footer": null},
-"exampleservice.domainconnect.org/template2/supporters": {"title": "exampleservice.domainconnect.org/template2 - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
-], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "domains": 0, "reach_pct": 0.0}},
+"exampleservice.domainconnect.org/template2/supporters": {"title": "exampleservice.domainconnect.org/template2 - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "since", "header": "SUPPORTED SINCE"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
+], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "since": null, "domains": 0, "reach_pct": 0.0}},
 "exampleservice.domainconnect.org/template2/history": {"title": "exampleservice.domainconnect.org/template2 - Support history", "columns": [{"key": "sweep_id", "header": "SWEEP"}, {"key": "started_at", "header": "STARTED"}, {"key": "completed_at", "header": "COMPLETED"}, {"key": "supporting_providers", "header": "SUPPORTING"}, {"key": "change", "header": "CHANGE"}], "rows": [
 {"sweep_id": 1, "started_at": "2026-03-02 02:00:00", "completed_at": "2026-03-04 17:12:09", "supporting_providers": 1, "change": 1},
 {"sweep_id": 4, "started_at": "2026-06-02 02:00:00", "completed_at": "2026-06-05 09:48:27", "supporting_providers": 0, "change": -1},

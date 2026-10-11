@@ -6,8 +6,8 @@
   "type": "object",
   "properties": {
     "format_version": {
-      "description": "Bumped only by a breaking change to the export's shape; added files, tables or columns keep it.",
-      "const": 1
+      "description": "Bumped only by a breaking change to the export's shape or a changed meaning of a value; added files, tables or columns keep it. 2: supported_templates.since became the first support of any version (EXPORT_FORMAT.md, Versioning).",
+      "const": 2
     },
     "generated_at": {
       "description": "When the export ran, UTC, to the second; also names the release directory (releases/YYYYMMDDTHHMMSSZ), and every other file of the release carries the same value.",

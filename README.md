@@ -37,7 +37,7 @@ npm run verify       # lint, type check, tests, build, e2e
 
 `DATA_DIR=<path to a release> npm run dev` renders a real export release,
 `REGISTRY_DIR=<registry checkout>` a real registry; `npm run derive` writes the derived data of
-`DATA_DIR` that the leaderboards, the templates list and the template card read. All commands:
+`DATA_DIR` that the overview, the stacks list and the leaderboards read. All commands:
 [CLAUDE.md](CLAUDE.md#development-commands).
 
 ## Structure

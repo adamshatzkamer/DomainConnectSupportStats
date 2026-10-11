@@ -36,13 +36,9 @@
   let scan = $state<Scan | null>(null);
   const loading = client.manifest().then(async (m) => {
     manifest = m;
-    const [file, facts, support] = await Promise.all([
-      client.file('templates'),
-      overviewFacts(client, m),
-      client.templatesSupport().catch(() => null),
-    ]);
+    const [file, facts] = await Promise.all([client.file('templates'), overviewFacts(client, m)]);
     scan = facts.scan;
-    return { file, support, total: facts.supportingDnsProviders };
+    return { file, total: facts.supportingDnsProviders };
   });
 
   if (spid) document.title = `${spid} - Templates - Domain Connect Support Statistics`;
@@ -110,10 +106,10 @@
 <Layout current="templates" {manifest}>
   {#await loading}
     <p class="no-data">Loading…</p>
-  {:then { file, support, total }}
+  {:then { file, total }}
     {@const source = findTable(file, 'service_templates')}
     {#if source}
-      {@const list = templateList(withSupport(source, support, total), { spid, showAll })}
+      {@const list = templateList(withSupport(source, total), { spid, showAll })}
       {@const spName = spid ? providerName(source.rows, spid) : null}
       <Panel
         id="templates"

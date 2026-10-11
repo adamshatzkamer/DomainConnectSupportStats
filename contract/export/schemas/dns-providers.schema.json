@@ -31,10 +31,12 @@
                 { "properties": { "key": { "const": "supported_templates" } } },
                 { "properties": { "key": { "const": "supported_templates_change" } } },
                 { "properties": { "key": { "const": "supported_templates_change_90d" } } },
+                { "properties": { "key": { "const": "unsupported_templates" } } },
+                { "properties": { "key": { "const": "undetermined_templates" } } },
                 { "properties": { "key": { "const": "domains" } } },
                 { "properties": { "key": { "const": "domains_pct" } } }
               ],
-              "minItems": 20,
+              "minItems": 22,
               "items": false
             },
             "rows": {
@@ -62,7 +64,8 @@
       "type": "object",
       "allOf": [
         { "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" },
-        { "$ref": "common.schema.json#/$defs/templateTrendColumns" }
+        { "$ref": "common.schema.json#/$defs/templateTrendColumns" },
+        { "$ref": "common.schema.json#/$defs/templateAnswerColumns" }
       ],
       "properties": {
         "name": {
@@ -84,7 +87,7 @@
         "settings_status": { "$ref": "common.schema.json#/$defs/settingsStatus" },
         "support_status": { "$ref": "common.schema.json#/$defs/supportStatus" },
         "total": {
-          "description": "Probe combinations (template versions) on record for this provider. Known defect, GitHub issue #205: 1, not 0, for a provider with none.",
+          "description": "Probe combinations (template versions) on record for this provider; 0 when it has none (then every percentage is null).",
           "$ref": "common.schema.json#/$defs/count"
         },
         "domains": {
