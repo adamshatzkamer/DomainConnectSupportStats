@@ -85,6 +85,13 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
   `npm run test:e2e` 371 passed, 5 skipped; lint, check, check:version clean.
   `dns-provider.spec.ts:219` (no horizontal scroll) failed once, then passed 10 of 10.
 
+- Real-release check: on all 2913 DNS providers the three counts add up to 1781 (the templates);
+  the 2280 never probed are 0/0/1781; card `support` table equals the list row on every one.
+  Screenshots (desktop + phone): DNS provider card (4, never-probed 2706), DNS providers list,
+  stack cloudflare.com deployments, template card and DNS provider card footnotes; shown to the
+  maintainer, awaiting acceptance. `npm run verify` clean (375 unit; e2e 371 passed, 5 skipped;
+  a first run failed one e2e test on an EACCES writing its trace file, not the test).
+
 ## Corrections
 
 ## Open questions
