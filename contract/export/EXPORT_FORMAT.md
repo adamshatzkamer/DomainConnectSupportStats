@@ -43,6 +43,7 @@ below.
 | Supported | The DNS provider's latest probe for a template version answered that it supports it (HTTP 200). |
 | Not supported | The latest probe answered that it does not (HTTP 404). |
 | Not yet determined | Neither: never probed yet, still being retried, or failed. The export does not break this down (see [Redaction](#redaction)); it is `total - supported_count - unsupported_count`. |
+| Template answer | A DNS provider's answer for a template, every version together (`supported_templates`, `unsupported_templates`, `undetermined_templates`): **supported** when any stored version is supported; **not supported** when no version is and the latest probe of every stored version said not supported; otherwise **not yet determined** - including a template with mixed versions, such as version 1 not supported and version 2 not yet determined (version 2 may still turn out supported). The three always add up to the number of templates, the rows of `templates.json`. |
 | Error | A DNS provider whose last settings request or support probe failed carries an error status and message (`settings_status`, `support_status`, `settings_last_error`, `support_last_error`). |
 | Domain share | How many of an import's scanned domains point to a DNS provider (or stack) through their Domain Connect record (`domains`), and that as a percentage of the scanned domains. |
 | Reach | For a template or service provider: the scanned domains hosted by the DNS providers that support it, each DNS provider counted once. It is how many of the scanned domains could apply the template today. |
@@ -111,7 +112,7 @@ The release's index, written last. One JSON object on one line.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `format_version` | integer | Version of this format, currently `1`. See [Versioning](#versioning-and-compatibility). |
+| `format_version` | integer | Version of this format, currently `2`. See [Versioning](#versioning-and-compatibility). |
 | `generated_at` | string | When the export ran, UTC, to the second, as `YYYY-MM-DDTHH:MM:SSZ` (e.g. `2026-10-01T00:00:00Z`). Every other file of the release carries the same value. Show it in the page header. |
 | `schema_version` | integer | Version of the database schema the export was read from. Informational. |
 | `share_import` | object or null | The [domain-share import](#domain-share-import). `null` when no import has share data; then every domain and reach column is `null`. |
@@ -342,6 +343,8 @@ provider was (or is to be) probed for.
 | `supported_templates` | count | Templates it supports now, **any version counted once** (unlike `supported_count`): the number of rows of its card's `supported_templates`. Rank "most templates supported" by this. |
 | `supported_templates_change` | integer | Change in supported templates over its latest sweep: its card's last `support_history` row's `supported_templates` minus the previous row's. `null` when there is no previous row, or the previous sweep started before the DNS provider was first seen (no measured starting point). |
 | `supported_templates_change_90d` | integer | Change in supported templates over about 90 days: its card's last `support_history` row minus the newest row whose sweep started at least 90 days before the last one's. `null` when there is no such row, or it started before the DNS provider was first seen. |
+| `unsupported_templates` | count | Templates it does not support: no version supported, and every stored version answered not supported (see *Template answer* in the [Glossary](#glossary)). |
+| `undetermined_templates` | count | Templates not yet determined: neither supported nor not supported, including mixed versions. `supported_templates + unsupported_templates + undetermined_templates` is the number of rows of `templates.json`. |
 | `domains` | count | Domains attributed to this DNS provider in the domain-share import. `null` without a domain-share import, or when the provider has no measurement in a pruned import (it was first seen later). |
 | `domains_pct` | percentage | `domains` / the import's scanned domains. |
 
@@ -383,6 +386,9 @@ One DNS provider's card, one per row of `dns-providers.json`.
 | `supported_pct` | percentage | `supported_count` / `total`; `null` when `total` is 0. |
 | `unsupported_count` | count | Not supported. |
 | `unsupported_pct` | percentage | `unsupported_count` / `total`; `null` when `total` is 0. |
+| `supported_templates` | count | Templates it supports, any version counted once (as in `dns-providers.json`). |
+| `unsupported_templates` | count | As in `dns-providers.json`. |
+| `undetermined_templates` | count | As in `dns-providers.json`. |
 
 #### Table `share`
 
@@ -421,7 +427,7 @@ by service provider, then template.
 | `service_name` | string | The template's name, else its id. |
 | `service_id` | string | The template's id. |
 | `versions` | versions | Supported versions, ascending. |
-| `since` | timestamp | When the current unbroken period of support began. `null` if not recorded. |
+| `since` | timestamp | When it first supported any version of the template: see [Supported since](#supported-since). `null` if not recorded. |
 
 #### Table `support_history`
 
@@ -471,6 +477,9 @@ because it often varies a lot between deployments of the same software. Ordered 
 | `min_supported_pct` | percentage | Lowest `supported_pct` among its DNS providers that have probe combinations. `null` when none has any. |
 | `median_supported_pct` | percentage | Median of the same. |
 | `max_supported_pct` | percentage | Highest of the same. |
+| `min_supported_templates_pct` | percentage | The same over templates, any version counted once: lowest `supported_templates` / the number of templates (rows of `templates.json`) among its DNS providers with at least one probe answer (`supported_count + unsupported_count` above 0). `null` when none has an answer. |
+| `median_supported_templates_pct` | percentage | Median of the same. |
+| `max_supported_templates_pct` | percentage | Highest of the same. |
 | `supported_templates` | count | Templates at least one of its DNS providers supports now, any version, each counted once: the number of rows of its card's `template_coverage`. |
 | `supported_templates_change` | integer | Change in the templates any of its DNS providers supported, from the previous full sweep to the latest one, replayed like a DNS provider card's `support_history` but over full sweeps only. `null` when there is no previous full sweep, or it started before the stack's first DNS provider was first seen. |
 | `supported_templates_change_90d` | integer | The same from the newest full sweep that started at least 90 days before the latest one. `null` likewise. |
@@ -493,6 +502,9 @@ One stack's card, one per row of `stacks.json`.
 | `min_supported_pct` | percentage | As in `stacks.json`. |
 | `median_supported_pct` | percentage | As in `stacks.json`. |
 | `max_supported_pct` | percentage | As in `stacks.json`. |
+| `min_supported_templates_pct` | percentage | As in `stacks.json`. |
+| `median_supported_templates_pct` | percentage | As in `stacks.json`. |
+| `max_supported_templates_pct` | percentage | As in `stacks.json`. |
 | `supported_templates` | count | As in `stacks.json`. |
 | `supported_templates_change` | integer | As in `stacks.json`. |
 | `supported_templates_change_90d` | integer | As in `stacks.json`. |
@@ -519,6 +531,8 @@ One stack's card, one per row of `stacks.json`.
 | `supported_templates` | count | As in `dns-providers.json`. |
 | `supported_templates_change` | integer | As in `dns-providers.json`. |
 | `supported_templates_change_90d` | integer | As in `dns-providers.json`. |
+| `unsupported_templates` | count | As in `dns-providers.json`. |
+| `undetermined_templates` | count | As in `dns-providers.json`. |
 | `domains` | count | As in `dns-providers.json`. |
 | `domains_pct` | percentage | As in `dns-providers.json`. |
 
@@ -662,6 +676,7 @@ The support columns count **probe combinations**: one per (DNS provider, templat
 | `supported_pct` | percentage | `supported_count` / `total`. `null` when `total` is 0. |
 | `unsupported_count` | count | Combinations whose latest probe said not supported. |
 | `unsupported_pct` | percentage | `unsupported_count` / `total`. `null` when `total` is 0. |
+| `supporting_providers` | count | DNS providers supporting it in any version, each counted once (as the service provider card's `templates.supporting_providers`). |
 | `reach_domains` | count | Domains behind the DNS providers counted in `supported_count`, each counted once. `null` without a domain-share import. |
 | `reach_pct` | percentage | `reach_domains` / the import's scanned domains. |
 
@@ -735,6 +750,7 @@ sums (`null` without a domain-share import), every other key is `null`.
 | `provider_id` | string | Its stack: links to the stack card. `null` if none. |
 | `api_host` | string | As in `dns-providers.json`. |
 | `versions` | versions | Versions of this template it supports, ascending. |
+| `since` | timestamp | When it first supported any version of the template, the same value as its DNS provider card's `supported_templates` `since`: see [Supported since](#supported-since). `null` if not recorded. |
 | `domains` | count | Its domains in the domain-share import. `null` without one. |
 | `reach_pct` | percentage | `domains` / the import's scanned domains. |
 
@@ -850,6 +866,15 @@ found" state that links back to its list page. Every page shows the manifest's
   `support_history` rows.
 - Import series include pruned imports from their kept totals (`source: snapshot`), so they
   reach back further than the detailed data.
+- <a id="supported-since"></a>**Supported since.** `since` (DNS provider card
+  `supported_templates`, template card `supporters`) is when a probe first saw the DNS
+  provider support any version of the template, and is given only for a template it
+  supports now. Version changes don't move it: supporting v1, then v2 (with v1 withdrawn
+  or not) keeps v1's date. Gaps don't move it either: a template that stopped being
+  supported and was supported again keeps its first date. It is not the length of an
+  uninterrupted run (that was its meaning in `format_version` 1). Like every history time,
+  it is when a probe observed the change, so it lags the real change by up to one probing
+  interval.
 
 ## Redaction
 
@@ -868,7 +893,7 @@ contact (`*_last_seen_ok_at`) **are** included.
 
 ## Versioning and compatibility
 
-- `format_version` (now `1`) changes only on a **breaking** change: a removed or renamed
+- `format_version` (now `2`) changes only on a **breaking** change: a removed or renamed
   file kind, table id or column key; a changed type or meaning of a value; a changed path
   template or id encoding.
 - **Additive** changes keep the version: new file kinds, tables, columns, manifest keys or
@@ -876,6 +901,12 @@ contact (`*_last_seen_ok_at`) **are** included.
   know (see [File shape](#file-shape)).
 - Titles, headers and note texts are display text, not part of the contract; they may
   change at any time.
+- **History of `format_version`:**
+  - `2`: `since` of the DNS provider card's `supported_templates` changed meaning from
+    "start of the current unbroken period of support" to "first support of any version"
+    ([Supported since](#supported-since)). Nothing else changed shape. (The template
+    card's `supporters` `since` was added in the same release.)
+  - `1`: the first published format.
 - Card URLs are stable as long as the ids are. A `dns_provider_id` is a database id that
   is never reused (the scanner's database is upgraded in place, never rebuilt); its card
   disappears only when two DNS providers turn out to be one and are merged, keeping one
@@ -926,9 +957,9 @@ shown indented; data files are shown as written.
 <!-- example: manifest.json -->
 ```json
 {
-  "format_version": 1,
+  "format_version": 2,
   "generated_at": "2026-10-01T00:00:00Z",
-  "schema_version": 15,
+  "schema_version": 16,
   "share_import": {
     "import_id": 1780272000,
     "status": "completed",
@@ -1042,11 +1073,11 @@ One list, `stacks.json`:
 <!-- example: stacks.json -->
 ```json
 {"generated_at": "2026-10-01T00:00:00Z", "notes": ["Domain share: import completed 2026-06-01 07:00 UTC (live), 12,000 domains scanned. Support columns are current state."], "tables": {
-"stacks": {"title": "DNS provider stacks", "columns": [{"key": "name", "header": "STACK"}, {"key": "provider_id", "header": "PROVIDER ID"}, {"key": "deployments", "header": "DEPLOYMENTS"}, {"key": "min_supported_pct", "header": "MIN SUPPORT"}, {"key": "median_supported_pct", "header": "MEDIAN SUPPORT"}, {"key": "max_supported_pct", "header": "MAX SUPPORT"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
-{"name": "Cloudflare", "provider_id": "cloudflare.com", "deployments": 1, "min_supported_pct": 66.66666666666666, "median_supported_pct": 66.66666666666666, "max_supported_pct": 66.66666666666666, "supported_templates": 3, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 4000, "domains_pct": 33.33333333333333},
-{"name": "IONOS", "provider_id": "ionos.com", "deployments": 1, "min_supported_pct": 50.0, "median_supported_pct": 50.0, "max_supported_pct": 50.0, "supported_templates": 2, "supported_templates_change": 1, "supported_templates_change_90d": 1, "domains": 2000, "domains_pct": 16.666666666666664},
-{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334},
-{"name": "Quiet Host", "provider_id": "quiet-host.example", "deployments": 1, "min_supported_pct": 0.0, "median_supported_pct": 0.0, "max_supported_pct": 0.0, "supported_templates": 0, "supported_templates_change": null, "supported_templates_change_90d": null, "domains": 0, "domains_pct": 0.0}
+"stacks": {"title": "DNS provider stacks", "columns": [{"key": "name", "header": "STACK"}, {"key": "provider_id", "header": "PROVIDER ID"}, {"key": "deployments", "header": "DEPLOYMENTS"}, {"key": "min_supported_pct", "header": "MIN SUPPORT"}, {"key": "median_supported_pct", "header": "MEDIAN SUPPORT"}, {"key": "max_supported_pct", "header": "MAX SUPPORT"}, {"key": "min_supported_templates_pct", "header": "MIN TEMPLATE SUPPORT"}, {"key": "median_supported_templates_pct", "header": "MEDIAN TEMPLATE SUPPORT"}, {"key": "max_supported_templates_pct", "header": "MAX TEMPLATE SUPPORT"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
+{"name": "Cloudflare", "provider_id": "cloudflare.com", "deployments": 1, "min_supported_pct": 66.66666666666666, "median_supported_pct": 66.66666666666666, "max_supported_pct": 66.66666666666666, "min_supported_templates_pct": 60.0, "median_supported_templates_pct": 60.0, "max_supported_templates_pct": 60.0, "supported_templates": 3, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 4000, "domains_pct": 33.33333333333333},
+{"name": "IONOS", "provider_id": "ionos.com", "deployments": 1, "min_supported_pct": 50.0, "median_supported_pct": 50.0, "max_supported_pct": 50.0, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 1, "supported_templates_change_90d": 1, "domains": 2000, "domains_pct": 16.666666666666664},
+{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334},
+{"name": "Quiet Host", "provider_id": "quiet-host.example", "deployments": 1, "min_supported_pct": 0.0, "median_supported_pct": 0.0, "max_supported_pct": 0.0, "min_supported_templates_pct": 0.0, "median_supported_templates_pct": 0.0, "max_supported_templates_pct": 0.0, "supported_templates": 0, "supported_templates_change": null, "supported_templates_change_90d": null, "domains": 0, "domains_pct": 0.0}
 ], "footer": null}
 }}
 ```
@@ -1057,12 +1088,12 @@ One card, `stacks/plesk.com.json`:
 <!-- example: stacks/plesk.com.json -->
 ```json
 {"generated_at": "2026-10-01T00:00:00Z", "notes": ["Domain share: import completed 2026-06-01 07:00 UTC (live), 12,000 domains scanned. Support columns are current state."], "tables": {
-"stack": {"title": "DNS provider stack", "columns": [{"key": "name", "header": "Stack"}, {"key": "provider_id", "header": "Provider ID"}, {"key": "deployments", "header": "Deployments"}, {"key": "min_supported_pct", "header": "Min support"}, {"key": "median_supported_pct", "header": "Median support"}, {"key": "max_supported_pct", "header": "Max support"}, {"key": "supported_templates", "header": "Supported templates"}, {"key": "supported_templates_change", "header": "Change since previous full sweep"}, {"key": "supported_templates_change_90d", "header": "Change over 90 days"}, {"key": "domains", "header": "Domains"}, {"key": "domains_pct", "header": "% scanned"}], "rows": [
-{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334}
+"stack": {"title": "DNS provider stack", "columns": [{"key": "name", "header": "Stack"}, {"key": "provider_id", "header": "Provider ID"}, {"key": "deployments", "header": "Deployments"}, {"key": "min_supported_pct", "header": "Min support"}, {"key": "median_supported_pct", "header": "Median support"}, {"key": "max_supported_pct", "header": "Max support"}, {"key": "min_supported_templates_pct", "header": "Min template support"}, {"key": "median_supported_templates_pct", "header": "Median template support"}, {"key": "max_supported_templates_pct", "header": "Max template support"}, {"key": "supported_templates", "header": "Supported templates"}, {"key": "supported_templates_change", "header": "Change since previous full sweep"}, {"key": "supported_templates_change_90d", "header": "Change over 90 days"}, {"key": "domains", "header": "Domains"}, {"key": "domains_pct", "header": "% scanned"}], "rows": [
+{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334}
 ], "footer": null},
-"deployments": {"title": "Deployments", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "api_host", "header": "API HOST"}, {"key": "settings_status", "header": "SETTINGS"}, {"key": "support_status", "header": "SUPPORT"}, {"key": "total", "header": "TOTAL"}, {"key": "supported_count", "header": "SUPPORTED"}, {"key": "supported_pct", "header": "SUPPORTED %"}, {"key": "unsupported_count", "header": "NOT SUPP."}, {"key": "unsupported_pct", "header": "NOT SUPP. %"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
-{"name": "Plesk", "dns_provider_id": 2, "api_host": "domainconnect.plesk.com", "settings_status": "ok", "support_status": "ok", "total": 6, "supported_count": 2, "supported_pct": 33.33333333333333, "unsupported_count": 3, "unsupported_pct": 50.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 900, "domains_pct": 7.5},
-{"name": "Plesk", "dns_provider_id": 3, "api_host": "domainconnect.plesk.com", "settings_status": "http_error", "support_status": "dead", "total": 6, "supported_count": 0, "supported_pct": 0.0, "unsupported_count": 0, "unsupported_pct": 0.0, "supported_templates": 0, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 250, "domains_pct": 2.083333333333333}
+"deployments": {"title": "Deployments", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "api_host", "header": "API HOST"}, {"key": "settings_status", "header": "SETTINGS"}, {"key": "support_status", "header": "SUPPORT"}, {"key": "total", "header": "TOTAL"}, {"key": "supported_count", "header": "SUPPORTED"}, {"key": "supported_pct", "header": "SUPPORTED %"}, {"key": "unsupported_count", "header": "NOT SUPP."}, {"key": "unsupported_pct", "header": "NOT SUPP. %"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "unsupported_templates", "header": "NOT SUPP. TEMPLATES"}, {"key": "undetermined_templates", "header": "UNDETERMINED TEMPLATES"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
+{"name": "Plesk", "dns_provider_id": 2, "api_host": "domainconnect.plesk.com", "settings_status": "ok", "support_status": "ok", "total": 6, "supported_count": 2, "supported_pct": 33.33333333333333, "unsupported_count": 3, "unsupported_pct": 50.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "unsupported_templates": 2, "undetermined_templates": 1, "domains": 900, "domains_pct": 7.5},
+{"name": "Plesk", "dns_provider_id": 3, "api_host": "domainconnect.plesk.com", "settings_status": "http_error", "support_status": "dead", "total": 6, "supported_count": 0, "supported_pct": 0.0, "unsupported_count": 0, "unsupported_pct": 0.0, "supported_templates": 0, "supported_templates_change": 0, "supported_templates_change_90d": 0, "unsupported_templates": 0, "undetermined_templates": 5, "domains": 250, "domains_pct": 2.083333333333333}
 ], "footer": null},
 "template_coverage": {"title": "Supporting deployments per template (current state)", "columns": [{"key": "service_provider_name", "header": "SERVICE PROVIDER"}, {"key": "service_provider_id", "header": "PROVIDER ID"}, {"key": "service_name", "header": "TEMPLATE"}, {"key": "service_id", "header": "SERVICE ID"}, {"key": "supporting_deployments", "header": "SUPPORTING"}, {"key": "supporting_pct", "header": "% OF DEPLOYMENTS"}, {"key": "reach_domains", "header": "REACH"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
 {"service_provider_name": "Acme Mail Inc.", "service_provider_id": "mail.acme.example", "service_name": "Acme Mail", "service_id": "mail", "supporting_deployments": 1, "supporting_pct": 50.0, "reach_domains": 900, "reach_pct": 7.5},

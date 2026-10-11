@@ -6,11 +6,11 @@
 {"type": "A", "host": "@", "pointsTo": "%ip%", "ttl": 3600},
 {"type": "CNAME", "host": "www", "pointsTo": "@", "ttl": 3600}
 ], "footer": null},
-"exampleservice.domainconnect.org/template1/supporters": {"title": "exampleservice.domainconnect.org/template1 - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
-{"name": "Cloudflare", "dns_provider_id": 1, "provider_id": "cloudflare.com", "api_host": "api.cloudflare.com", "versions": [1, 2], "domains": 4000, "reach_pct": 33.33333333333333},
-{"name": "IONOS", "dns_provider_id": 5, "provider_id": "ionos.com", "api_host": "domainconnect.ionos.example", "versions": [1, 2], "domains": 2000, "reach_pct": 16.666666666666664},
-{"name": "Plesk", "dns_provider_id": 2, "provider_id": "plesk.com", "api_host": "domainconnect.plesk.com", "versions": [1], "domains": 900, "reach_pct": 7.5}
-], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "domains": 6900, "reach_pct": 57.49999999999999}},
+"exampleservice.domainconnect.org/template1/supporters": {"title": "exampleservice.domainconnect.org/template1 - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "since", "header": "SUPPORTED SINCE"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
+{"name": "Cloudflare", "dns_provider_id": 1, "provider_id": "cloudflare.com", "api_host": "api.cloudflare.com", "versions": [1, 2], "since": "2026-03-02 03:00:00", "domains": 4000, "reach_pct": 33.33333333333333},
+{"name": "IONOS", "dns_provider_id": 5, "provider_id": "ionos.com", "api_host": "domainconnect.ionos.example", "versions": [1, 2], "since": "2026-06-02 03:00:00", "domains": 2000, "reach_pct": 16.666666666666664},
+{"name": "Plesk", "dns_provider_id": 2, "provider_id": "plesk.com", "api_host": "domainconnect.plesk.com", "versions": [1], "since": "2026-03-02 03:00:00", "domains": 900, "reach_pct": 7.5}
+], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "since": null, "domains": 6900, "reach_pct": 57.49999999999999}},
 "exampleservice.domainconnect.org/template1/history": {"title": "exampleservice.domainconnect.org/template1 - Support history", "columns": [{"key": "sweep_id", "header": "SWEEP"}, {"key": "started_at", "header": "STARTED"}, {"key": "completed_at", "header": "COMPLETED"}, {"key": "supporting_providers", "header": "SUPPORTING"}, {"key": "change", "header": "CHANGE"}], "rows": [
 {"sweep_id": 1, "started_at": "2026-03-02 02:00:00", "completed_at": "2026-03-04 17:12:09", "supporting_providers": 3, "change": 3},
 {"sweep_id": 4, "started_at": "2026-06-02 02:00:00", "completed_at": "2026-06-05 09:48:27", "supporting_providers": 4, "change": 1},

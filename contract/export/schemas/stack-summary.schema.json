@@ -41,13 +41,16 @@
             { "properties": { "key": { "const": "min_supported_pct" } } },
             { "properties": { "key": { "const": "median_supported_pct" } } },
             { "properties": { "key": { "const": "max_supported_pct" } } },
+            { "properties": { "key": { "const": "min_supported_templates_pct" } } },
+            { "properties": { "key": { "const": "median_supported_templates_pct" } } },
+            { "properties": { "key": { "const": "max_supported_templates_pct" } } },
             { "properties": { "key": { "const": "supported_templates" } } },
             { "properties": { "key": { "const": "supported_templates_change" } } },
             { "properties": { "key": { "const": "supported_templates_change_90d" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "domains_pct" } } }
           ],
-          "minItems": 11,
+          "minItems": 14,
           "items": false
         },
         "rows": { "$ref": "common.schema.json#/$defs/oneRow", "items": { "$ref": "stacks.schema.json#/$defs/row" } },
@@ -77,10 +80,12 @@
             { "properties": { "key": { "const": "supported_templates" } } },
             { "properties": { "key": { "const": "supported_templates_change" } } },
             { "properties": { "key": { "const": "supported_templates_change_90d" } } },
+            { "properties": { "key": { "const": "unsupported_templates" } } },
+            { "properties": { "key": { "const": "undetermined_templates" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "domains_pct" } } }
           ],
-          "minItems": 19,
+          "minItems": 21,
           "items": false
         },
         "rows": {
@@ -103,7 +108,8 @@
       "type": "object",
       "allOf": [
         { "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" },
-        { "$ref": "common.schema.json#/$defs/templateTrendColumns" }
+        { "$ref": "common.schema.json#/$defs/templateTrendColumns" },
+        { "$ref": "common.schema.json#/$defs/templateAnswerColumns" }
       ],
       "properties": {
         "name": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/name" },

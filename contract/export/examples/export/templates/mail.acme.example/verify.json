@@ -5,10 +5,10 @@
 "mail.acme.example/verify/records": {"title": "mail.acme.example/verify - Records", "columns": [{"key": "type", "header": "type"}, {"key": "host", "header": "host"}, {"key": "data", "header": "data"}, {"key": "ttl", "header": "ttl"}], "rows": [
 {"type": "TXT", "host": "@", "data": "%token%", "ttl": 300}
 ], "footer": null},
-"mail.acme.example/verify/supporters": {"title": "mail.acme.example/verify - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
-{"name": "Cloudflare", "dns_provider_id": 1, "provider_id": "cloudflare.com", "api_host": "api.cloudflare.com", "versions": [1], "domains": 4000, "reach_pct": 33.33333333333333},
-{"name": "IONOS", "dns_provider_id": 5, "provider_id": "ionos.com", "api_host": "domainconnect.ionos.example", "versions": [1], "domains": 2000, "reach_pct": 16.666666666666664}
-], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "domains": 6000, "reach_pct": 50.0}},
+"mail.acme.example/verify/supporters": {"title": "mail.acme.example/verify - Supporting DNS providers (current state)", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "provider_id", "header": "STACK"}, {"key": "api_host", "header": "API HOST"}, {"key": "versions", "header": "VERSIONS"}, {"key": "since", "header": "SUPPORTED SINCE"}, {"key": "domains", "header": "DOMAINS"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
+{"name": "Cloudflare", "dns_provider_id": 1, "provider_id": "cloudflare.com", "api_host": "api.cloudflare.com", "versions": [1], "since": "2026-04-01 03:00:00", "domains": 4000, "reach_pct": 33.33333333333333},
+{"name": "IONOS", "dns_provider_id": 5, "provider_id": "ionos.com", "api_host": "domainconnect.ionos.example", "versions": [1], "since": "2026-09-02 03:00:00", "domains": 2000, "reach_pct": 16.666666666666664}
+], "footer": {"name": "TOTAL", "dns_provider_id": null, "provider_id": null, "api_host": null, "versions": null, "since": null, "domains": 6000, "reach_pct": 50.0}},
 "mail.acme.example/verify/history": {"title": "mail.acme.example/verify - Support history", "columns": [{"key": "sweep_id", "header": "SWEEP"}, {"key": "started_at", "header": "STARTED"}, {"key": "completed_at", "header": "COMPLETED"}, {"key": "supporting_providers", "header": "SUPPORTING"}, {"key": "change", "header": "CHANGE"}], "rows": [
 {"sweep_id": 1, "started_at": "2026-03-02 02:00:00", "completed_at": "2026-03-04 17:12:09", "supporting_providers": 0, "change": 0},
 {"sweep_id": 3, "started_at": "2026-04-01 02:00:00", "completed_at": "2026-04-01 03:05:51", "supporting_providers": 1, "change": 1},

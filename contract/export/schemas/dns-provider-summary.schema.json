@@ -149,9 +149,12 @@
             { "properties": { "key": { "const": "pending_count" } } },
             { "properties": { "key": { "const": "pending_pct" } } },
             { "properties": { "key": { "const": "failed_count" } } },
-            { "properties": { "key": { "const": "failed_pct" } } }
+            { "properties": { "key": { "const": "failed_pct" } } },
+            { "properties": { "key": { "const": "supported_templates" } } },
+            { "properties": { "key": { "const": "unsupported_templates" } } },
+            { "properties": { "key": { "const": "undetermined_templates" } } }
           ],
-          "minItems": 9,
+          "minItems": 12,
           "items": false
         },
         "rows": {
@@ -170,14 +173,18 @@
     "publicSupportRow": {
       "description": "The support row's public columns - the static export's row (docs/schemas/export/dns-provider-summary.schema.json).",
       "type": "object",
-      "allOf": [{ "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" }],
+      "allOf": [
+        { "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" },
+        { "$ref": "common.schema.json#/$defs/templateAnswerColumns" }
+      ],
       "properties": {
         "total": {
-          "description": "Probe combinations on record. Known defect, GitHub issue #205: 1, not 0, for a provider with none.",
+          "description": "Probe combinations on record; 0 when there are none (then every percentage is null).",
           "$ref": "common.schema.json#/$defs/count"
-        }
+        },
+        "supported_templates": { "$ref": "common.schema.json#/$defs/templateTrendColumns/properties/supported_templates" }
       },
-      "required": ["total"]
+      "required": ["total", "supported_templates"]
     },
     "shareTable": {
       "description": "The provider's share of the selected import: one row, or none when there is no such import with share data.",
@@ -260,7 +267,7 @@
                 "minItems": 1
               },
               "since": {
-                "description": "When the current unbroken run of support began (support_history); null if the event log has no record of it.",
+                "description": "When the provider first supported any version of the template (support_history); version changes and gaps (every version withdrawn, then supported again) do not restart it. null if the event log has no record of it.",
                 "$ref": "common.schema.json#/$defs/nullableTimestamp"
               }
             },
