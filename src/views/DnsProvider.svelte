@@ -17,8 +17,7 @@
   import { scannerStart } from '../lib/data/config';
   import { cardSweep } from '../lib/annotation';
   import { defaultClient, NotFoundError } from '../lib/data/load';
-  import { templateSupport } from '../lib/dns-providers';
-  import { templateCount } from '../lib/supporting';
+  import { templateSupport, templateTotal } from '../lib/dns-providers';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatAxisPct, formatCount, formatPct, UNKNOWN } from '../lib/format';
@@ -144,8 +143,8 @@
       {@const urls = findTable(file, 'urls')}
       {@const templates = findTable(file, 'supported_templates')}
       {@const probed = text(provider, 'support_last_status') !== null}
-      {@const supportedTemplates = templates ? templates.rows.length : null}
-      {@const templateShare = templateSupport(supportedTemplates, templateCount(manifest))}
+      {@const support = oneRecord(findTable(file, 'support'))}
+      {@const templateShare = templateSupport(support)}
       {@const supportHistory = findTable(file, 'support_history')}
       {@const shareHistory = findTable(file, 'share_history')}
       {@const stack = text(provider, 'provider_id')}
@@ -174,18 +173,21 @@
 
       <section class="summary-stats" aria-label="Support and domain share" data-testid="headline">
         <StatCard
-          value={formatCount(supportedTemplates)}
+          value={formatCount(num(support, 'supported_templates'))}
           label="Supported templates"
           detail={probed
-            ? `of ${formatCount(templateCount(manifest))} templates (${formatPct(templateShare.supportedPct)})`
+            ? `of ${formatCount(templateTotal(support))} templates (${formatPct(templateShare.supportedPct)})`
             : 'not probed yet'}
         />
         <StatCard
-          value={probed ? formatCount(templateShare.notSupported) : UNKNOWN}
+          value={formatCount(num(support, 'unsupported_templates'))}
           label="Not supported"
-          detail={probed
-            ? `${formatPct(templateShare.notSupportedPct)}, not yet determined included`
-            : 'not probed yet'}
+          detail={`${formatPct(templateShare.unsupportedPct)} of templates`}
+        />
+        <StatCard
+          value={formatCount(num(support, 'undetermined_templates'))}
+          label="Not yet determined"
+          detail={`${formatPct(templateShare.undeterminedPct)}: never probed, retried or failed`}
         />
         <StatCard
           value={formatPct(num(share, 'share_pct'))}

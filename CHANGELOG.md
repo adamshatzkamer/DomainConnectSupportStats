@@ -12,6 +12,14 @@ fixes, styling and dependencies.
 - "Supported since" (DNS provider card, template card) is when a probe first saw support of any
   version of the template; new versions and gaps don't move it. A footnote says so.
 - Template card: "Supported since" comes from the export.
+- DNS provider card, DNS providers list, stack card deployments: "Not supported" counts only
+  templates every version answered not supported; shares are of every template.
+
+### Added
+
+- DNS provider card: "Not yet determined" templates (never probed, being retried or failed).
+- DNS providers list, stack card deployments: undetermined templates; not supported on the stack
+  card too. Wide screens only.
 
 ## [0.17.0] - 2026-10-09
 

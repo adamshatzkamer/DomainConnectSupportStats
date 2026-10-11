@@ -25,6 +25,10 @@
   import {
     isNeverProbed,
     SUPPORTED_PCT_KEY,
+    UNDETERMINED_KEY,
+    UNDETERMINED_PCT_KEY,
+    UNSUPPORTED_KEY,
+    UNSUPPORTED_PCT_KEY,
     withTemplateSupport,
     withTemplateSupportColumns,
   } from '../lib/dns-providers';
@@ -63,6 +67,16 @@
       .catch(() => []);
   }
 
+  const DEPLOYMENT_KEYS = [
+    'name',
+    'settings_status',
+    'support_status',
+    'supported_templates',
+    UNSUPPORTED_KEY,
+    UNDETERMINED_KEY,
+    'domains',
+  ];
+
   const registry = defaultRegistryClient();
   const registryLoads: Record<string, ReturnType<typeof loadRegistry>> = {};
 
@@ -93,6 +107,11 @@
   }
 </script>
 
+{#snippet countPct(row: Row, key: string, pctKey: string)}
+  <span class="count">{formatCount(num(row, key))}</span>
+  {#if num(row, pctKey) !== null}<div class="muted">{formatPct(num(row, pctKey))}</div>{/if}
+{/snippet}
+
 {#snippet deploymentCell(column: Column, row: Row)}
   {@const dnsId = num(row, 'dns_provider_id')}
   {#if column.key === 'name'}
@@ -104,10 +123,11 @@
   {:else if isNeverProbed(row) && column.key === 'supported_templates'}
     <span class="muted count">Not probed yet</span>
   {:else if column.key === 'supported_templates'}
-    <span class="count">{formatCount(num(row, 'supported_templates'))}</span>
-    {#if num(row, SUPPORTED_PCT_KEY) !== null}<div class="muted">
-        {formatPct(num(row, SUPPORTED_PCT_KEY))}
-      </div>{/if}
+    {@render countPct(row, column.key, SUPPORTED_PCT_KEY)}
+  {:else if column.key === UNSUPPORTED_KEY}
+    {@render countPct(row, column.key, UNSUPPORTED_PCT_KEY)}
+  {:else if column.key === UNDETERMINED_KEY}
+    {@render countPct(row, column.key, UNDETERMINED_PCT_KEY)}
   {:else if column.key === 'domains'}
     <DomainShare pct={num(row, 'domains_pct')} domains={num(row, 'domains')} {scan} />
   {/if}
@@ -229,16 +249,10 @@
             table={{
               ...deployments,
               columns: withTemplateSupportColumns(deployments.columns),
-              rows: deployments.rows.map((r) => withTemplateSupport(r, templateCount(manifest))),
+              rows: deployments.rows.map(withTemplateSupport),
             }}
-            keys={['name', 'settings_status', 'support_status', 'supported_templates', 'domains']}
-            customKeys={[
-              'name',
-              'settings_status',
-              'support_status',
-              'supported_templates',
-              'domains',
-            ]}
+            keys={DEPLOYMENT_KEYS}
+            customKeys={DEPLOYMENT_KEYS}
             phoneKeys={['name', 'supported_templates', 'domains']}
             cell={deploymentCell}
             searchable

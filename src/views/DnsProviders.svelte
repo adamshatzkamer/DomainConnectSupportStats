@@ -11,9 +11,11 @@
   import {
     dnsProviderList,
     isNeverProbed,
-    NOT_SUPPORTED_KEY,
-    NOT_SUPPORTED_PCT_KEY,
     SUPPORTED_PCT_KEY,
+    UNDETERMINED_KEY,
+    UNDETERMINED_PCT_KEY,
+    UNSUPPORTED_KEY,
+    UNSUPPORTED_PCT_KEY,
   } from '../lib/dns-providers';
   import { templateCount } from '../lib/supporting';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
@@ -56,7 +58,8 @@
     'settings_status',
     'support_status',
     'supported_templates',
-    NOT_SUPPORTED_KEY,
+    UNSUPPORTED_KEY,
+    UNDETERMINED_KEY,
     'domains',
   ];
   const CUSTOM_KEYS = [
@@ -65,7 +68,8 @@
     'settings_status',
     'support_status',
     'supported_templates',
-    NOT_SUPPORTED_KEY,
+    UNSUPPORTED_KEY,
+    UNDETERMINED_KEY,
     'domains',
   ];
 
@@ -100,8 +104,10 @@
     <span class="muted count">Not probed yet</span>
   {:else if column.key === 'supported_templates'}
     {@render countPct(formatCount(num(row, column.key)), num(row, SUPPORTED_PCT_KEY))}
-  {:else if column.key === NOT_SUPPORTED_KEY}
-    {@render countPct(formatCount(num(row, column.key)), num(row, NOT_SUPPORTED_PCT_KEY))}
+  {:else if column.key === UNSUPPORTED_KEY}
+    {@render countPct(formatCount(num(row, column.key)), num(row, UNSUPPORTED_PCT_KEY))}
+  {:else if column.key === UNDETERMINED_KEY}
+    {@render countPct(formatCount(num(row, column.key)), num(row, UNDETERMINED_PCT_KEY))}
   {:else if column.key === 'domains'}
     <DomainShare pct={num(row, 'domains_pct')} domains={num(row, 'domains')} {scan} />
   {/if}
@@ -113,7 +119,7 @@
   {:then file}
     {@const source = findTable(file, 'dns_providers')}
     {#if source}
-      {@const list = dnsProviderList(source, { stack, showAll }, templateCount(manifest))}
+      {@const list = dnsProviderList(source, { stack, showAll })}
       <Panel
         id="dns-providers"
         title={stack ? `DNS providers of stack ${stack}` : 'DNS providers'}
@@ -148,11 +154,11 @@
         />
         <ul class="caveats" data-testid="caveats">
           <li>
-            Supported: templates supported in any version by the latest probes; not supported: the
-            other templates, not yet determined included (never probed, being retried or failed).
-            Both as a share of every template ({formatCount(templateCount(manifest))}) (<a
-              href={links.methodology('52-support-probe')}>methodology 5.2</a
-            >).
+            Supported: templates supported in any version by the latest probes; not supported: every
+            version answered not supported; undetermined: a version without an answer yet (never
+            probed, being retried or failed). Each as a share of every template ({formatCount(
+              templateCount(manifest),
+            )}) (<a href={links.methodology('52-support-probe')}>methodology 5.2</a>).
           </li>
           <li>
             Domains: share of the scanned domains whose Domain Connect record is attributed to the

@@ -2,13 +2,15 @@ import type { CellValue, Column, Row, Table } from './data/types';
 
 /**
  * The DNS providers list (EXPORT_FORMAT.md "dns-providers.json"): stack filter, rows hidden by
- * default, template support out of every template, and status badges.
+ * default, shares of the template answers, and status badges.
  */
 
-/** Keys of the derived columns: supported templates as a share, and the rest of the templates. */
+/** Keys of the template answers besides `supported_templates`, and of the derived shares. */
+export const UNSUPPORTED_KEY = 'unsupported_templates';
+export const UNDETERMINED_KEY = 'undetermined_templates';
 export const SUPPORTED_PCT_KEY = 'supported_templates_pct';
-export const NOT_SUPPORTED_KEY = 'not_supported_templates';
-export const NOT_SUPPORTED_PCT_KEY = 'not_supported_templates_pct';
+export const UNSUPPORTED_PCT_KEY = 'unsupported_templates_pct';
+export const UNDETERMINED_PCT_KEY = 'undetermined_templates_pct';
 
 function num(row: Row | undefined, key: string): number | null {
   const v = row?.[key];
@@ -22,52 +24,62 @@ export function isNeverProbed(row: Row): boolean {
 
 export interface TemplateSupport {
   supportedPct: number | null;
-  /** Templates not supported, not yet determined included. */
-  notSupported: number | null;
-  notSupportedPct: number | null;
+  unsupportedPct: number | null;
+  undeterminedPct: number | null;
 }
 
-/** `supported` of `templates` templates, and the rest; unknown when either is or it exceeds. */
-export function templateSupport(
-  supported: number | null,
-  templates: number | null,
-): TemplateSupport {
-  if (supported === null || templates === null || templates === 0 || supported > templates)
-    return { supportedPct: null, notSupported: null, notSupportedPct: null };
+const ANSWER_KEYS = ['supported_templates', UNSUPPORTED_KEY, UNDETERMINED_KEY];
+
+/** Supported, not supported and not yet determined templates together: every template. */
+export function templateTotal(row: Row | undefined): number | null {
+  return ANSWER_KEYS.map((k) => num(row, k)).reduce<number | null>(
+    (sum, c) => (sum === null || c === null ? null : sum + c),
+    0,
+  );
+}
+
+/** Each template answer of a row as a share of every template; unknown when a count is, or none. */
+export function templateSupport(row: Row | undefined): TemplateSupport {
+  const total = templateTotal(row);
+  const pct = (key: string) => {
+    const c = num(row, key);
+    return c === null || !total ? null : (c / total) * 100;
+  };
   return {
-    supportedPct: (supported / templates) * 100,
-    notSupported: templates - supported,
-    notSupportedPct: ((templates - supported) / templates) * 100,
+    supportedPct: pct('supported_templates'),
+    unsupportedPct: pct(UNSUPPORTED_KEY),
+    undeterminedPct: pct(UNDETERMINED_KEY),
   };
 }
 
-/** A row with its template support columns; unknown for a DNS provider never probed. */
-export function withTemplateSupport(row: Row, templates: number | null): Row {
-  const t = isNeverProbed(row)
-    ? templateSupport(null, null)
-    : templateSupport(num(row, 'supported_templates'), templates);
+/** A row with the shares of its template answers. */
+export function withTemplateSupport(row: Row): Row {
+  const t = templateSupport(row);
   return {
     ...row,
     [SUPPORTED_PCT_KEY]: t.supportedPct,
-    [NOT_SUPPORTED_KEY]: t.notSupported,
-    [NOT_SUPPORTED_PCT_KEY]: t.notSupportedPct,
+    [UNSUPPORTED_PCT_KEY]: t.unsupportedPct,
+    [UNDETERMINED_PCT_KEY]: t.undeterminedPct,
   };
 }
 
-/** The columns with the template support columns after `supported_templates`. */
+const ANSWER_COLUMNS: [key: string, header: string, pctKey: string, pctHeader: string][] = [
+  ['supported_templates', 'SUPPORTED', SUPPORTED_PCT_KEY, 'SUPPORTED %'],
+  [UNSUPPORTED_KEY, 'NOT SUPP.', UNSUPPORTED_PCT_KEY, 'NOT SUPP. %'],
+  [UNDETERMINED_KEY, 'UNDETERMINED', UNDETERMINED_PCT_KEY, 'UNDETERMINED %'],
+];
+
+/** The columns with the template answers renamed, each followed by its share. */
 export function withTemplateSupportColumns(columns: Column[]): Column[] {
-  const out = columns.map((c) =>
-    c.key === 'supported_templates' ? { ...c, header: 'SUPPORTED' } : c,
-  );
-  const at = out.findIndex((c) => c.key === 'supported_templates');
-  out.splice(
-    at === -1 ? out.length : at + 1,
-    0,
-    { key: SUPPORTED_PCT_KEY, header: 'SUPPORTED %' },
-    { key: NOT_SUPPORTED_KEY, header: 'NOT SUPP.' },
-    { key: NOT_SUPPORTED_PCT_KEY, header: 'NOT SUPP. %' },
-  );
-  return out;
+  return columns.flatMap((c) => {
+    const a = ANSWER_COLUMNS.find(([key]) => key === c.key);
+    return a
+      ? [
+          { ...c, header: a[1] },
+          { key: a[2], header: a[3] },
+        ]
+      : [c];
+  });
 }
 
 /** Given up, never probed, or no domains in the domain-share import (`null` domains is unknown). */
@@ -81,20 +93,19 @@ export function isHiddenByDefault(row: Row): boolean {
 }
 
 export interface DnsProviderList {
-  /** The rows to show, in export order, with the derived column. */
+  /** The rows to show, in export order, with the derived columns. */
   table: Table;
   /** Rows of the stack (or of all) hidden by default. */
   hiddenCount: number;
 }
 
 /**
- * The list rows for `?stack=` and the show-all toggle, with template support out of `templates`
- * templates; unknown columns and keys are kept.
+ * The list rows for `?stack=` and the show-all toggle, with the shares of the template answers;
+ * unknown columns and keys are kept.
  */
 export function dnsProviderList(
   source: Table,
   filters: { stack: string | null; showAll: boolean },
-  templates: number | null = null,
 ): DnsProviderList {
   const inStack = source.rows.filter(
     (r) => filters.stack === null || r.provider_id === filters.stack,
@@ -104,7 +115,7 @@ export function dnsProviderList(
     table: {
       ...source,
       columns: withTemplateSupportColumns(source.columns),
-      rows: shown.map((r) => withTemplateSupport(r, templates)),
+      rows: shown.map(withTemplateSupport),
     },
     hiddenCount: inStack.filter(isHiddenByDefault).length,
   };

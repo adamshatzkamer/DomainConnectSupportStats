@@ -16,7 +16,10 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     );
     const headline = page.getByTestId('headline');
     await expect(headline).toContainText(/3\s*Supported templates\s*of 5 templates \(60.0%\)/);
-    await expect(headline).toContainText(/2\s*Not supported\s*40.0%, not yet determined included/);
+    await expect(headline).toContainText(/1\s*Not supported\s*20.0% of templates/);
+    await expect(headline).toContainText(
+      /1\s*Not yet determined\s*20.0%: never probed, retried or failed/,
+    );
     await expect(headline).not.toContainText('template versions');
     await expect(headline).not.toContainText('4,000');
     await expect(

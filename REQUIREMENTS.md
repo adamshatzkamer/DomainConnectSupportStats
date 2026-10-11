@@ -117,8 +117,9 @@ load: a short error in their place.
 Settings show the URLs, name servers and first-seen time; probe statuses, errors and last-success
 times are not shown.
 
-Headline: supported and not supported templates (F-2.21), domain share, rank. Stack card: median,
-lowest and highest template support across its deployments (F-2.21); deployments table as F-1b.
+Headline: supported, not supported and not yet determined templates (F-2.21), domain share, rank. Stack card: median,
+lowest and highest template support across its deployments (F-2.21); deployments table as F-1b
+(without the stack column).
 DNS provider card supported templates: newest `since` first by default. "Supported since" is when
 a probe first saw support of any version; new versions and gaps don't move it; a footnote says so
 (also on the template card supporters).
@@ -126,7 +127,7 @@ a probe first saw support of any version; new versions and gaps don't move it; a
 ### F-1b DNS providers list
 
 - Columns: name (card link) with its API host below; stack (stack card link); settings and support
-  status badges; supported and not supported templates (F-2.21); domains (F-2.18). Sorted by the
+  status badges; supported, not supported and undetermined templates (F-2.21); domains (F-2.18). Sorted by the
   counts. Phone width: name, supported and domains only. Paginated (F-2.10).
 - Badges: `ok` "OK" green; `http_error`, `error` "HTTP error" and `connection_error` "Connection
   error" orange; `dead` "Given up" and `null` "Not checked yet" grey. The hover text shows the raw
@@ -291,10 +292,11 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
 - F-2.20 Timestamps in tables, cards and records show the date (`DD-MM-YYYY`); the hover text
   shows `DD-MM-YYYY HH:MM UTC`. Sentences (the annotation, F-2.1) keep the full time.
 - F-2.21 A DNS provider's support counts templates, never template versions: supported =
-  `supported_templates` (any version), not supported = every other template (not yet determined
-  included; the export has no per-template split), both also as a share of every template (the
-  templates list's rows, `manifest.files.templates.rows`). A DNS provider never probed (support
-  status `null`) reads "Not probed yet". A stack's support: min, median and max of that share over
+  `supported_templates` (any version), not supported = `unsupported_templates` (every version
+  answered not supported), not yet determined = `undetermined_templates` (never probed, being
+  retried or failed in a version), each also as a share of the three together (every template). A
+  DNS provider never probed (support status `null`) reads "Not probed yet" as supported; its
+  other two are the export's counts (0, every template). A stack's support: min, median and max of that share over
   its deployments with at least one probe answer (`supported_count + unsupported_count` > 0), the
   export's `min_`, `median_` and `max_supported_templates_pct`.
 - F-2.9 Internal ids (`dns_provider_id`, `import_id`, `sweep_id`) are not shown: no columns, titles,

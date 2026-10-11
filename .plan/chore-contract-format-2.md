@@ -19,9 +19,9 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 - [x] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
       `deriveStacks()`, `stacksSupport()`, `withStackSupport()`, `templateShares()`, types, tests,
       e2e route; compare the export's definition with F-2.21 (issue #61 "Do" list)
-- [~] Step 4 (#62): `unsupported_templates`, `undetermined_templates` on DNS provider card, list,
+- [x] Step 4 (#62): `unsupported_templates`, `undetermined_templates` on DNS provider card, list,
       stack deployments; caveats; F-1a, F-1b, F-2.21 (issue #62 "Do" list)
-- [ ] Real-release check, screenshots (desktop + phone) of every affected page, `npm run verify`
+- [~] Real-release check, screenshots (desktop + phone) of every affected page, `npm run verify`
 - [ ] Promote findings, close issues via PR, `git rm -r .plan`
 
 ## Findings
@@ -48,6 +48,11 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 - Footnote below the supported templates / supporters tables: first support of any version; new
   versions and gaps don't move it (maintainer).
 - Version: minor, 0.18.0 (maintainer).
+- Never-probed DNS providers show the export's counts (0 not supported, every template not yet
+  determined); supported keeps "Not probed yet" (maintainer).
+- Shares of the three answers: of their sum per row (maintainer).
+- List and stack deployments: NOT SUPP. and UNDETERMINED, count with share below, wide screens
+  only (maintainer).
 - "First scan" badge (F-2.13) text unchanged: a pre-start `since` still means supported on the
   first scan.
 
@@ -70,6 +75,15 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
   F-2.21 (deployments with a probe answer); real release: export equals the old derivation on 25
   of 25 stacks. No CHANGELOG entry (no visible change). `npx vitest run` 374 passed;
   `npm run test:e2e` 371 passed, 5 skipped; lint, check clean.
+
+- Step 4 done: `templateSupport(row)` / `templateTotal(row)` / `withTemplateSupport(row)` read
+  `supported_templates`, `unsupported_templates`, `undetermined_templates`;
+  `withTemplateSupportColumns()` renames them and adds a share column after each. DNS provider
+  card reads the `support` table (the `provider` table has no counts) and shows a "Not yet
+  determined" stat card. List and stack deployments: `UNSUPPORTED_KEY`, `UNDETERMINED_KEY`
+  columns. REQUIREMENTS.md F-1a, F-1b, F-2.21; CHANGELOG 0.18.0. `npx vitest run` 375 passed;
+  `npm run test:e2e` 371 passed, 5 skipped; lint, check, check:version clean.
+  `dns-provider.spec.ts:219` (no horizontal scroll) failed once, then passed 10 of 10.
 
 ## Corrections
 

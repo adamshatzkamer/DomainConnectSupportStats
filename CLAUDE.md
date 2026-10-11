@@ -197,7 +197,7 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/registry/path.ts`: `registryPath()` (`<a>/<b>` folder), `entryPath()`
 - `src/lib/registry/entry.ts`: `parseEntry()` (registry entry, unknown values as `null`), `parseSource()`, `FEATURES`
 - `src/lib/registry/load.ts`: `RegistryClient` (entry, logo URL, `registry.json` once), `entryFileUrl()`
-- `src/lib/dns-providers.ts`: DNS providers list (stack filter, rows hidden by default, template support out of every template, status badges)
+- `src/lib/dns-providers.ts`: DNS providers list (stack filter, rows hidden by default, shares of the template answers, status badges)
 - `src/lib/templates-list.ts`: templates list (service provider filter, never-probed rows hidden by default, `withSupport()` support columns from `supporting_providers`)
 - `src/lib/domains.ts`: domain figures' hover text (`scanLabel`, `shareScan`, `domainsTitle`, `ofScanned`)
 - `src/lib/supporting.ts`: DNS providers supporting at least one template (overview `ecosystem`), shares of them, `templateCount()`
