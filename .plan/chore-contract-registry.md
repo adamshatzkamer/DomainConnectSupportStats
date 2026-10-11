@@ -6,18 +6,15 @@
 
 ## Tasks
 
-- [~] Step 1: contract and deploy
-  - [ ] `scripts/contract-registry.ts` (`npm run contract:registry -- <checkout>`): copies
-        `README.md` → `REGISTRY_FORMAT.md`, `schema/`, the fixed entry selection → `examples/providers/`
-  - [ ] Run it on upstream `1be4041`; bump `registry/` submodule to it
-  - [ ] `validateRegistry`: new schema; logo rules the site relies on (gzip+base64 decodes,
-        `format` matches the image); no logo files
-  - [ ] `bundleRegistry`: decode embedded logo to `<providerId>.<format>`; download URL logo
-        (async, limits, failure logged); bundled entry's `logo` = published file name or absent
-  - [ ] Dev/preview middleware serves entries through the same transform (no URL download)
-  - [ ] `parseEntry`: logo file name from bundled entry; drop `formUrl`, `partner`
-  - [ ] Tests (contract, unit, component, e2e) against the new fixture; `npm run verify` green
-- [ ] Step 2: cards
+- [x] Step 1: contract and deploy (commits f6beabb..62ffe78)
+  - `scripts/contract-registry.ts` + `vendorRegistry`, `FIXTURE_PROVIDER_IDS` in `scripts/registry.ts`
+  - `validateRegistry` decodes embedded logos (`decodeLogo`, `imageFormat`); `bundleRegistry` is
+    async, returns `{published, warnings}`, `fetchLogo` for URL logos, `bundledEntry` rewrites `logo`
+  - `servedRegistryFile` used by the vite middleware (`/registry/` serves only bundled files and
+    `registry.json`)
+  - `parseEntry` without `formUrl`, `partner`; tests read the golden copy through
+    `servedRegistryFile` (the site's input)
+- [~] Step 2: cards
   - [ ] Labels and descriptions from the vendored schema (build time); features from the schema
   - [ ] Onboarding details (mode other, update schedule, cost details, agreement, partners)
   - [ ] Settings response group (non-standard list, empty = none); contact type `form`
@@ -40,6 +37,11 @@
   (`provider.example`), 14 none; no URL logo; no mode `other`.
 - Example export stacks: `cloudflare.com`, `ionos.com`, `plesk.com`, `quiet-host.example`.
 
+- `npm run bundle:registry` on upstream `1be4041`: 25 entries, 36 files, no warnings.
+- `npm test` 382 passed; `npm run test:e2e` 371 passed, 5 skipped (after step 1).
+- Ajv never checked formats (no ajv-formats); now `validateFormats: false` silences the
+  warnings; patterns do the checking.
+
 ## Decisions
 
 - Fixture: `provider.example`, `cloudflare.com`, `ionos.com`, `plesk.com`, `domainchief`,
@@ -52,5 +54,7 @@
 - `links`, `consent` not shown.
 
 ## Corrections
+
+- The fixture has no HTML in notes any more (real data); the component test uses an inline entry.
 
 ## Open questions
