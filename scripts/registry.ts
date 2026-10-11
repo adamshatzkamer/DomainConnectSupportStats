@@ -89,6 +89,53 @@ export function validateRegistry(dir: string, validate = loadRegistrySchema()): 
   return { entries, errors };
 }
 
+/**
+ * The upstream entries copied into the golden copy: every field and an SVG logo
+ * (`provider.example`), PNG logos with on-request onboarding (`cloudflare.com`, `ionos.com`), a
+ * stack of several deployments (`plesk.com`), automatic onboarding (`domainchief`), a JPG logo
+ * (`vercel.com`), no logo and no onboarding (`aruba.it`). The first three are stacks of the
+ * example export.
+ */
+export const FIXTURE_PROVIDER_IDS = [
+  'provider.example',
+  'cloudflare.com',
+  'ionos.com',
+  'plesk.com',
+  'domainchief',
+  'vercel.com',
+  'aruba.it',
+] as const;
+
+/**
+ * Replace the registry contract in `contractDir` with a registry checkout's `README.md` (as
+ * `REGISTRY_FORMAT.md`), `schema/` and the `FIXTURE_PROVIDER_IDS` entries (into `examples/`),
+ * unchanged. Returns the contract-relative paths written.
+ */
+export function vendorRegistry(checkout: string, contractDir: string): string[] {
+  const files: [string, string][] = [
+    ['README.md', 'REGISTRY_FORMAT.md'],
+    ...readdirSync(join(checkout, 'schema')).map((f): [string, string] => [
+      `schema/${f}`,
+      `schema/${f}`,
+    ]),
+    ...FIXTURE_PROVIDER_IDS.map((id): [string, string] => [
+      entryPath(id),
+      `examples/${entryPath(id)}`,
+    ]),
+  ];
+  const missing = files.filter(([from]) => !existsSync(join(checkout, from)));
+  if (missing.length)
+    throw new Error(`missing in ${checkout}: ${missing.map(([f]) => f).join(', ')}`);
+
+  rmSync(join(contractDir, 'schema'), { recursive: true, force: true });
+  rmSync(join(contractDir, 'examples'), { recursive: true, force: true });
+  for (const [from, to] of files) {
+    mkdirSync(dirname(join(contractDir, to)), { recursive: true });
+    copyFileSync(join(checkout, from), join(contractDir, to));
+  }
+  return files.map(([, to]) => to);
+}
+
 /** Where the registry was checked out from, written to `registry.json` for the site. */
 export interface RegistrySource {
   repository: string;

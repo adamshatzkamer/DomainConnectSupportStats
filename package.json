@@ -45,6 +45,7 @@
     "test:e2e": "playwright test",
     "validate:export": "node scripts/validate-export.ts",
     "validate:registry": "node scripts/validate-registry.ts",
+    "contract:registry": "node scripts/contract-registry.ts",
     "bundle:data": "node scripts/bundle-data.ts",
     "bundle:registry": "node scripts/bundle-registry.ts",
     "derive": "node scripts/derive-data.ts",
