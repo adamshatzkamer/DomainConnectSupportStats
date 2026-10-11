@@ -364,7 +364,7 @@ Page `leaderboards.html` with every board; each says what it ranks, of what, and
 ## 3. Stack
 
 - Svelte 5 + TypeScript, Vite multi-page; Chart.js.
-- Data in a separate data repo; deploy on `repository_dispatch`, daily fallback.
+- Data in a separate data repo; deploy on a `workflow_dispatch` from the data repo, daily fallback.
 - GitHub Pages on github.io; custom domain possible without rebuild (relative base).
 - Export and registry contracts vendored under `contract/`, updated by PR; test registry as git
   submodule `registry/` (dev).

@@ -2,18 +2,17 @@
 # Variables: DATA_REPO (required, "owner/name"), DATA_REF (default main), DATA_PATH (default ".").
 # REGISTRY_REPO (required, "owner/name", public), REGISTRY_REF (default main).
 # Secret DATA_REPO_TOKEN only for a private data repo. Environment `release`: required reviewers.
+# The data repo's notify-site workflow dispatches this workflow after each data push.
 name: Deploy
 
 on:
   # A new package.json version on main: tag, approve, deploy.
   push:
     branches: [main]
-  # The Scanner pushed a new data release.
-  repository_dispatch:
-    types: [export-published]
   # Covers a lost dispatch.
   schedule:
     - cron: '30 7 * * *'
+  # The data repo after each data push, or by hand.
   workflow_dispatch:
 
 permissions:

@@ -122,7 +122,7 @@ e2e: `contract/registry/examples/`).
 footer.
 
 **Deployment.** Merging a new version to `main` tags `v<version>`, waits for approval in
-environment `release`, then deploys. Data releases (`repository_dispatch` `export-published`,
+environment `release`, then deploys. Data releases (`workflow_dispatch` from the data repo's `notify-site`,
 daily, manual) redeploy the latest GitHub Release with the current data and registry.
 `deploy.yml` validates the release against `contract/export/schemas/export/`, bundles it into
 `dist/data/` and derives `dist/data/derived/`, and the registry (`REGISTRY_REPO`, checked out into `registry/`) against
