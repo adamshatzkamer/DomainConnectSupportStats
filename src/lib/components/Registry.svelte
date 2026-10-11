@@ -1,7 +1,7 @@
 <script lang="ts">
   import { formatFlag } from '../format';
   import { links } from '../links';
-  import type { Flag, RegistryEntry } from '../registry/entry';
+  import type { Flag, Mode, RegistryEntry } from '../registry/entry';
   import { enumTexts, FEATURE_GROUPS, label } from '../registry/schema';
   import ContactList from './ContactList.svelte';
   import ExternalLink from './ExternalLink.svelte';
@@ -19,7 +19,13 @@
 
   let { entry, fileUrl, stack, settingsUrl = null }: Props = $props();
   const onboarding = $derived(entry.onboarding);
-  const MODES = enumTexts('onboarding.mode');
+  /** Onboarding modes for the visitor; the schema's text on hover. */
+  const MODES: Record<Mode, string> = {
+    automatic: 'Automatic, no request needed',
+    'on-request': 'On request, through the onboarding contacts',
+    other: 'Other, see the description',
+  };
+  const MODE_DETAILS = enumTexts('onboarding.mode');
 
   /** Requirement flags with a known value. */
   const requirements = $derived(
@@ -97,7 +103,7 @@
       <dl class="record" data-testid="registry-onboarding">
         {#if onboarding.mode}
           <RegistryTerm path="onboarding.mode" />
-          <dd title={onboarding.mode}>{MODES[onboarding.mode] ?? onboarding.mode}</dd>
+          <dd title={MODE_DETAILS[onboarding.mode]}>{MODES[onboarding.mode]}</dd>
         {/if}
         {@render textRow('onboarding.updateSchedule', onboarding.updateSchedule)}
         {@render textRow('onboarding.modeDescription', onboarding.modeDescription)}

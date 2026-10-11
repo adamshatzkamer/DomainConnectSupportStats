@@ -62,12 +62,12 @@
   `image/png` or `image/jpeg` (extension from it).
 - Schema descriptions on hover.
 - `links`, `consent` not shown.
-- Mode shown as its text from the schema description (`enumTexts`), the raw value on hover; feature labels are the schema titles (e.g. "Asynchronous flow").
+- Mode shown as a short text for the visitor (`MODES` in Registry.svelte), the schema's text for the value on hover (`enumTexts`); feature labels are the schema titles (e.g. "Asynchronous flow").
 - Step 3 docs: add `RegistryTerm`, `schema.ts`, `settingsUrl` to CLAUDE.md.
 
 ## Corrections
 
-- Mode shown raw → maintainer: human-friendly text from the schema's mode description.
+- Mode shown raw → maintainer: short human-friendly text per mode, written for the visitor.
 - The fixture has no HTML in notes any more (real data); the component test uses an inline entry.
 
 ## Open questions
