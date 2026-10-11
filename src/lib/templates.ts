@@ -1,4 +1,3 @@
-import type { TemplateSupporters } from './data/derived';
 import type { CellValue, Column, Row, Table } from './data/types';
 
 /**
@@ -77,26 +76,4 @@ export function historyDiffers(history: Row[], supporters: number): boolean {
 export function tableTitle(title: string, serviceProviderId: string, serviceId: string): string {
   const prefix = `${serviceProviderId}/${serviceId} - `;
   return title.startsWith(prefix) ? title.slice(prefix.length) : title;
-}
-
-/**
- * The supporters with `since` (derived from the DNS provider cards) after `versions`; unknown
- * without the derived data or a supporter it lacks.
- */
-export function withSince(source: Table, derived: TemplateSupporters | null): Table {
-  const since = new Map((derived?.supporters ?? []).map((s) => [s.dns_provider_id, s.since]));
-  const at = source.columns.findIndex((c) => c.key === 'versions') + 1 || source.columns.length;
-  return {
-    ...source,
-    columns: [
-      ...source.columns.slice(0, at),
-      { key: 'since', header: 'SUPPORTED SINCE' },
-      ...source.columns.slice(at),
-    ],
-    rows: source.rows.map((row) => ({
-      ...row,
-      since:
-        typeof row.dns_provider_id === 'number' ? (since.get(row.dns_provider_id) ?? null) : null,
-    })),
-  };
 }

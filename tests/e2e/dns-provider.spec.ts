@@ -33,6 +33,7 @@ test.describe('DNS provider card (dns-provider.html)', () => {
       'aria-sort',
       'descending',
     );
+    await expect(templates.getByTestId('since-caveat')).toContainText('any version');
   });
 
   test('links supported templates to their template and service provider cards', async ({

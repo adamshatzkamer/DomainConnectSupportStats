@@ -26,9 +26,7 @@
     RECORD_DETAILS_KEY,
     recordValue,
     tableTitle,
-    withSince,
   } from '../lib/templates';
-  import type { TemplateSupporters } from '../lib/data/derived';
   import { domainsTitle } from '../lib/domains';
   import DomainShare from '../lib/components/DomainShare.svelte';
   import { NO_FACTS, overviewFacts, type OverviewFacts } from '../lib/overview-facts';
@@ -39,11 +37,6 @@
   const client = defaultClient();
   let manifest = $state<Manifest | null>(null);
   let facts = $state<OverviewFacts>(NO_FACTS);
-  /** When each supporter's support began (derived); null when unavailable. */
-  const since: Promise<TemplateSupporters | null> =
-    spid !== null && sid !== null
-      ? client.templateSupporters(spid, sid).catch(() => null)
-      : Promise.resolve(null);
 
   /** The card, or null when a parameter is missing or the template has no card (404). */
   const loading: Promise<ExportFile | null> = client.manifest().then((m) => {
@@ -207,18 +200,22 @@
           title={tableTitle(supporters.title, serviceProviderId, serviceId)}
           context={templateName}
         >
-          {#await since then derived}
-            <DataTable
-              table={withSince(supporters, derived)}
-              keys={['name', 'provider_id', 'versions', 'since', 'reach_pct']}
-              customKeys={['name', 'provider_id', 'reach_pct']}
-              phoneKeys={['name', 'since', 'reach_pct']}
-              searchable
-              pageSize={20}
-              cell={supporterCell}
-              emptyText="No DNS provider supports it in the latest probes"
-            />
-          {/await}
+          <DataTable
+            table={supporters}
+            keys={['name', 'provider_id', 'versions', 'since', 'reach_pct']}
+            customKeys={['name', 'provider_id', 'reach_pct']}
+            phoneKeys={['name', 'since', 'reach_pct']}
+            searchable
+            pageSize={20}
+            cell={supporterCell}
+            emptyText="No DNS provider supports it in the latest probes"
+          />
+          <p class="caveat" data-testid="since-caveat">
+            Supported since: when a probe first saw the DNS provider support any version of the
+            template. New versions and gaps in support don't move it (<a
+              href={links.methodology('52-support-probe')}>methodology 5.2</a
+            >).
+          </p>
         </Panel>
       {/if}
 
@@ -273,12 +270,6 @@
   .host {
     font-size: 0.8rem;
     overflow-wrap: anywhere;
-  }
-
-  .caveat {
-    margin: var(--spacing-sm) 0 0;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
   }
 
   .fields {

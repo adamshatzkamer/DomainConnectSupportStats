@@ -142,6 +142,13 @@ a:hover {
   color: var(--primary-navy);
 }
 
+/* A footnote below a chart or table. */
+.caveat {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 .no-data {
   text-align: center;
   padding: var(--spacing-xl);

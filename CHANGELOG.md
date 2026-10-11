@@ -4,6 +4,15 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.18.0] - 2026-10-11
+
+### Changed
+
+- Reads export `format_version` 2.
+- "Supported since" (DNS provider card, template card) is when a probe first saw support of any
+  version of the template; new versions and gaps don't move it. A footnote says so.
+- Template card: "Supported since" comes from the export.
+
 ## [0.17.0] - 2026-10-09
 
 ### Changed

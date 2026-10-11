@@ -9,11 +9,11 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 
 ## Tasks
 
-- [~] Step 1 (#60): vendor contract, `SUPPORTED_FORMAT_VERSION = 2`, contract/README.md format 2;
+- [x] Step 1 (#60): vendor contract, `SUPPORTED_FORMAT_VERSION = 2`, contract/README.md format 2;
       template card shows the export's supporters `since` (no duplicate column); "Supported since"
       footnote on DNS provider and template cards; REQUIREMENTS.md F-1a, F-1c; version 0.18.0 +
       CHANGELOG
-- [ ] Step 2 (#59): templates list from `service_templates.supporting_providers`; drop
+- [~] Step 2 (#59): templates list from `service_templates.supporting_providers`; drop
       `deriveTemplates()`, `templatesSupport()`, `templateSupporters()`, `withSince()`, types,
       tests; docs (issue #59 "Do" list)
 - [ ] Step 3 (#61): stacks list and stack card from `*_supported_templates_pct`; drop
@@ -50,6 +50,15 @@ One PR, steps with pauses for a context reset (mutex and branch kept).
 - Version: minor, 0.18.0 (maintainer).
 - "First scan" badge (F-2.13) text unchanged: a pre-start `since` still means supported on the
   first scan.
+
+- Step 1 done: `npx vitest run` 388 passed; `npm run test:e2e` 371 passed, 5 skipped; lint, check,
+  check:version clean. `withSince()` and its tests are gone; `Template.svelte` shows the export's
+  supporters table as is. Footnote `data-testid="since-caveat"`, shared `.caveat` class in
+  `styles.css`.
+- Still to remove in step 2: `deriveTemplates()` still writes the per-template files and
+  `templates.json`; `ExportClient.templateSupporters()` is now unused; REQUIREMENTS.md F-4.5 no
+  longer mentions the per-template files. Real release for checks: clone
+  `https://github.com/pawel-kow/DomainConnectSupportStatsData` (release in `statsdata/providers`).
 
 ## Corrections
 

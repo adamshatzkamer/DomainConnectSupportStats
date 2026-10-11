@@ -18,7 +18,7 @@ The only interface to the Scanner: never read, copy or depend on Scanner source 
 | [`export/schemas/`](export/schemas/)                   | `docs/schemas/`                 | JSON Schemas (Draft 2020-12). `schemas/export/` is the export; the report schemas next to it are `$ref`'d by it. |
 | [`export/examples/export/`](export/examples/export/)   | `docs/examples/export/`         | The full export of the Scanner's simulated example database. Used as the dev data set and as test fixtures.      |
 
-Current `format_version`: **1**.
+Current `format_version`: **2**.
 
 The deploy validates every data release against `export/schemas/export/`; a release that fails is
 not published ([DEPLOYMENT.md](../DEPLOYMENT.md)).

@@ -119,7 +119,9 @@ times are not shown.
 
 Headline: supported and not supported templates (F-2.21), domain share, rank. Stack card: median,
 lowest and highest template support across its deployments (F-2.21); deployments table as F-1b.
-DNS provider card supported templates: newest `since` first by default.
+DNS provider card supported templates: newest `since` first by default. "Supported since" is when
+a probe first saw support of any version; new versions and gaps don't move it; a footnote says so
+(also on the template card supporters).
 
 ### F-1b DNS providers list
 
@@ -144,8 +146,8 @@ DNS provider card supported templates: newest `since` first by default.
 4. Supporting DNS providers over time (stepped); a caveat below when the latest point differs from
    the current supporter count.
 5. Supporting DNS providers (current state): name (card link) with its API host below, stack, versions,
-   supported since (derived, F-4.5), reach (F-2.18); `TOTAL` footer. Phone width: name, supported
-   since, reach.
+   supported since (F-1a), reach (F-2.18); `TOTAL` footer. Phone width: name, supported since,
+   reach.
 6. Records: type, host, `groupId`, `ttl`, `essential` (when declared), and every other declared
    field of the record as `key: value` in one cell, verbatim; unknown fields left out. Phone
    width: type, host, and the rest in the one cell.
@@ -337,11 +339,11 @@ Page `leaderboards.html` with every board; each says what it ranks, of what, and
 - F-4.5 Derived data: `scripts/derive.ts` collects F-4.4 from the cards into
   `derived/leaderboards.json` next to the export at deploy, and from the DNS provider cards'
   `supported_templates` each template's supporting DNS providers into `derived/templates.json` and
-  their `since` into `derived/<template card path>`, and from the DNS providers list each stack's
+  and from the DNS providers list each stack's
   template support (F-2.21) into `derived/stacks.json`, and from the DNS provider cards'
   `support_history` and the DNS providers list F-1h into `derived/ecosystem.json`; the site rejects a derived file when its
   `generated_at` differs from the manifest's. Without them, the templates list's supported columns
-  and the supporters' since are `–`. A board whose data fails to load (missing, another release) says "Not available at the moment", without technical details; the rest of the page shows.
+  are `–`. A board whose data fails to load (missing, another release) says "Not available at the moment", without technical details; the rest of the page shows.
 - F-4.6 The overview shows F-4.4 and the most improved top 5 (since the previous sweep) below the chart, side by side on desktop, with a link to the page.
 
 ## 2. Constraints

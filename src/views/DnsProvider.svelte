@@ -268,6 +268,12 @@
             sort={{ key: 'since', direction: -1 }}
             emptyText="No template supported in the latest probes"
           />
+          <p class="caveat" data-testid="since-caveat">
+            Supported since: when a probe first saw the DNS provider support any version of the
+            template. New versions and gaps in support don't move it (<a
+              href={links.methodology('52-support-probe')}>methodology 5.2</a
+            >).
+          </p>
         </Panel>
       {/if}
 

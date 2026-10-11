@@ -49,7 +49,7 @@ describe('ExportClient', () => {
     const manifest = JSON.parse(readFileSync(join(EXAMPLE_DIR, 'manifest.json'), 'utf8'));
     const client = new ExportClient(
       BASE,
-      exampleFetch({ 'manifest.json': { ...manifest, format_version: 2 } }),
+      exampleFetch({ 'manifest.json': { ...manifest, format_version: 1 } }),
     );
     await expect(client.manifest()).rejects.toBeInstanceOf(UnsupportedFormatError);
   });
