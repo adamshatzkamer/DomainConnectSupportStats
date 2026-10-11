@@ -67,7 +67,7 @@
 
 ## Corrections
 
+- Mode shown raw → maintainer: human-friendly text from the schema's mode description.
 - The fixture has no HTML in notes any more (real data); the component test uses an inline entry.
 
 ## Open questions
-- Mode shown raw → maintainer: human-friendly text from the schema's mode description.
