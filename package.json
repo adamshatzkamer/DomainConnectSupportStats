@@ -1,7 +1,7 @@
 {
   "name": "domainconnect-support-stats",
   "private": true,
-  "version": "0.18.0",
+  "version": "0.19.0",
   "type": "module",
   "description": "Static statistics site for Domain Connect support across DNS providers, built from the DomainConnectScanner export",
   "engines": {
@@ -45,6 +45,7 @@
     "test:e2e": "playwright test",
     "validate:export": "node scripts/validate-export.ts",
     "validate:registry": "node scripts/validate-registry.ts",
+    "contract:registry": "node scripts/contract-registry.ts",
     "bundle:data": "node scripts/bundle-data.ts",
     "bundle:registry": "node scripts/bundle-registry.ts",
     "derive": "node scripts/derive-data.ts",

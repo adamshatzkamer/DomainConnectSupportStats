@@ -29,7 +29,7 @@ not published ([DEPLOYMENT.md](../DEPLOYMENT.md)).
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | [`registry/REGISTRY_FORMAT.md`](registry/REGISTRY_FORMAT.md) | `README.md`                                                                                                         | Layout, folder rule, matching, entry format.                   |
 | [`registry/schema/`](registry/schema/)                     | `schema/`                                                                                                           | JSON Schema (Draft 2020-12) of an entry.                       |
-| [`registry/examples/`](registry/examples/)                 | `providers/` (as `examples/providers/`)                                                                             | Golden copy of the test entries and logos. Test fixtures only. |
+| [`registry/examples/`](registry/examples/)                 | `providers/` (as `examples/providers/`)                                                                             | Fixed selection of entries (`FIXTURE_PROVIDER_IDS`). Test fixtures only. |
 
 Validation (CI, deploy) uses `registry/schema/` only, never the schema of a registry checkout. The
 dev registry is the test repository itself, as git submodule `../registry/`.
@@ -38,7 +38,8 @@ dev registry is the test repository itself, as git submodule `../registry/`.
 
 On a `chore/contract-<topic>` branch:
 
-1. Copy the upstream paths over these, unchanged.
+1. Copy the upstream paths over these, unchanged. Registry: `npm run contract:registry --
+   <registryCheckout>`.
 2. Run `npm test` and `npm run test:e2e`.
 3. Export: if `format_version` changed (a breaking change), update `SUPPORTED_FORMAT_VERSION` in
    `src/lib/data/manifest.ts` and fix the pages in the same PR. Additive changes need no code

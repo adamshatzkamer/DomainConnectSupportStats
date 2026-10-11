@@ -36,6 +36,9 @@ export const links = {
   methodology: (section?: string) => page('methodology') + (section ? `#${section}` : ''),
 };
 
+/** Anchor of the onboarding contacts in a card's contact block. */
+export const ONBOARDING_CONTACTS = 'onboarding-contacts';
+
 /** Top navigation: the landing page, the four lists and the leaderboards. */
 export const NAV = [
   { page: 'index', label: 'Overview', href: links.overview() },
@@ -67,4 +70,11 @@ const EMAIL = /^[^@\s<>"?&#/:]+@[^@\s<>"?&#/:]+$/;
 export function safeMailto(value: string | null | undefined): string | null {
   const address = value?.trim();
   return address && EMAIL.test(address) ? `mailto:${address}` : null;
+}
+
+/** The Domain Connect settings response of `domain` at API `apiUrl`, both from the data. */
+export function settingsUrl(apiUrl: string | null, domain: string | null): string | null {
+  const api = safeUrl(apiUrl);
+  if (!api || !domain) return null;
+  return safeUrl(`${api.replace(/\/+$/, '')}/v2/${encodeURIComponent(domain)}/settings`);
 }

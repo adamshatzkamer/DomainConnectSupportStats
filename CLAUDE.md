@@ -61,12 +61,13 @@ src/entries/<page>.ts      mounts the page's view into #app
 src/views/*.svelte         one view per page (Overview, DnsProvider, Placeholder, ...)
 src/lib/components/        shared UI: Layout (header/nav/footer), DataTable, TimeChart, StatCard,
                            NotFound, LoadError, Notes, CardTitle, Panel, ShareMenu,
-                           RegistryContact, Registry, ContactList, ExternalLink, StatusBadge,
+                           RegistryContact, Registry, RegistryTerm, ContactList, ExternalLink, StatusBadge,
                            Board, NewSupporters, Unavailable, DomainShare, Timestamp
 src/lib/data/              the contract in code: types, id encoding, manifest paths, loader
                            (ExportClient), table lookup, data and registry base URL config,
                            derived data types
-src/lib/registry/          the registry in code: entry path, entry parsing, loader (RegistryClient)
+src/lib/registry/          the registry in code: entry path, entry parsing, schema labels, loader
+                           (RegistryClient)
 src/lib/*.ts               pure helpers: format (numbers, dates), cells (column formatting,
                            sort, filter), series (two clocks), links (page URLs), params (query)
 src/lib/styles.css         global styles, brand tokens (from stats.domainconnect.org)
@@ -113,7 +114,7 @@ the deploy runs it after bundling the release. The site rejects a derived file w
 
 **Registry location.** Default `./registry/`. Build time: `VITE_REGISTRY_BASE_URL`. Runtime:
 `window.DC_STATS_CONFIG.registryBaseUrl`. Entry `registry/<a>/<b>/<encoded providerId>.json`,
-logo next to it, `registry.json` `{repository, commit}` (footer, entry link). `vite dev` and
+logo file next to it (decoded or downloaded at bundling), `registry.json` `{repository, commit}` (footer, entry link). `vite dev` and
 `vite preview` serve `/registry/` from `REGISTRY_DIR` (default: the `registry/` submodule;
 e2e: `contract/registry/examples/`).
 
@@ -151,6 +152,7 @@ npm run bundle:data -- <releaseDir> dist # validate + copy a release into dist/d
 npm run derive -- [releaseDir] [outDir]  # derived data (default: DATA_DIR or example → DERIVED_DIR or .derived/)
 npm run validate:registry -- <dir>       # validate a registry (default registry/, the dev registry)
 npm run bundle:registry -- <dir> dist <owner/name> <commit>  # validate + copy into dist/registry/
+npm run contract:registry -- <checkout>  # replace contract/registry/ from a registry checkout
 npm run release:notes -- <version>       # print the CHANGELOG section of a version
 ```
 
@@ -195,7 +197,8 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/data/types.ts`: types of the export (only what the site reads)
 - `src/lib/data/derived.ts`: types of the derived data (`leaderboards.json`, `ecosystem.json`), shared with `scripts/derive.ts`
 - `src/lib/registry/path.ts`: `registryPath()` (`<a>/<b>` folder), `entryPath()`
-- `src/lib/registry/entry.ts`: `parseEntry()` (registry entry, unknown values as `null`), `parseSource()`, `FEATURES`
+- `src/lib/registry/entry.ts`: `parseEntry()` (registry entry, unknown values as `null`), `parseSource()`
+- `src/lib/registry/schema.ts`: `label()` (schema title, description), `enumTexts()`, `FEATURE_GROUPS`/`FEATURES` from the schema
 - `src/lib/registry/load.ts`: `RegistryClient` (entry, logo URL, `registry.json` once), `entryFileUrl()`
 - `src/lib/dns-providers.ts`: DNS providers list (stack filter, rows hidden by default, shares of the template answers, status badges)
 - `src/lib/templates-list.ts`: templates list (service provider filter, never-probed rows hidden by default, `withSupport()` support columns from `supporting_providers`)
@@ -210,7 +213,7 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/share.ts`: shared link, post text, share target URLs, Mastodon instance (validation, `localStorage`), `absoluteOgImage()`
 - `src/lib/share-icons.ts`: share target logos (Simple Icons paths, brand colours)
 - `src/lib/components/Panel.svelte`: chart and table panel (anchor, `#` link, share menu, scroll and highlight); `ShareMenu.svelte`: the share menu
-- `src/lib/format.ts`, `cells.ts`, `series.ts`, `links.ts`, `params.ts`: pure display/series/URL/query helpers (`safeUrl`, `safeMailto` for URLs from the data; `isPublicKey` hides internal ids)
+- `src/lib/format.ts`, `cells.ts`, `series.ts`, `links.ts`, `params.ts`: pure display/series/URL/query helpers (`safeUrl`, `safeMailto` for URLs from the data; `isPublicKey` hides internal ids; `settingsUrl` for a registry example domain)
 - `src/lib/components/`: shared Svelte components
 - `src/lib/styles.css`: global styles, brand tokens
 - `src/views/`: page views; `src/pages/`: HTML entries; `src/entries/`: mount scripts
@@ -220,13 +223,13 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `scripts/export-release.ts`: `validateRelease()` (schemas, one `generated_at`, counts, card presence)
 - `scripts/validate-export.ts`, `scripts/bundle-data.ts`: CLIs over it, used by CI and deploy
 - `scripts/derive.ts`: `deriveLeaderboards()` (first support per DNS provider), `deriveEcosystem()` (templates per scanned domain per full sweep); CLI `derive-data.ts`, used by deploy and e2e
-- `scripts/registry.ts`: `validateRegistry()` (schema, entry path, logo), `bundleRegistry()`; CLIs `validate-registry.ts`, `bundle-registry.ts`
+- `scripts/registry.ts`: `validateRegistry()` (schema, entry path, embedded logo), `bundleRegistry()` (logos decoded or downloaded into files), `servedRegistryFile()` (dev/preview), `vendorRegistry()` (`FIXTURE_PROVIDER_IDS`); CLIs `validate-registry.ts`, `bundle-registry.ts`, `contract-registry.ts`
 - `scripts/changelog.ts`: CHANGELOG parsing; `scripts/check-version.ts`, `scripts/release-notes.ts`: CLIs over it
 - `vite.config.ts`: multi-page inputs, relative base, `__APP_VERSION__`, `/data/` and `/registry/` dev/preview middleware, Vitest config
 - `playwright.config.ts`: e2e against `vite preview`, desktop + mobile
 - `.github/workflows/ci.yml`: PR/push gates, `.plan/` merge gate
 - `.github/workflows/deploy.yml`: tag on merge, approval, Pages deploy
-- `contract/export/`: vendored export contract; `contract/registry/`: vendored registry contract (schema, golden examples for tests)
+- `contract/export/`: vendored export contract; `contract/registry/`: vendored registry contract (schema, fixture entries for tests)
 - `registry/`: git submodule, the test registry repository (dev registry)
 - `CHANGELOG.md`: changes per version
 - `README.md`, `REQUIREMENTS.md`, `DEVELOPING.md`, `TESTING.md`, `DEPLOYMENT.md`

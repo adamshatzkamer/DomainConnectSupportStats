@@ -1,10 +1,11 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, resolve, sep } from 'node:path';
+import type { ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 import { renderMethodology } from './scripts/methodology.ts';
-import { decodeSegment } from './src/lib/data/encode.ts';
+import { servedRegistryFile } from './scripts/registry.ts';
 
 const ROOT = import.meta.dirname;
 const PAGES_DIR = resolve(ROOT, 'src/pages');
@@ -43,15 +44,16 @@ function exportFile(path: string): string {
 }
 
 /**
- * `/registry/<a>/<b>/<encoded name>` → REGISTRY_DIR/providers/<a>/<b>/<name>: the deploy bundles
- * a registry checkout without `providers/` and with encoded file names. `registry.json` (repository
- * and commit, written by the bundle step) is served when REGISTRY_DIR has one.
+ * `/registry/<a>/<b>/<encoded name>`: the entry and embedded logo as the deploy bundles them, made
+ * from REGISTRY_DIR on request (`servedRegistryFile`). `registry.json` (repository and commit,
+ * written by the bundle step) is served when REGISTRY_DIR has one.
  */
-function registryFile(path: string): string {
-  const segments = path.split('/').slice(1);
-  if (segments.length !== 3) return resolve(REGISTRY_DIR, '.' + path);
-  const [a, b, name] = segments as [string, string, string];
-  return resolve(REGISTRY_DIR, 'providers', a, b, decodeSegment(name));
+function serveRegistry(path: string, res: ServerResponse): boolean {
+  const file = servedRegistryFile(REGISTRY_DIR, path.slice(1));
+  if (!file) return false;
+  res.setHeader('Content-Type', CONTENT_TYPES['.' + file.type]!);
+  res.end(file.body);
+  return true;
 }
 
 /**
@@ -67,13 +69,21 @@ function serveInputs(): Plugin {
       file: (p: string) => resolve(DERIVED_DIR, '.' + p),
     },
     { prefix: '/data', dir: DATA_DIR, file: exportFile },
-    { prefix: '/registry', dir: REGISTRY_DIR, file: registryFile },
+    {
+      prefix: '/registry',
+      dir: REGISTRY_DIR,
+      // Nothing else of the checkout is published.
+      file: (p: string) => (p === '/registry.json' ? resolve(REGISTRY_DIR, 'registry.json') : ''),
+      serve: serveRegistry,
+    },
   ];
   const middleware: Connect.NextHandleFunction = (req, res, next) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const mount = mounts.find((m) => url.pathname.startsWith(m.prefix + '/'));
     if (!mount) return next();
-    const file = mount.file(decodeURIComponent(url.pathname.slice(mount.prefix.length)));
+    const path = decodeURIComponent(url.pathname.slice(mount.prefix.length));
+    if (mount.serve?.(path, res)) return;
+    const file = mount.file(path);
     if (!file.startsWith(mount.dir + sep) || !existsSync(file) || !statSync(file).isFile()) {
       res.statusCode = 404;
       res.end('Not found');

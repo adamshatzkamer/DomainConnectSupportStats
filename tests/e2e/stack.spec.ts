@@ -65,10 +65,14 @@ test.describe('Stack card (stack.html)', () => {
   test('shows the registry contact and details of the stack itself', async ({ page }) => {
     await page.goto('stack.html?id=cloudflare.com');
     await expect(
-      page.getByTestId('registry-contact').getByRole('link', { name: 'Community forum' }),
+      page
+        .getByTestId('registry-contact')
+        .getByRole('link', { name: 'domain-connect@cloudflare.com' }),
     ).toBeVisible();
     const registry = page.getByTestId('registry');
     await expect(registry.getByRole('heading', { name: 'Registry', exact: true })).toBeVisible();
+    await expect(registry.getByTestId('registry-example')).toContainText('cloudflare.com');
+    await expect(registry.getByTestId('registry-example').getByRole('link')).toHaveCount(0);
     await expect(
       registry.getByRole('link', { name: 'Entry in the registry repository' }),
     ).toBeVisible();

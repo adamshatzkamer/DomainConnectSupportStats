@@ -1,8 +1,11 @@
 <script lang="ts">
   import { formatFlag } from '../format';
-  import { links } from '../links';
-  import { FEATURES, type Flag, type RegistryEntry } from '../registry/entry';
+  import { links, ONBOARDING_CONTACTS } from '../links';
+  import type { Flag, Mode, RegistryEntry } from '../registry/entry';
+  import { enumTexts, FEATURE_GROUPS, label } from '../registry/schema';
+  import ContactList from './ContactList.svelte';
   import ExternalLink from './ExternalLink.svelte';
+  import RegistryTerm from './RegistryTerm.svelte';
 
   interface Props {
     entry: RegistryEntry;
@@ -10,43 +13,48 @@
     fileUrl: string | null;
     /** Set when the entry belongs to a stack of several deployments. */
     stack: { id: string; name: string } | null;
+    /** The settings response of the example domain, when the card's API is known. */
+    settingsUrl?: string | null;
   }
 
-  let { entry, fileUrl, stack }: Props = $props();
+  let { entry, fileUrl, stack, settingsUrl = null }: Props = $props();
   const onboarding = $derived(entry.onboarding);
+  /** Onboarding modes for the visitor; the schema's text on hover. */
+  const MODES: Record<Mode, string> = {
+    automatic: 'Automatic, no request needed',
+    'on-request': 'On request, through the onboarding contacts',
+    other: 'Other, see the description',
+  };
+  const MODE_DETAILS = enumTexts('onboarding.mode');
 
-  const MODES = {
-    automatic: 'Automatic: templates merged into the Templates repository are deployed',
-    'on-request': 'On request',
-  } as const;
-
-  /** Onboarding flags with a known value. */
-  const flags = $derived(
-    (
-      [
-        ['Through a partner', onboarding.usesPartner],
-        ['Charged', onboarding.cost],
-        ['Signed templates only', onboarding.requirements.signedTemplatesOnly],
-        ['warnPhishing rejected', onboarding.requirements.warnPhishingRejected],
-        ['Signing key published', onboarding.requirements.signingKeyPublished],
-      ] as const
-    ).filter(([, value]) => value !== null),
+  /** Requirement flags with a known value. */
+  const requirements = $derived(
+    (['signedTemplatesOnly', 'warnPhishingRejected', 'signingKeyPublished'] as const).filter(
+      (key) => onboarding.requirements[key] !== null,
+    ),
   );
   const hasOnboarding = $derived(
     onboarding.mode !== null ||
-      onboarding.partner !== null ||
-      flags.length > 0 ||
+      onboarding.updateSchedule !== null ||
+      onboarding.modeDescription !== null ||
+      onboarding.cost !== null ||
+      onboarding.costDetails !== null ||
+      onboarding.agreementRequired !== null ||
+      onboarding.agreementUrl !== null ||
+      onboarding.usesPartner !== null ||
+      onboarding.partners.length > 0 ||
+      requirements.length > 0 ||
       onboarding.notes !== null,
   );
 
   /** Feature groups with their features of known value; groups without any left out. */
   const groups = $derived(
-    [...new Set(FEATURES.map(([, , group]) => group))]
-      .map((group) => ({
-        group,
-        rows: FEATURES.filter(([key, , g]) => g === group && entry.features[key] !== null),
-      }))
-      .filter(({ rows }) => rows.length > 0),
+    FEATURE_GROUPS.map((group) => ({
+      ...group,
+      features: group.features.filter(({ key, list }) =>
+        list ? entry.featureLists[key] != null : entry.features[key] != null,
+      ),
+    })).filter(({ features }) => features.length > 0),
   );
 </script>
 
@@ -54,7 +62,21 @@
   <span class="flag">{formatFlag(value)}</span>
 {/snippet}
 
-{#if hasOnboarding || groups.length || entry.notes}
+{#snippet flagRow(path: string, value: Flag)}
+  {#if value !== null}
+    <RegistryTerm {path} />
+    <dd>{@render flag(value)}</dd>
+  {/if}
+{/snippet}
+
+{#snippet textRow(path: string, value: string | null)}
+  {#if value}
+    <RegistryTerm {path} />
+    <dd class="verbatim">{value}</dd>
+  {/if}
+{/snippet}
+
+{#if hasOnboarding || groups.length || entry.notes || entry.exampleDomain}
   <section class="panel" data-testid="registry">
     <h2>
       {#if stack}
@@ -64,40 +86,108 @@
       {/if}
     </h2>
 
+    {#if entry.exampleDomain}
+      <dl class="record" data-testid="registry-example">
+        <RegistryTerm path="exampleDomain" />
+        <dd>
+          <span class="mono">{entry.exampleDomain}</span>
+          {#if settingsUrl}
+            (<ExternalLink url={settingsUrl} text="settings response" />)
+          {/if}
+        </dd>
+      </dl>
+    {/if}
+
     {#if hasOnboarding}
-      <h3>Onboarding</h3>
+      <h3>{label('onboarding').title}</h3>
       <dl class="record" data-testid="registry-onboarding">
         {#if onboarding.mode}
-          <dt>Mode</dt>
-          <dd>{MODES[onboarding.mode]}</dd>
+          <RegistryTerm path="onboarding.mode" />
+          <dd title={MODE_DETAILS[onboarding.mode]}>
+            {#if onboarding.mode === 'on-request' && onboarding.contacts.length}
+              On request, through the <a href="#{ONBOARDING_CONTACTS}">onboarding contacts</a>
+            {:else}
+              {MODES[onboarding.mode]}
+            {/if}
+          </dd>
         {/if}
-        {#each flags as [label, value] (label)}
-          <dt>{label}</dt>
-          <dd>{@render flag(value)}</dd>
+        {@render textRow('onboarding.updateSchedule', onboarding.updateSchedule)}
+        {@render textRow('onboarding.modeDescription', onboarding.modeDescription)}
+        {@render flagRow('onboarding.cost', onboarding.cost)}
+        {@render textRow('onboarding.costDetails', onboarding.costDetails)}
+        {@render flagRow('onboarding.agreementRequired', onboarding.agreementRequired)}
+        {#if onboarding.agreementUrl}
+          <RegistryTerm path="onboarding.agreementUrl" />
+          <dd><ExternalLink url={onboarding.agreementUrl} /></dd>
+        {/if}
+        {@render flagRow('onboarding.usesPartner', onboarding.usesPartner)}
+        {#if onboarding.partners.length}
+          <RegistryTerm path="onboarding.partners" />
+          <dd>
+            <ul class="plain" data-testid="registry-partners">
+              {#each onboarding.partners as partner, i (i)}
+                <li>
+                  {#if partner.url}
+                    <ExternalLink url={partner.url} text={partner.name} />
+                  {:else}
+                    {partner.name}
+                  {/if}
+                  {#if partner.contacts.length}
+                    <ContactList contacts={partner.contacts} />
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          </dd>
+        {/if}
+        {#each requirements as key (key)}
+          {@render flagRow(`onboarding.requirements.${key}`, onboarding.requirements[key])}
         {/each}
-        {#if onboarding.partner}
-          <dt>Partner</dt>
-          <dd><ExternalLink url={onboarding.partner.url} text={onboarding.partner.name} /></dd>
-        {/if}
-        {#if onboarding.notes}
-          <dt>Notes</dt>
-          <dd class="verbatim">{onboarding.notes}</dd>
-        {/if}
+        {@render textRow('onboarding.notes', onboarding.notes)}
       </dl>
     {/if}
 
     {#if groups.length}
-      <h3>Features</h3>
+      <h3>{label('features').title}</h3>
       <div class="table-wrapper">
         <table data-testid="registry-features">
-          <caption class="visually-hidden">Features</caption>
+          <caption class="visually-hidden">{label('features').title}</caption>
           <tbody>
-            {#each groups as { group, rows } (group)}
-              <tr class="group"><th colspan="2" scope="colgroup">{group}</th></tr>
-              {#each rows as [key, label] (key)}
+            {#each groups as group (group.key)}
+              {#if group.key !== null}
+                <tr class="group">
+                  <th
+                    colspan="2"
+                    scope="colgroup"
+                    class:hint={group.description !== null}
+                    title={group.description}>{group.title}</th
+                  >
+                </tr>
+              {/if}
+              {#each group.features as feature (feature.key)}
+                {@const items = entry.featureLists[feature.key]}
                 <tr>
-                  <th scope="row">{label}</th>
-                  <td>{@render flag(entry.features[key])}</td>
+                  <th
+                    scope="row"
+                    class:hint={feature.description !== null}
+                    title={feature.description}>{feature.title}</th
+                  >
+                  <td>
+                    {#if !feature.list}
+                      {@render flag(entry.features[feature.key] ?? null)}
+                    {:else if items?.length}
+                      <ul class="plain">
+                        {#each items as item, i (i)}
+                          <li>
+                            <span class="mono">{item.key}</span>{#if item.description}:
+                              <span class="verbatim">{item.description}</span>{/if}
+                          </li>
+                        {/each}
+                      </ul>
+                    {:else}
+                      none
+                    {/if}
+                  </td>
                 </tr>
               {/each}
             {/each}
@@ -107,7 +197,7 @@
     {/if}
 
     {#if entry.notes}
-      <h3>Notes</h3>
+      <h3>{label('notes').title}</h3>
       <p class="verbatim" data-testid="registry-notes">{entry.notes}</p>
     {/if}
 
@@ -138,6 +228,10 @@
     text-align: left;
     color: var(--text-secondary);
     padding-top: var(--spacing-sm);
+  }
+
+  .hint {
+    cursor: help;
   }
 
   .source {

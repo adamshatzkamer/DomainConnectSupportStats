@@ -1,17 +1,16 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import CardTitle from '../../src/lib/components/CardTitle.svelte';
 import Registry from '../../src/lib/components/Registry.svelte';
 import RegistryContact from '../../src/lib/components/RegistryContact.svelte';
+import { EXAMPLE_REGISTRY_DIR, servedRegistryFile } from '../../scripts/registry';
 import { parseEntry } from '../../src/lib/registry/entry';
 
-const EXAMPLES = resolve(import.meta.dirname, '../../contract/registry/examples/providers');
+/** A golden-copy entry as the deploy bundles it. */
 const example = (path: string) =>
-  parseEntry(JSON.parse(readFileSync(resolve(EXAMPLES, path), 'utf8')));
+  parseEntry(JSON.parse(servedRegistryFile(EXAMPLE_REGISTRY_DIR, path)!.body.toString()));
 
 function feature(label: string): string | null {
   const row = within(screen.getByTestId('registry-features')).queryByText(label)?.closest('tr');
@@ -57,23 +56,40 @@ describe('CardTitle', () => {
 
 describe('RegistryContact', () => {
   it('shows links and contacts', () => {
-    render(RegistryContact, { entry: example('c/l/cloudflare.com.json'), stack: null });
+    render(RegistryContact, { entry: example('p/r/provider.example.json'), stack: null });
     expect(screen.getByRole('heading', { name: 'Contact' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'https://www.cloudflare.example' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'https://www.provider.example' })).toHaveAttribute(
       'rel',
       'nofollow noopener noreferrer',
     );
-    expect(screen.getByRole('link', { name: 'dc-tech@cloudflare.example' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'DNS engineering' })).toHaveAttribute(
       'href',
-      'mailto:dc-tech@cloudflare.example',
+      'mailto:dns-engineering@provider.example',
     );
-    expect(screen.getByRole('link', { name: 'Community forum' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Domain Connect' })).toHaveAttribute(
       'href',
-      'https://community.cloudflare.example/c/dns',
+      'https://docs.provider.example/domain-connect',
     );
     expect(
-      screen.getByRole('link', { name: 'https://forms.cloudflare.example/domain-connect' }),
+      screen.getByRole('link', { name: 'domainconnect@provider.example' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: 'https://partners.provider.example/domain-connect/request',
+      }),
+    ).toHaveAttribute('href', 'https://partners.provider.example/domain-connect/request');
+    expect(screen.getByText('Existing partners: Partner account manager')).toBeInTheDocument();
+    expect(screen.getByText('Onboarding contacts')).toHaveAttribute('id', 'onboarding-contacts');
+  });
+
+  it('labels fields with the schema titles, descriptions on hover', () => {
+    render(RegistryContact, { entry: example('p/r/provider.example.json'), stack: null });
+    expect(screen.getByText('Technical contacts')).toHaveAttribute('title', 'Technical contact.');
+    expect(screen.getByText('Onboarding process documentation')).toHaveAttribute(
+      'title',
+      'Documentation of the onboarding process.',
+    );
+    expect(screen.getByText('Website')).toHaveAttribute('title', 'Website.');
   });
 
   it('never links a URL or address that is not plain http(s) or e-mail', () => {
@@ -92,10 +108,9 @@ describe('RegistryContact', () => {
 
   it('leaves out unknown rows', () => {
     render(RegistryContact, { entry: example('i/o/ionos.com.json'), stack: null });
-    expect(screen.getByText('Onboarding contact')).toBeInTheDocument();
+    expect(screen.getByText('Onboarding contacts')).toBeInTheDocument();
     expect(screen.queryByText('Documentation')).toBeNull();
-    expect(screen.queryByText('Technical contact')).toBeNull();
-    expect(screen.queryByText('Onboarding request form')).toBeNull();
+    expect(screen.queryByText('Technical contacts')).toBeNull();
     expect(screen.queryByText('–')).toBeNull();
   });
 
@@ -128,9 +143,11 @@ describe('Registry', () => {
       stack: null,
     });
     expect(screen.getByRole('heading', { name: 'Registry' })).toBeInTheDocument();
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('On request');
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'On request, through the onboarding contacts',
+    );
     expect(feature('Synchronous flow')).toBe('yes');
-    expect(feature('Asynchronous flow (OAuth)')).toBe('no');
+    expect(feature('Asynchronous flow')).toBe('no');
     expect(feature('Revert in the asynchronous flow')).toBeNull();
     expect(screen.queryByText('–')).toBeNull();
     expect(screen.getByRole('link', { name: 'Entry in the registry repository' })).toHaveAttribute(
@@ -139,9 +156,137 @@ describe('Registry', () => {
     );
   });
 
+  it('shows every onboarding fact of a full entry, descriptions on hover', () => {
+    render(Registry, { entry: example('p/r/provider.example.json'), fileUrl: null, stack: null });
+    const onboarding = within(screen.getByTestId('registry-onboarding'));
+    const value = (term: string) => onboarding.getByText(term).nextElementSibling?.textContent;
+    expect(onboarding.getByText('Mode')).toHaveAttribute(
+      'title',
+      expect.stringContaining('on-request: service providers request onboarding'),
+    );
+    expect(value('Mode')).toBe('On request, through the onboarding contacts');
+    expect(onboarding.getByText('Mode').nextElementSibling).toHaveAttribute(
+      'title',
+      'Service providers request onboarding through the onboarding contacts',
+    );
+    expect(onboarding.getByRole('link', { name: 'onboarding contacts' })).toHaveAttribute(
+      'href',
+      '#onboarding-contacts',
+    );
+    expect(value('Charged')).toBe('no');
+    expect(value('Contract, agreement or T&C acceptance required')).toBe('yes');
+    expect(onboarding.getByRole('link', { name: /domain-connect\/terms/ })).toHaveAttribute(
+      'href',
+      'https://partners.provider.example/domain-connect/terms',
+    );
+    expect(value('Uses a partner')).toBe('yes');
+    const partners = within(screen.getByTestId('registry-partners'));
+    expect(partners.getByRole('link', { name: 'Example Onboarding Partner' })).toHaveAttribute(
+      'href',
+      'https://www.partner.example/',
+    );
+    expect(partners.getByRole('link', { name: 'onboarding@partner.example' })).toHaveAttribute(
+      'href',
+      'mailto:onboarding@partner.example',
+    );
+    expect(value('Signed templates only')).toBe('yes');
+    expect(value('warnPhishing rejected')).toBe('yes');
+  });
+
+  it('shows mode on-request without a link when there are no onboarding contacts', () => {
+    const entry = example('p/r/provider.example.json');
+    render(Registry, {
+      entry: { ...entry, onboarding: { ...entry.onboarding, contacts: [] } },
+      fileUrl: null,
+      stack: null,
+    });
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'On request, through the onboarding contacts',
+    );
+    expect(screen.queryByRole('link', { name: 'onboarding contacts' })).toBeNull();
+  });
+
+  it('shows the update schedule of mode automatic', () => {
+    render(Registry, { entry: example('d/o/domainchief.json'), fileUrl: null, stack: null });
+    const onboarding = screen.getByTestId('registry-onboarding');
+    expect(onboarding).toHaveTextContent('Automatic, no request needed');
+    expect(onboarding).toHaveTextContent(/Update schedule\s*Compatible templates are imported/);
+  });
+
+  it('shows the description of mode other and the cost details', () => {
+    render(Registry, {
+      entry: parseEntry({
+        providerId: 'x',
+        name: 'X',
+        onboarding: {
+          mode: 'other',
+          modeDescription: 'Ask your account manager.',
+          cost: true,
+          costDetails: 'Per template.',
+        },
+      }),
+      fileUrl: null,
+      stack: null,
+    });
+    const onboarding = screen.getByTestId('registry-onboarding');
+    expect(onboarding).toHaveTextContent(
+      /Mode\s*Other, see the description\s*Description\s*Ask your account manager\./,
+    );
+    expect(onboarding).toHaveTextContent(/Charged\s*yes\s*Details\s*Per template\./);
+  });
+
+  it('groups features by the schema, the group description on hover', () => {
+    render(Registry, { entry: example('p/r/provider.example.json'), fileUrl: null, stack: null });
+    expect(screen.getByText('Settings response')).toHaveAttribute(
+      'title',
+      expect.stringContaining('Optional properties of the settings response.'),
+    );
+    expect(screen.getByText('Control panel URL')).toHaveAttribute(
+      'title',
+      'urlControlPanel is returned.',
+    );
+    expect(feature('Control panel URL')).toBe('yes');
+    expect(feature('Non-standard properties')).toBe(
+      'redirectSupported: Boolean; true when REDIR301/REDIR302 records can be applied for the domain.',
+    );
+    expect(feature('CNAME flattening')).toBe('no');
+  });
+
+  it('shows an empty non-standard settings list as none', () => {
+    render(Registry, { entry: example('a/r/aruba.it.json'), fileUrl: null, stack: null });
+    expect(feature('Non-standard properties')).toBe('none');
+  });
+
+  it('shows the example domain, with the settings response link when given', () => {
+    render(Registry, {
+      entry: example('c/l/cloudflare.com.json'),
+      fileUrl: null,
+      stack: null,
+      settingsUrl: 'https://api.example/v2/cloudflare.com/settings',
+    });
+    const example_ = screen.getByTestId('registry-example');
+    expect(example_).toHaveTextContent('Example domain cloudflare.com (settings response)');
+    expect(within(example_).getByRole('link', { name: 'settings response' })).toHaveAttribute(
+      'href',
+      'https://api.example/v2/cloudflare.com/settings',
+    );
+  });
+
+  it('shows the example domain as text without a settings response link', () => {
+    render(Registry, { entry: example('c/l/cloudflare.com.json'), fileUrl: null, stack: null });
+    const example_ = screen.getByTestId('registry-example');
+    expect(example_).toHaveTextContent('cloudflare.com');
+    expect(within(example_).queryByRole('link')).toBeNull();
+  });
+
   it('shows HTML in notes as text', () => {
     const { container } = render(Registry, {
-      entry: example('c/l/cloudflare.com.json'),
+      entry: parseEntry({
+        providerId: 'x',
+        name: 'X',
+        notes: 'Use <script>alert(1)</script>',
+        onboarding: { notes: 'Templates must <b>not</b> overwrite' },
+      }),
       fileUrl: null,
       stack: null,
     });
@@ -160,17 +305,22 @@ describe('Registry', () => {
       screen.getByRole('heading', { name: 'Registry entry of stack Plesk' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /registry repository/ })).toBeNull();
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(/Automatic/);
+    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent(
+      'On request, through the onboarding contacts',
+    );
     expect(screen.queryByText('Charged')).toBeNull();
-    expect(feature('Asynchronous flow (OAuth)')).toBe('yes');
-    expect(feature('SPFM')).toBeNull();
-    expect(screen.queryByText('Record types')).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Notes' })).toBeNull();
+    expect(feature('Asynchronous flow')).toBe('no');
+    expect(feature('Revert in the asynchronous flow')).toBeNull();
+    expect(screen.queryByText('Template features')).toBeNull();
   });
 
-  it('leaves out the Features heading when no feature is known', () => {
-    render(Registry, { entry: example('i/o/ionos.com.json'), fileUrl: null, stack: null });
-    expect(screen.getByTestId('registry-onboarding')).toHaveTextContent('On request');
+  it('leaves out onboarding and Features when nothing is known', () => {
+    render(Registry, {
+      entry: parseEntry({ providerId: 'x', name: 'X', notes: 'n', features: { syncFlow: null } }),
+      fileUrl: null,
+      stack: null,
+    });
+    expect(screen.queryByTestId('registry-onboarding')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Features' })).toBeNull();
     expect(screen.queryByTestId('registry-features')).toBeNull();
   });
