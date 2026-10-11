@@ -104,9 +104,13 @@ Both cards share one layout, top to bottom:
 1. Title: name and the registry logo; the card's id and stack in a small line.
 2. Headline stat cards.
 3. Contact block from the registry: website, documentation, technical contact, onboarding contact,
-   request form, process documentation.
+   process documentation. Labels are the schema titles, descriptions on hover.
 4. Domain share over time; supported templates over time; supported templates.
-5. Registry details: onboarding facts, features, notes, link to the entry.
+5. Registry details: example domain (DNS provider card without a stack: with a link to its
+   settings response), onboarding facts in schema order, partners, features grouped as in the
+   schema, notes, link to the entry. Labels are the schema titles, descriptions on hover; the
+   onboarding mode is a short text, the schema's text on hover. `links` and `consent` are not
+   shown.
 6. Settings, notes, owned URLs.
 
 A deployment of a multi-deployment stack shows the stack's registry entry (logo, contact block,
@@ -312,9 +316,10 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
 - F-3.3 A new data release is deployed without a code change ([DEPLOYMENT.md](DEPLOYMENT.md)).
 - F-3.4 A release that fails validation against the vendored contract is not published.
 - F-3.5 Only approved, tagged site versions are published.
-- F-3.6 The DNS provider registry (entries and logos, keyed by `provider_id`) is a separate public
-  repository, validated against `contract/registry/schema/` and published with every deploy under
-  `registry/`, with its repository and commit (no repository link and no footer commit when that
+- F-3.6 The DNS provider registry (entries keyed by `provider_id`, logos embedded or as https URL)
+  is a separate public repository, validated against `contract/registry/schema/` and published
+  with every deploy under `registry/`, logos decoded or downloaded into files (https, 10 s,
+  ≤ 1 MB, SVG, PNG or JPEG; an entry whose logo fails is published without it), with its repository and commit (no repository link and no footer commit when that
   is missing). Base URL: build time `VITE_REGISTRY_BASE_URL`,
   runtime `config.js`, default `./registry/`. The footer shows the registry commit.
 

@@ -4,6 +4,22 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.19.0] - 2026-10-11
+
+### Changed
+
+- Reads the current DNS provider registry format: logos embedded or as https URL, published as
+  files at deploy.
+- DNS provider and stack cards: registry fields labelled with the schema titles, descriptions on
+  hover; features grouped as in the schema; onboarding mode as a short text.
+- The request form link is gone (no longer in the registry).
+
+### Added
+
+- DNS provider and stack cards: example domain (with a link to its settings response on a DNS
+  provider without a stack), update schedule, mode description, cost details, agreement,
+  partners, contact forms, non-standard settings.
+
 ## [0.18.0] - 2026-10-11
 
 ### Changed
