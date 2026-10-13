@@ -12,7 +12,7 @@
 - [x] Version (patch), CHANGELOG
 - [~] Test with the maintainer: a page view from Brave (shields on) and one other browser reaches
       the dashboard; compare `domain-connect.goatcounter.com/count` in Brave
-- [ ] Screenshots of the privacy page (desktop, phone), accepted
+- [x] Screenshots of the privacy page (desktop, phone), accepted
 - [ ] `git rm -r .plan` in its own commit
 
 ## Findings
