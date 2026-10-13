@@ -6,8 +6,8 @@
 ## Tasks
 
 - [x] Proxy reachable: `/c` answered by GoatCounter through nginx
-- [~] Endpoint in `public/config.js`, e2e, DEPLOYMENT.md, privacy page, version 0.21.2
-- [ ] Privacy page screenshots accepted; Brave test with the maintainer
+- [x] Endpoint in `public/config.js`, e2e, DEPLOYMENT.md, privacy page, version 0.21.2
+- [~] Privacy page screenshots accepted; Brave test with the maintainer
 - [ ] `git rm -r .plan` in its own commit
 
 ## Findings
