@@ -95,7 +95,13 @@
       (<a href="#6-status-of-dns-providers-and-handling-of-failures">6</a>); the next run that
       covers it updates the card.
     </p>
-    <p>This site sets no cookies and uses no analytics.</p>
+    <p>
+      This site sets no cookies. Page views are counted with
+      <a href="https://www.goatcounter.com/help/privacy" target="_blank" rel="noopener"
+        >GoatCounter</a
+      >, hosted in the EU, without cookies or personal data: per page and card, the referring site,
+      browser, operating system, language, screen width and country. IP addresses are not stored.
+    </p>
   </section>
 
   <article class="panel methodology" use:methodologyDoc></article>

@@ -4,6 +4,13 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.20.0] - 2026-10-13
+
+### Added
+
+- Page views counted with GoatCounter (page and card, referrer; no cookies, no personal data),
+  set in `config.js`. The methodology page says what is collected.
+
 ## [0.19.0] - 2026-10-11
 
 ### Changed

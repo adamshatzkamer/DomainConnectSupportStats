@@ -51,6 +51,7 @@ Details: [DEVELOPING.md](DEVELOPING.md) §1.
   - import series and sweep series run on two clocks (`src/lib/series.ts`);
   - tables keep only the columns that fit at phone width (`phoneKeys`); ask the maintainer which
     when not obvious;
+  - one analytics service (GoatCounter, `analytics.ts`); no other third-party requests;
   - tables that can grow long have a filter and 20-row pages (`searchable`, `pageSize`).
 
 ## Architecture
@@ -211,6 +212,7 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/annotation.ts`: data annotation (sweep a page reflects, import completion time)
 - `src/lib/templates.ts`: template card (records as type, host and details, history caveat, table titles, `withSince()`)
 - `src/lib/share.ts`: shared link, post text, share target URLs, Mastodon instance (validation, `localStorage`), `absoluteOgImage()`
+- `src/lib/analytics.ts`: GoatCounter page views (`goatCounter` in `config.js`, `countedPath()`: page and card id), started by `mount.ts`
 - `src/lib/share-icons.ts`: share target logos (Simple Icons paths, brand colours)
 - `src/lib/components/Panel.svelte`: chart and table panel (anchor, `#` link, share menu, scroll and highlight); `ShareMenu.svelte`: the share menu
 - `src/lib/format.ts`, `cells.ts`, `series.ts`, `links.ts`, `params.ts`: pure display/series/URL/query helpers (`safeUrl`, `safeMailto` for URLs from the data; `isPublicKey` hides internal ids; `settingsUrl` for a registry example domain)

@@ -151,6 +151,11 @@ links): `shareBaseUrl: 'https://stats.example.org/'`, build time `VITE_SHARE_BAS
 name, its query and the panel anchor are kept. Unset or not an absolute http(s) URL: the browser's
 URL.
 
+Page views are counted at the GoatCounter endpoint `goatCounter` (https), which the shipped
+`public/config.js` sets to `https://domain-connect.goatcounter.com/count`. Remove the line to
+turn counting off. `count.js` loads from `gc.zgo.at` and skips localhost. Unset or not https:
+nothing is loaded.
+
 ---
 
 ## 4. Operations
