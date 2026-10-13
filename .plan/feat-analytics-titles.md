@@ -11,8 +11,8 @@
 - [x] e2e: card titles, beacon path and title, script from the site, endpoint blocked
 - [x] Docs: REQUIREMENTS C-7, F-2.22; DEPLOYMENT (update count.js); privacy; TESTING; CLAUDE.md
 - [x] Version 0.21.0, CHANGELOG
-- [~] Real-release check, screenshots (privacy page)
-- [ ] Custom domain endpoint in config.js, DEPLOYMENT, privacy (when live); Brave test with maintainer
+- [x] Real-release check, screenshots (privacy page)
+- [~] Custom domain endpoint in config.js, DEPLOYMENT, privacy (when live); Brave test with maintainer
 - [ ] Promote findings, delete this file
 
 ## Findings
@@ -42,7 +42,7 @@
   documents e2e: only example-value assertions fail. Real cards: title and beacon `t` match
   (GoDaddy DNS provider 15, stack godaddy.com, Google service provider, Domain Verification
   template); unknown DNS provider id counts with "DNS provider - …".
-- Privacy page screenshots (desktop, phone) taken against the real release.
+- Privacy page screenshots (desktop, phone) against the real release: accepted by the maintainer.
 
 ## Corrections
 
