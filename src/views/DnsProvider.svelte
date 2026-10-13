@@ -16,11 +16,13 @@
   import { isBeforeScans, parseNameservers } from '../lib/cells';
   import { scannerStart } from '../lib/data/config';
   import { cardSweep } from '../lib/annotation';
+  import { countView } from '../lib/analytics';
   import { defaultClient, NotFoundError } from '../lib/data/load';
   import { templateSupport, templateTotal } from '../lib/dns-providers';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatAxisPct, formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links, settingsUrl } from '../lib/links';
   import { integerParam } from '../lib/params';
   import { defaultRegistryClient, entryFileUrl } from '../lib/registry/load';
@@ -42,7 +44,7 @@
     return client.file('dns_provider', { dns_provider_id: id }).then(
       (file) => {
         const name = text(oneRecord(findTable(file, 'provider')), 'name');
-        if (name) document.title = `${name} - DNS provider - Domain Connect Support Statistics`;
+        document.title = pageTitle(name ?? 'Unnamed DNS provider', 'DNS provider');
         return file;
       },
       (e: unknown) => {
@@ -51,6 +53,13 @@
       },
     );
   });
+
+  // Counted with the card's title; not found or failed, with the page's own.
+  void loading.then(
+    () => countView(),
+    () => countView(),
+  );
+
   /** The newest sweep the card reflects, for the data annotation. */
   const sweep = loading.then((f) => (f ? cardSweep('dns_provider', f) : null));
 

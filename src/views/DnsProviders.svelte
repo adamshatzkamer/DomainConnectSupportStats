@@ -19,6 +19,7 @@
   } from '../lib/dns-providers';
   import { templateCount } from '../lib/supporting';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links } from '../lib/links';
   import DomainShare from '../lib/components/DomainShare.svelte';
   import type { Scan } from '../lib/domains';
@@ -50,7 +51,7 @@
     return client.file('dns_providers');
   });
 
-  if (stack) document.title = `${stack} - DNS providers - Domain Connect Support Statistics`;
+  if (stack) document.title = pageTitle(stack, 'DNS providers');
 
   const KEYS = [
     'name',

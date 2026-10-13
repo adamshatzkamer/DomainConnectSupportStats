@@ -1,4 +1,4 @@
 import Stack from '../views/Stack.svelte';
 import { mountPage } from '../lib/mount';
 
-mountPage(Stack, {});
+mountPage(Stack, {}, { countsItself: true });

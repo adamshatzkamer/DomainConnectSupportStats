@@ -11,10 +11,12 @@
   import { scannerStart } from '../lib/data/config';
   import TimeChart, { SERIES_COLORS } from '../lib/components/TimeChart.svelte';
   import { cardSweep } from '../lib/annotation';
+  import { countView } from '../lib/analytics';
   import { defaultClient, NotFoundError } from '../lib/data/load';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links } from '../lib/links';
   import { textParam } from '../lib/params';
   import { domainsTitle } from '../lib/domains';
@@ -38,7 +40,7 @@
     return client.file('service_provider', { service_provider_id: id }).then(
       (file) => {
         const name = text(oneRecord(findTable(file, 'service_provider')), 'name');
-        document.title = `${name ?? id} - Service provider - Domain Connect Support Statistics`;
+        document.title = pageTitle(name ?? id, 'Service provider');
         shown = defaultShown(seriesOf(file));
         return file;
       },
@@ -48,6 +50,13 @@
       },
     );
   });
+
+  // Counted with the card's title; not found or failed, with the page's own.
+  void loading.then(
+    () => countView(),
+    () => countView(),
+  );
+
   /** The newest sweep the card reflects, for the data annotation. */
   const sweep = loading.then((f) => (f ? cardSweep('service_provider', f) : null));
 
