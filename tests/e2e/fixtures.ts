@@ -4,7 +4,7 @@ import { test as base, expect, type Page } from '@playwright/test';
 export const REGISTRY_SOURCE = { repository: 'Domain-Connect/DnsProviders', commit: 'abc1234' };
 
 /** The analytics endpoint hosts: never reached from a test; every test answers them with nothing. */
-export const ANALYTICS_HOSTS = /^https:\/\/(dcss\.dc\.paulonet\.eu|[^/]+\.goatcounter\.com)\//;
+export const ANALYTICS_HOSTS = /^https:\/\/(dcssp\.dc\.paulonet\.eu|[^/]+\.goatcounter\.com)\//;
 
 /**
  * Every page test fails on an uncaught page error or a console error. A test that provokes an
