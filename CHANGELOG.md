@@ -4,6 +4,14 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.21.0] - 2026-10-13
+
+### Changed
+
+- Card page titles name the DNS provider, stack, service provider or template, also in the page
+  view counts.
+- The page view counter's script is served by the site; only the page view goes to GoatCounter.
+
 ## [0.20.0] - 2026-10-13
 
 ### Added
