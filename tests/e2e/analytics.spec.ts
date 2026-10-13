@@ -1,7 +1,7 @@
 import { ANALYTICS_HOSTS, expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
 
-const ENDPOINT = 'https://domain-connect.goatcounter.com/count';
+const ENDPOINT = 'https://dcss.dc.paulonet.eu/count';
 const SITE = 'Domain Connect Support Statistics';
 
 /** The page view sent to the endpoint: path and title. count.js skips localhost unless allowed. */

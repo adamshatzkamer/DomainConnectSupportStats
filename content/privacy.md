@@ -13,7 +13,7 @@ IP address, and logs it for security and operation
 
 Page views are counted with [GoatCounter](https://www.goatcounter.com/help/privacy), hosted in the
 EU. Its script comes from this site; only the page view goes to GoatCounter
-(`domain-connect.goatcounter.com`). Per page and card (address and title) it counts the referring site, browser, operating system, language, screen
+(`dcss.dc.paulonet.eu`). Per page and card (address and title) it counts the referring site, browser, operating system, language, screen
 width and country. It sets no cookies and does not store IP addresses; it cannot link the counts to
 a person. The counts are only visible to the operator of this site.
 
