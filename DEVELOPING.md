@@ -358,7 +358,7 @@ gate; both run once the PR is ready for review. Never merge red.
 - `dependencies`: only what ships to the browser (`chart.js`). Everything else is a
   `devDependency`. `package-lock.json` is committed; CI uses `npm ci`.
 - No runtime requests to third-party hosts: libraries bundled, no CDN, fonts or embeds. Exception:
-  one cookieless analytics service (not yet chosen). Footer links are links, not loads.
+  the cookieless analytics endpoint (GoatCounter, F-2.22). Footer links are links, not loads.
 - Updates: one PR, `npm run verify`.
 
 ---

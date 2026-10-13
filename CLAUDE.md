@@ -76,7 +76,7 @@ src/lib/styles.css         global styles, brand tokens (from stats.domainconnect
 content/                   the site's own texts (privacy, imprint), Markdown rendered at build time;
                            `{{ key }}` placeholders filled from `CONTENT_VALUES` (personal data stays
                            out of git)
-public/                    copied as is: brand assets, config.js (runtime config)
+public/                    copied as is: brand assets, config.js (runtime config), GoatCounter count.js
 scripts/                   Node scripts (Node TS type stripping): release and registry
                            validation and bundling, derived data, version/CHANGELOG check,
                            release notes
@@ -218,7 +218,8 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/annotation.ts`: data annotation (sweep a page reflects, import completion time)
 - `src/lib/templates.ts`: template card (records as type, host and details, history caveat, table titles, `withSince()`)
 - `src/lib/share.ts`: shared link, post text, share target URLs, Mastodon instance (validation, `localStorage`), `absoluteOgImage()`
-- `src/lib/analytics.ts`: GoatCounter page views (`goatCounter` in `config.js`, `countedPath()`: page and card id), started by `mount.ts`
+- `src/lib/analytics.ts`: GoatCounter page views (`goatCounter` in `config.js`, bundled `public/goatcounter/count.v5.js`, `countedPath()`: page and card id), started by `mount.ts`; cards `countView()` once titled
+- `src/lib/title.ts`: `pageTitle()` (`<name> - <kind> - Domain Connect Support Statistics`)
 - `src/lib/share-icons.ts`: share target logos (Simple Icons paths, brand colours)
 - `src/lib/components/Panel.svelte`: chart and table panel (anchor, `#` link, share menu, scroll and highlight); `ShareMenu.svelte`: the share menu
 - `src/lib/format.ts`, `cells.ts`, `series.ts`, `links.ts`, `params.ts`: pure display/series/URL/query helpers (`safeUrl`, `safeMailto` for URLs from the data; `isPublicKey` hides internal ids; `settingsUrl` for a registry example domain)
