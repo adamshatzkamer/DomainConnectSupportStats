@@ -8,4 +8,4 @@
 // See DEPLOYMENT.md "Runtime configuration".
 window.DC_STATS_CONFIG = window.DC_STATS_CONFIG || {};
 window.DC_STATS_CONFIG.scannerStartDate = '2026-09-22';
-window.DC_STATS_CONFIG.goatCounter = 'https://dcss.dc.paulonet.eu/count';
+window.DC_STATS_CONFIG.goatCounter = 'https://dcssp.dc.paulonet.eu/c';
