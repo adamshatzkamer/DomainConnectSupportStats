@@ -51,6 +51,7 @@ Details: [DEVELOPING.md](DEVELOPING.md) §1.
   - import series and sweep series run on two clocks (`src/lib/series.ts`);
   - tables keep only the columns that fit at phone width (`phoneKeys`); ask the maintainer which
     when not obvious;
+  - one analytics service (GoatCounter, `analytics.ts`); no other third-party requests;
   - tables that can grow long have a filter and 20-row pages (`searchable`, `pageSize`).
 
 ## Architecture
@@ -58,11 +59,12 @@ Details: [DEVELOPING.md](DEVELOPING.md) §1.
 ```
 src/pages/<page>.html      one HTML entry per page (Vite multi-page build)
 src/entries/<page>.ts      mounts the page's view into #app
-src/views/*.svelte         one view per page (Overview, DnsProvider, Placeholder, ...)
+src/views/*.svelte         one view per page (Overview, DnsProvider, Document, ...)
 src/lib/components/        shared UI: Layout (header/nav/footer), DataTable, TimeChart, StatCard,
                            NotFound, LoadError, Notes, CardTitle, Panel, ShareMenu,
                            RegistryContact, Registry, RegistryTerm, ContactList, ExternalLink, StatusBadge,
-                           Board, NewSupporters, Unavailable, DomainShare, Timestamp
+                           Board, NewSupporters, Unavailable, DomainShare, Timestamp,
+                           MarkdownDoc
 src/lib/data/              the contract in code: types, id encoding, manifest paths, loader
                            (ExportClient), table lookup, data and registry base URL config,
                            derived data types
@@ -71,6 +73,9 @@ src/lib/registry/          the registry in code: entry path, entry parsing, sche
 src/lib/*.ts               pure helpers: format (numbers, dates), cells (column formatting,
                            sort, filter), series (two clocks), links (page URLs), params (query)
 src/lib/styles.css         global styles, brand tokens (from stats.domainconnect.org)
+content/                   the site's own texts (privacy, imprint), Markdown rendered at build time;
+                           `{{ key }}` placeholders filled from `CONTENT_VALUES` (personal data stays
+                           out of git)
 public/                    copied as is: brand assets, config.js (runtime config)
 scripts/                   Node scripts (Node TS type stripping): release and registry
                            validation and bundling, derived data, version/CHANGELOG check,
@@ -96,6 +101,7 @@ every view is a shareable link:
 | `template.html?spid=&sid=`                       | `templates/{service_provider_id}/{service_id}.json` | built |
 | `leaderboards.html` (`?window=`)                 | the four lists, `derived/leaderboards.json`         | built |
 | `methodology.html`                               | `manifest.json`, `contract/export/METHODOLOGY.md`   | built |
+| `privacy.html`, `imprint.html`                   | `content/privacy.md`, `content/imprint.md`          | built |
 
 A card page with a missing parameter or a 404 shows `NotFound` linking to its list; any other load
 failure shows `LoadError`; a section that loads on its own (leaderboard panels) shows `Unavailable` instead. Never a blank page. Card layout: REQUIREMENTS.md F-1a. Leaderboards:
@@ -138,6 +144,7 @@ npm run dev                              # dev server on :5173 with the example 
 DATA_DIR=../data-repo npm run dev        # ... against a real release
 REGISTRY_DIR=../registry npm run dev     # ... against a registry checkout
 npm run build                            # dist/ (site only, no data)
+CONTENT_VALUES='{"EMAIL":"…"}' npm run build  # ... with the content placeholders filled
 npm run preview                          # serve dist/ on :4173 with DATA_DIR under /data/
 
 npm test                                 # Vitest: unit + contract + component
@@ -211,6 +218,7 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/annotation.ts`: data annotation (sweep a page reflects, import completion time)
 - `src/lib/templates.ts`: template card (records as type, host and details, history caveat, table titles, `withSince()`)
 - `src/lib/share.ts`: shared link, post text, share target URLs, Mastodon instance (validation, `localStorage`), `absoluteOgImage()`
+- `src/lib/analytics.ts`: GoatCounter page views (`goatCounter` in `config.js`, `countedPath()`: page and card id), started by `mount.ts`
 - `src/lib/share-icons.ts`: share target logos (Simple Icons paths, brand colours)
 - `src/lib/components/Panel.svelte`: chart and table panel (anchor, `#` link, share menu, scroll and highlight); `ShareMenu.svelte`: the share menu
 - `src/lib/format.ts`, `cells.ts`, `series.ts`, `links.ts`, `params.ts`: pure display/series/URL/query helpers (`safeUrl`, `safeMailto` for URLs from the data; `isPublicKey` hides internal ids; `settingsUrl` for a registry example domain)
@@ -219,11 +227,12 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/views/`: page views; `src/pages/`: HTML entries; `src/entries/`: mount scripts
 - `src/env.d.ts`: build-time constants (`__APP_VERSION__`)
 - `public/config.js`: optional runtime config (`window.DC_STATS_CONFIG`)
-- `scripts/methodology.ts`: METHODOLOGY.md → HTML (GitHub heading ids); `vite.config.ts` bakes it into `methodology.html`
+- `scripts/markdown.ts`: Markdown → HTML (GitHub heading ids, raw HTML escaped); `vite.config.ts` bakes METHODOLOGY.md into `methodology.html` and `content/<name>.md` into pages with `<!-- content:<name> -->`; `MarkdownDoc.svelte` shows it
 - `scripts/export-release.ts`: `validateRelease()` (schemas, one `generated_at`, counts, card presence)
 - `scripts/validate-export.ts`, `scripts/bundle-data.ts`: CLIs over it, used by CI and deploy
 - `scripts/derive.ts`: `deriveLeaderboards()` (first support per DNS provider), `deriveEcosystem()` (templates per scanned domain per full sweep); CLI `derive-data.ts`, used by deploy and e2e
 - `scripts/registry.ts`: `validateRegistry()` (schema, entry path, embedded logo), `bundleRegistry()` (logos decoded or downloaded into files), `servedRegistryFile()` (dev/preview), `vendorRegistry()` (`FIXTURE_PROVIDER_IDS`); CLIs `validate-registry.ts`, `bundle-registry.ts`, `contract-registry.ts`
+- `scripts/content.ts`: `CONTENT_VALUES` (JSON) → `{{ key }}` placeholders of `content/*.md`; with values set, a missing one fails the build
 - `scripts/changelog.ts`: CHANGELOG parsing; `scripts/check-version.ts`, `scripts/release-notes.ts`: CLIs over it
 - `vite.config.ts`: multi-page inputs, relative base, `__APP_VERSION__`, `/data/` and `/registry/` dev/preview middleware, Vitest config
 - `playwright.config.ts`: e2e against `vite preview`, desktop + mobile

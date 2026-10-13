@@ -15,6 +15,7 @@ declare global {
       registryBaseUrl?: string;
       scannerStartDate?: string;
       shareBaseUrl?: string;
+      goatCounter?: string;
     };
   }
 }

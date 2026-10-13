@@ -60,13 +60,14 @@ one at a time (`concurrency: pages`).
 2. **Settings → Environments → New environment `release`** → Required reviewers: the maintainer.
 3. **Settings → Secrets and variables → Actions → Variables:**
 
-   | Variable        | Required | Default | Meaning                                                                    |
-   | --------------- | -------- | ------- | -------------------------------------------------------------------------- |
-   | `DATA_REPO`     | yes      | —       | `owner/name` of the data repo                                              |
-   | `DATA_REF`      | no       | `main`  | Branch or tag of the data repo                                             |
-   | `DATA_PATH`     | no       | `.`     | Directory in the data repo holding `manifest.json` (`statsdata/providers`) |
-   | `REGISTRY_REPO` | yes      | —       | `owner/name` of the DNS provider registry (public)                         |
-   | `REGISTRY_REF`  | no       | `main`  | Branch or tag of the registry                                              |
+   | Variable         | Required | Default | Meaning                                                                                                                                               |
+   | ---------------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `DATA_REPO`      | yes      | —       | `owner/name` of the data repo                                                                                                                         |
+   | `DATA_REF`       | no       | `main`  | Branch or tag of the data repo                                                                                                                        |
+   | `DATA_PATH`      | no       | `.`     | Directory in the data repo holding `manifest.json` (`statsdata/providers`)                                                                            |
+   | `REGISTRY_REPO`  | yes      | —       | `owner/name` of the DNS provider registry (public)                                                                                                    |
+   | `REGISTRY_REF`   | no       | `main`  | Branch or tag of the registry                                                                                                                         |
+   | `CONTENT_VALUES` | yes      | —       | Values of the `{{ key }}` placeholders in `content/*.md` (personal data of the imprint), a JSON object of strings: `{"FULL NAME": "…", "EMAIL": "…"}` |
 
 4. **Secret `DATA_REPO_TOKEN`**, only for a private data repo: fine-grained token, _Contents:
    read_ on the data repo.
@@ -151,6 +152,11 @@ links): `shareBaseUrl: 'https://stats.example.org/'`, build time `VITE_SHARE_BAS
 name, its query and the panel anchor are kept. Unset or not an absolute http(s) URL: the browser's
 URL.
 
+Page views are counted at the GoatCounter endpoint `goatCounter` (https), which the shipped
+`public/config.js` sets to `https://domain-connect.goatcounter.com/count`. Remove the line to
+turn counting off. `count.js` loads from `gc.zgo.at` and skips localhost. Unset or not https:
+nothing is loaded.
+
 ---
 
 ## 4. Operations
@@ -172,6 +178,8 @@ Deploy run (Actions → Deploy → Review deployments).
 | ------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `Require the data repo variable`                 | `DATA_REPO` unset                                                               | Set it (§2.1)                                                                                           |
 | `Require the registry repo variable`             | `REGISTRY_REPO` unset                                                           | Set it (§2.1)                                                                                           |
+| `Require the content values variable`            | `CONTENT_VALUES` unset                                                          | Set it (§2.1)                                                                                           |
+| `Build`: `no value in CONTENT_VALUES for …`      | A placeholder in `content/*.md` has no value                                    | Add the key to `CONTENT_VALUES` (§2.1)                                                                  |
 | `No site release yet`                            | Data deploy before the first approved site release                              | Release a site version (§4.2)                                                                           |
 | `Release notes`                                  | No CHANGELOG section for the version                                            | Add it via PR with a patch bump                                                                         |
 | Data repo checkout                               | Wrong `DATA_REPO`/`DATA_REF`, or private without `DATA_REPO_TOKEN`              | Fix variable/secret                                                                                     |

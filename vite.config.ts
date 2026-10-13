@@ -4,7 +4,8 @@ import { extname, resolve, sep } from 'node:path';
 import type { ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
-import { renderMethodology } from './scripts/methodology.ts';
+import { fillContent, parseContentValues } from './scripts/content.ts';
+import { renderMarkdown } from './scripts/markdown.ts';
 import { servedRegistryFile } from './scripts/registry.ts';
 
 const ROOT = import.meta.dirname;
@@ -100,19 +101,31 @@ function serveInputs(): Plugin {
 }
 
 const METHODOLOGY = resolve(ROOT, 'contract/export/METHODOLOGY.md');
+const CONTENT_DIR = resolve(ROOT, 'content');
 
-/** Replaces `<!-- methodology -->` in a page with the vendored METHODOLOGY.md as static HTML. */
-function methodology(): Plugin {
+/**
+ * Replaces `<!-- methodology -->` in a page with the vendored METHODOLOGY.md and
+ * `<!-- content:<name> -->` with `content/<name>.md`, its `{{ key }}` placeholders filled from
+ * `CONTENT_VALUES` (scripts/content.ts), as static HTML.
+ */
+function markdown(): Plugin {
+  const values = parseContentValues(process.env.CONTENT_VALUES);
   return {
-    name: 'methodology',
+    name: 'markdown',
     transformIndexHtml: {
       order: 'pre',
       handler: (html) =>
-        html.includes('<!-- methodology -->')
-          ? html.replace('<!-- methodology -->', () =>
-              renderMethodology(readFileSync(METHODOLOGY, 'utf8')),
-            )
-          : html,
+        html
+          .replace('<!-- methodology -->', () => renderMarkdown(readFileSync(METHODOLOGY, 'utf8')))
+          .replace(/<!-- content:([a-z-]+) -->/g, (_, name: string) =>
+            renderMarkdown(
+              fillContent(
+                readFileSync(resolve(CONTENT_DIR, `${name}.md`), 'utf8'),
+                values,
+                `content/${name}.md`,
+              ),
+            ),
+          ),
     },
   };
 }
@@ -123,11 +136,7 @@ export default defineConfig({
   // Relative base: the same build works on github.io/<repo>/, a custom domain, or any sub-path.
   base: './',
   define: { __APP_VERSION__: JSON.stringify(version) },
-  plugins: [
-    svelte({ configFile: resolve(ROOT, 'svelte.config.js') }),
-    serveInputs(),
-    methodology(),
-  ],
+  plugins: [svelte({ configFile: resolve(ROOT, 'svelte.config.js') }), serveInputs(), markdown()],
   // All addresses: `localhost` may resolve to `::1` only, which a devcontainer port forward
   // (IPv4) cannot reach.
   server: { host: true },

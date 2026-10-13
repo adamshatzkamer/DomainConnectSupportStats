@@ -3,6 +3,9 @@ import { test as base, expect, type Page } from '@playwright/test';
 /** The deploy writes `registry/registry.json`; the example registry has none, so it is routed. */
 export const REGISTRY_SOURCE = { repository: 'Domain-Connect/DnsProviders', commit: 'abc1234' };
 
+/** The analytics hosts: never reached from a test; every test answers them with nothing. */
+export const ANALYTICS_HOSTS = /^https:\/\/(gc\.zgo\.at|[^/]+\.goatcounter\.com)\//;
+
 /**
  * Every page test fails on an uncaught page error or a console error. A test that provokes an
  * error on purpose sets `expectErrors` to true.
@@ -11,12 +14,22 @@ export const test = base.extend<{
   expectErrors: boolean;
   consoleErrors: string[];
   registrySource: void;
+  analytics: void;
 }>({
   expectErrors: [false, { option: true }],
   registrySource: [
     async ({ page }, use) => {
       await page.route('**/registry/registry.json', (route) =>
         route.fulfill({ json: REGISTRY_SOURCE }),
+      );
+      await use();
+    },
+    { auto: true },
+  ],
+  analytics: [
+    async ({ page }, use) => {
+      await page.route(ANALYTICS_HOSTS, (route) =>
+        route.fulfill({ contentType: 'text/javascript', body: '' }),
       );
       await use();
     },
@@ -49,6 +62,8 @@ export const PAGES = [
   'service-provider',
   'template',
   'leaderboards',
+  'privacy',
+  'imprint',
 ] as const;
 
 /** The page-level error state: plain text, no file URL. */

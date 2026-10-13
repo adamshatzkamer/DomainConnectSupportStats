@@ -4,6 +4,19 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.20.0] - 2026-10-13
+
+### Added
+
+- Page views counted with GoatCounter (page and card, referrer; no cookies, no personal data),
+  set in `config.js`.
+- Privacy and Imprint pages, linked from the footer; their texts in `content/*.md`, personal data
+  from the `CONTENT_VALUES` variable at deploy.
+
+### Changed
+
+- The methodology page no longer holds the privacy note.
+
 ## [0.19.0] - 2026-10-11
 
 ### Changed

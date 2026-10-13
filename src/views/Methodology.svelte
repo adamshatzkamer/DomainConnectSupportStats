@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import Layout from '../lib/components/Layout.svelte';
+  import MarkdownDoc from '../lib/components/MarkdownDoc.svelte';
   import LoadError from '../lib/components/LoadError.svelte';
   import { defaultClient } from '../lib/data/load';
   import type { Manifest } from '../lib/data/types';
@@ -9,22 +9,6 @@
   const client = defaultClient();
   let manifest = $state<Manifest | null>(null);
   const loading = client.manifest().then((m) => (manifest = m));
-
-  /** METHODOLOGY.md, baked into the page at build time as `<template id="methodology">`. */
-  function methodologyDoc(node: HTMLElement) {
-    const template = document.getElementById('methodology');
-    if (template instanceof HTMLTemplateElement) node.append(template.content.cloneNode(true));
-    scrollToHash();
-  }
-
-  /** The browser scrolled before the document was in place: scroll to the linked section. */
-  function scrollToHash() {
-    const id = decodeURIComponent(location.hash.slice(1));
-    if (id) document.getElementById(id)?.scrollIntoView();
-  }
-
-  // The release facts change the height above the document.
-  void loading.catch(() => null).then(() => tick().then(scrollToHash));
 
   function sampling(percent: number | null | undefined): string {
     if (percent === null || percent === undefined) return UNKNOWN;
@@ -83,7 +67,7 @@
       <li>Individual domains: the export holds no per-domain data.</li>
     </ul>
 
-    <h3>Corrections and privacy</h3>
+    <h3>Corrections</h3>
     <p>
       A figure looks wrong?
       <a
@@ -95,66 +79,13 @@
       (<a href="#6-status-of-dns-providers-and-handling-of-failures">6</a>); the next run that
       covers it updates the card.
     </p>
-    <p>This site sets no cookies and uses no analytics.</p>
   </section>
 
-  <article class="panel methodology" use:methodologyDoc></article>
+  <!-- The release facts change the height above the document. -->
+  <MarkdownDoc ready={loading.catch(() => null)} />
 </Layout>
 
 <style>
-  .methodology :global(h2) {
-    font-size: 1.5rem;
-  }
-
-  .methodology :global(h4) {
-    font-size: 1.05rem;
-    color: var(--secondary-navy);
-    margin-top: var(--spacing-md);
-  }
-
-  .methodology :global(h3) {
-    margin-top: var(--spacing-lg);
-  }
-
-  .methodology :global(p),
-  .methodology :global(ul),
-  .methodology :global(ol),
-  .methodology :global(.table-wrapper) {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .methodology :global(ul),
-  .methodology :global(ol) {
-    padding-left: var(--spacing-lg);
-  }
-
-  .methodology :global(pre) {
-    overflow-x: auto;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    background-color: var(--bg-light-gray);
-    border-radius: var(--radius-sm);
-  }
-
-  .methodology :global(code) {
-    font-family: var(--font-mono);
-    font-size: 0.875em;
-  }
-
-  .methodology :global(td) {
-    vertical-align: top;
-  }
-
-  .methodology :global(td:first-child) {
-    font-weight: var(--font-weight-semibold);
-    white-space: nowrap;
-  }
-
-  /* Anchored headings clear the top of the window. */
-  .methodology :global([id]) {
-    scroll-margin-top: var(--spacing-md);
-  }
-
   ul {
     padding-left: var(--spacing-lg);
     margin-bottom: var(--spacing-md);

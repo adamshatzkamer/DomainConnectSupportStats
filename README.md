@@ -21,6 +21,7 @@ statistics dashboard at [stats.domainconnect.org](https://stats.domainconnect.or
 | DNS providers, Stacks, Service providers, Templates | Full lists with sort, filter and search _(in progress)_                                                         |
 | Stack, Service provider, Template cards             | One entity's support, domain share, history and cross-links _(in progress)_                                     |
 | Methodology (`methodology.html`)                    | How the figures come about, this release's zones and sampling, limits                                           |
+| Privacy (`privacy.html`), Imprint (`imprint.html`)  | What is collected about visitors; publisher. Text in `content/*.md`                                             |
 
 Every view is a shareable link; query parameters carry only ids and filters.
 

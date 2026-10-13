@@ -95,6 +95,11 @@ jobs:
         run: |
           echo "::error::Repository variable REGISTRY_REPO (owner/name of the DNS provider registry) is not set. See DEPLOYMENT.md."
           exit 1
+      - name: Require the content values variable
+        if: vars.CONTENT_VALUES == ''
+        run: |
+          echo "::error::Repository variable CONTENT_VALUES (JSON values of the content/*.md placeholders) is not set. See DEPLOYMENT.md."
+          exit 1
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.tag }}
@@ -123,6 +128,8 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+        env:
+          CONTENT_VALUES: ${{ vars.CONTENT_VALUES }}
       - name: Validate and bundle the release
         run: npm run bundle:data -- "export-data/${{ vars.DATA_PATH || '.' }}" dist
       - name: Derive data from the release
