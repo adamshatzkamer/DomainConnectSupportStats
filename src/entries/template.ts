@@ -1,4 +1,4 @@
 import Template from '../views/Template.svelte';
 import { mountPage } from '../lib/mount';
 
-mountPage(Template, {});
+mountPage(Template, {}, { countsItself: true });

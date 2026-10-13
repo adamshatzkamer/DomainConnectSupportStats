@@ -311,10 +311,16 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
   "sweep" in headings, labels or tooltips. Public ids (`provider_id`,
   `service_provider_id`, `service_id`) are shown. Export `notes` stay verbatim.
 - F-2.22 Page views are counted with GoatCounter when `config.js` sets `goatCounter` (the
-  endpoint; the shipped one does): `count.js` from `gc.zgo.at`, path = page file name plus the card
-  id (`id`; template card `spid`, `sid`), without the site base path, list filters or anchors;
+  endpoint; the shipped one does): `count.js` bundled with the site (a pinned version), only the
+  page view goes to the endpoint. Path = page file name plus the card id (`id`; template card
+  `spid`, `sid`), without the site base path, list filters or anchors; title = the page title
+  (F-2.23), a card counted once it has loaded, not found or failing with the page's own title;
   referrer as GoatCounter takes it. No events, no tracking pixel. Counts are private. Localhost
   sends nothing; a blocked or failing service leaves the page unchanged.
+- F-2.23 Card page titles: `<name> - <kind> - Domain Connect Support Statistics`. Without a name:
+  stack and service provider their id, DNS provider "Unnamed DNS provider", template "Unnamed
+  template". Not found or failing: the page's own title, `<kind> - Domain Connect Support
+Statistics`.
 
 ### F-3 Data and deployment
 
@@ -359,20 +365,20 @@ Page `leaderboards.html` with every board; each says what it ranks, of what, and
 
 ## 2. Constraints
 
-| Id   | Constraint                                                                                                                                                                               |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C-1  | Static and stateless: no backend, no write path, no state between pages beyond the URL; only exception: the Mastodon instance in `localStorage` (F-2.15)                                 |
-| C-2  | One HTML file per page (multi-page build)                                                                                                                                                |
-| C-3  | Built only from `contract/` (export, registry), never from Scanner source                                                                                                                |
-| C-4  | Unknown files, tables, columns and keys ignored; tables found by id                                                                                                                      |
-| C-5  | `null` is unknown: `–`, a gap, sorted last, never 0                                                                                                                                      |
-| C-6  | Third-party text escaped; data URLs pass `safeUrl` (e-mail addresses `safeMailto`) and open with `rel="nofollow noopener noreferrer"`                                                    |
-| C-7  | No runtime requests to third-party hosts (bundled libraries, no CDN or fonts), except the analytics service (GoatCounter, its script from its CDN) and template logos (without referrer) |
-| C-8  | Look and feel of stats.domainconnect.org; navigation and URLs compatible with a merge                                                                                                    |
-| C-9  | Works at phone width without horizontal page scroll                                                                                                                                      |
-| C-10 | Only `format_version` `SUPPORTED_FORMAT_VERSION` is rendered; others fail loudly                                                                                                         |
-| C-11 | WCAG 2.2 AA: contrast, keyboard use, screen-reader-usable tables; charts without data tables                                                                                             |
-| C-12 | User-facing texts translatable (not scattered through logic); English only                                                                                                               |
+| Id   | Constraint                                                                                                                                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C-1  | Static and stateless: no backend, no write path, no state between pages beyond the URL; only exception: the Mastodon instance in `localStorage` (F-2.15)                             |
+| C-2  | One HTML file per page (multi-page build)                                                                                                                                            |
+| C-3  | Built only from `contract/` (export, registry), never from Scanner source                                                                                                            |
+| C-4  | Unknown files, tables, columns and keys ignored; tables found by id                                                                                                                  |
+| C-5  | `null` is unknown: `–`, a gap, sorted last, never 0                                                                                                                                  |
+| C-6  | Third-party text escaped; data URLs pass `safeUrl` (e-mail addresses `safeMailto`) and open with `rel="nofollow noopener noreferrer"`                                                |
+| C-7  | No runtime requests to third-party hosts (bundled libraries, no CDN or fonts), except the analytics endpoint (GoatCounter; its script bundled) and template logos (without referrer) |
+| C-8  | Look and feel of stats.domainconnect.org; navigation and URLs compatible with a merge                                                                                                |
+| C-9  | Works at phone width without horizontal page scroll                                                                                                                                  |
+| C-10 | Only `format_version` `SUPPORTED_FORMAT_VERSION` is rendered; others fail loudly                                                                                                     |
+| C-11 | WCAG 2.2 AA: contrast, keyboard use, screen-reader-usable tables; charts without data tables                                                                                         |
+| C-12 | User-facing texts translatable (not scattered through logic); English only                                                                                                           |
 
 ## 3. Stack
 

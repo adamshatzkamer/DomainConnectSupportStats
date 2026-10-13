@@ -1,4 +1,4 @@
 import ServiceProvider from '../views/ServiceProvider.svelte';
 import { mountPage } from '../lib/mount';
 
-mountPage(ServiceProvider, {});
+mountPage(ServiceProvider, {}, { countsItself: true });

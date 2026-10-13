@@ -154,8 +154,12 @@ URL.
 
 Page views are counted at the GoatCounter endpoint `goatCounter` (https), which the shipped
 `public/config.js` sets to `https://domain-connect.goatcounter.com/count`. Remove the line to
-turn counting off. `count.js` loads from `gc.zgo.at` and skips localhost. Unset or not https:
-nothing is loaded.
+turn counting off. `count.js` is bundled: `public/goatcounter/count.v5.js`, a copy of GoatCounter's
+versioned script; it skips localhost. Unset or not https: nothing is loaded.
+
+Updating `count.js`: download the newest versioned script (`https://gc.zgo.at/count.vN.js`) into
+`public/goatcounter/`, remove the old one, set `GOATCOUNTER_SCRIPT` in `src/lib/analytics.ts`,
+run `npm run verify` (patch version).
 
 ---
 

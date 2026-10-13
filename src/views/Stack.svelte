@@ -11,10 +11,12 @@
   import StatCard from '../lib/components/StatCard.svelte';
   import StatusBadge from '../lib/components/StatusBadge.svelte';
   import TimeChart from '../lib/components/TimeChart.svelte';
+  import { countView } from '../lib/analytics';
   import { defaultClient, NotFoundError } from '../lib/data/load';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatAxisPct, formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links } from '../lib/links';
   import { textParam } from '../lib/params';
   import { defaultRegistryClient, entryFileUrl } from '../lib/registry/load';
@@ -49,7 +51,7 @@
     return client.file('stack', { provider_id: id }).then(
       (file) => {
         const name = text(oneRecord(findTable(file, 'stack')), 'name');
-        document.title = `${name ?? id} - Stack - Domain Connect Support Statistics`;
+        document.title = pageTitle(name ?? id, 'Stack');
         return file;
       },
       (e: unknown) => {
@@ -58,6 +60,12 @@
       },
     );
   });
+
+  // Counted with the card's title; not found or failed, with the page's own.
+  void loading.then(
+    () => countView(),
+    () => countView(),
+  );
 
   /** The overview's `adoption` rows: each import's date and sampling. */
   function adoptionFor(): Promise<Row[]> {

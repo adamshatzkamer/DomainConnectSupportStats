@@ -11,6 +11,7 @@ export default ts.config(
       'coverage/',
       'contract/',
       'registry/',
+      'public/goatcounter/',
       'playwright-report/',
       'test-results/',
     ],

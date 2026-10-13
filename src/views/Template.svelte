@@ -11,10 +11,12 @@
   import { scannerStart } from '../lib/data/config';
   import TimeChart from '../lib/components/TimeChart.svelte';
   import { cardSweep } from '../lib/annotation';
+  import { countView } from '../lib/analytics';
   import { defaultClient, NotFoundError } from '../lib/data/load';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links, safeUrl } from '../lib/links';
   import { textParam } from '../lib/params';
   import { sweepSeries } from '../lib/series';
@@ -46,7 +48,7 @@
     return client.file('template', { service_provider_id: spid, service_id: sid }).then(
       (file) => {
         const name = text(oneRecord(findTable(file, 'metadata')), 'name');
-        if (name) document.title = `${name} - Template - Domain Connect Support Statistics`;
+        document.title = pageTitle(name ?? 'Unnamed template', 'Template');
         return file;
       },
       (e: unknown) => {
@@ -55,6 +57,13 @@
       },
     );
   });
+
+  // Counted with the card's title; not found or failed, with the page's own.
+  void loading.then(
+    () => countView(),
+    () => countView(),
+  );
+
   /** The newest sweep the card reflects, for the data annotation. */
   const sweep = loading.then((f) => (f ? cardSweep('template', f) : null));
 

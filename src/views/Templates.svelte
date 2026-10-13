@@ -8,6 +8,7 @@
   import { findTable } from '../lib/data/tables';
   import type { Column, Manifest, Row } from '../lib/data/types';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
+  import { pageTitle } from '../lib/title';
   import { links } from '../lib/links';
   import { withHash } from '../lib/share';
   import { flagParam, textParam } from '../lib/params';
@@ -41,7 +42,7 @@
     return { file, total: facts.supportingDnsProviders };
   });
 
-  if (spid) document.title = `${spid} - Templates - Domain Connect Support Statistics`;
+  if (spid) document.title = pageTitle(spid, 'Templates');
 
   const KEYS = [
     'provider_name',
