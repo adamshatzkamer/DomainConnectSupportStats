@@ -38,6 +38,12 @@
 - sendBeacon to the endpoint is visible to Playwright (`waitForRequest`); `allow_local` lets
   count.js send from localhost in e2e.
 
+- Real release `generated_at` 2026-10-13T05:00:03Z: 5936 files valid; analytics, navigation,
+  documents e2e: only example-value assertions fail. Real cards: title and beacon `t` match
+  (GoDaddy DNS provider 15, stack godaddy.com, Google service provider, Domain Verification
+  template); unknown DNS provider id counts with "DNS provider - …".
+- Privacy page screenshots (desktop, phone) taken against the real release.
+
 ## Corrections
 
 - e2e expected `/template.html` for a template card missing `sid`; `countedPath` keeps `spid`.
