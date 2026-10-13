@@ -6,12 +6,12 @@
 ## Tasks
 
 - [x] Investigate titles, analytics, count.js
-- [~] Unit tests first: `countView()`, bundled script, `cardTitle()`
-- [ ] Implement analytics (no_onload, count once with path and title), title helper, views
-- [ ] e2e: card titles, beacon path and title, script from the site, endpoint blocked
-- [ ] Docs: REQUIREMENTS C-7, F-2.22; DEPLOYMENT (update count.js); privacy; TESTING; CLAUDE.md
-- [ ] Version 0.21.0, CHANGELOG
-- [ ] Real-release check, screenshots (privacy page)
+- [x] Unit tests first: `countView()`, bundled script, `pageTitle()`
+- [x] Implement analytics (no_onload, count once with path and title), title helper, views
+- [x] e2e: card titles, beacon path and title, script from the site, endpoint blocked
+- [x] Docs: REQUIREMENTS C-7, F-2.22; DEPLOYMENT (update count.js); privacy; TESTING; CLAUDE.md
+- [x] Version 0.21.0, CHANGELOG
+- [~] Real-release check, screenshots (privacy page)
 - [ ] Custom domain endpoint in config.js, DEPLOYMENT, privacy (when live); Brave test with maintainer
 - [ ] Promote findings, delete this file
 
@@ -33,7 +33,14 @@
 - Not found, missing parameter, load error: counted with the page's static title.
 - Endpoint stays `domain-connect.goatcounter.com` until the custom domain is live.
 
+- `npm run verify` green: 414 e2e passed (one trace-file EACCES, rerun green), analytics spec
+  3x repeated green.
+- sendBeacon to the endpoint is visible to Playwright (`waitForRequest`); `allow_local` lets
+  count.js send from localhost in e2e.
+
 ## Corrections
+
+- e2e expected `/template.html` for a template card missing `sid`; `countedPath` keeps `spid`.
 
 ## Open questions
 
