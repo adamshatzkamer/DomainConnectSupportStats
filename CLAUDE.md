@@ -73,7 +73,9 @@ src/lib/registry/          the registry in code: entry path, entry parsing, sche
 src/lib/*.ts               pure helpers: format (numbers, dates), cells (column formatting,
                            sort, filter), series (two clocks), links (page URLs), params (query)
 src/lib/styles.css         global styles, brand tokens (from stats.domainconnect.org)
-content/                   the site's own texts (privacy, imprint), Markdown rendered at build time
+content/                   the site's own texts (privacy, imprint), Markdown rendered at build time;
+                           `{{ key }}` placeholders filled from `CONTENT_VALUES` (personal data stays
+                           out of git)
 public/                    copied as is: brand assets, config.js (runtime config)
 scripts/                   Node scripts (Node TS type stripping): release and registry
                            validation and bundling, derived data, version/CHANGELOG check,
@@ -142,6 +144,7 @@ npm run dev                              # dev server on :5173 with the example 
 DATA_DIR=../data-repo npm run dev        # ... against a real release
 REGISTRY_DIR=../registry npm run dev     # ... against a registry checkout
 npm run build                            # dist/ (site only, no data)
+CONTENT_VALUES='{"EMAIL":"…"}' npm run build  # ... with the content placeholders filled
 npm run preview                          # serve dist/ on :4173 with DATA_DIR under /data/
 
 npm test                                 # Vitest: unit + contract + component
@@ -229,6 +232,7 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `scripts/validate-export.ts`, `scripts/bundle-data.ts`: CLIs over it, used by CI and deploy
 - `scripts/derive.ts`: `deriveLeaderboards()` (first support per DNS provider), `deriveEcosystem()` (templates per scanned domain per full sweep); CLI `derive-data.ts`, used by deploy and e2e
 - `scripts/registry.ts`: `validateRegistry()` (schema, entry path, embedded logo), `bundleRegistry()` (logos decoded or downloaded into files), `servedRegistryFile()` (dev/preview), `vendorRegistry()` (`FIXTURE_PROVIDER_IDS`); CLIs `validate-registry.ts`, `bundle-registry.ts`, `contract-registry.ts`
+- `scripts/content.ts`: `CONTENT_VALUES` (JSON) → `{{ key }}` placeholders of `content/*.md`; with values set, a missing one fails the build
 - `scripts/changelog.ts`: CHANGELOG parsing; `scripts/check-version.ts`, `scripts/release-notes.ts`: CLIs over it
 - `vite.config.ts`: multi-page inputs, relative base, `__APP_VERSION__`, `/data/` and `/registry/` dev/preview middleware, Vitest config
 - `playwright.config.ts`: e2e against `vite preview`, desktop + mobile

@@ -10,7 +10,8 @@ fixes, styling and dependencies.
 
 - Page views counted with GoatCounter (page and card, referrer; no cookies, no personal data),
   set in `config.js`.
-- Privacy and Imprint pages, linked from the footer; their texts in `content/*.md`.
+- Privacy and Imprint pages, linked from the footer; their texts in `content/*.md`, personal data
+  from the `CONTENT_VALUES` variable at deploy.
 
 ### Changed
 

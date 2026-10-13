@@ -11,7 +11,8 @@
       footer links; methodology privacy note removed; docs, e2e
 - [x] 0.20.0, CHANGELOG
 - [~] verify, screenshots (methodology, privacy, imprint, footer), PR
-- [ ] Maintainer fills the imprint placeholders `[...]` before merge
+- [x] Imprint personal data from `CONTENT_VALUES` (GitHub variable, JSON) into `{{ key }}` placeholders at build; deploy requires it
+- [ ] Maintainer sets `CONTENT_VALUES` (`FULL NAME`, `EMAIL`)
 
 ## Decisions (maintainer)
 

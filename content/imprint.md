@@ -1,20 +1,16 @@
 # Imprint
 
-Information according to [LEGAL REFERENCE, e.g. § 5 DDG]:
+Information according to § 5 German DDG:
 
-[FULL NAME]\
-[STREET AND NUMBER]\
-[POSTCODE AND CITY]\
-[COUNTRY]
+{{ FULL NAME }}
 
 ## Contact
 
-Email: [EMAIL]\
-Phone: [PHONE]
+Email: {{ EMAIL }}
 
 ## Responsible for the content
 
-[FULL NAME], address as above.
+{{ FULL NAME }}
 
 ## Data
 

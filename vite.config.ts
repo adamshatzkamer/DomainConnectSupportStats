@@ -4,6 +4,7 @@ import { extname, resolve, sep } from 'node:path';
 import type { ServerResponse } from 'node:http';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { fillContent, parseContentValues } from './scripts/content.ts';
 import { renderMarkdown } from './scripts/markdown.ts';
 import { servedRegistryFile } from './scripts/registry.ts';
 
@@ -104,9 +105,11 @@ const CONTENT_DIR = resolve(ROOT, 'content');
 
 /**
  * Replaces `<!-- methodology -->` in a page with the vendored METHODOLOGY.md and
- * `<!-- content:<name> -->` with `content/<name>.md`, as static HTML.
+ * `<!-- content:<name> -->` with `content/<name>.md`, its `{{ key }}` placeholders filled from
+ * `CONTENT_VALUES` (scripts/content.ts), as static HTML.
  */
 function markdown(): Plugin {
+  const values = parseContentValues(process.env.CONTENT_VALUES);
   return {
     name: 'markdown',
     transformIndexHtml: {
@@ -115,7 +118,13 @@ function markdown(): Plugin {
         html
           .replace('<!-- methodology -->', () => renderMarkdown(readFileSync(METHODOLOGY, 'utf8')))
           .replace(/<!-- content:([a-z-]+) -->/g, (_, name: string) =>
-            renderMarkdown(readFileSync(resolve(CONTENT_DIR, `${name}.md`), 'utf8')),
+            renderMarkdown(
+              fillContent(
+                readFileSync(resolve(CONTENT_DIR, `${name}.md`), 'utf8'),
+                values,
+                `content/${name}.md`,
+              ),
+            ),
           ),
     },
   };
