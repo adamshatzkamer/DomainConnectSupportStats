@@ -1,7 +1,7 @@
 {
   "name": "domainconnect-support-stats",
   "private": true,
-  "version": "0.21.1",
+  "version": "0.21.2",
   "type": "module",
   "description": "Static statistics site for Domain Connect support across DNS providers, built from the DomainConnectScanner export",
   "engines": {
