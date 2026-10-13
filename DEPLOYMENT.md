@@ -153,8 +153,9 @@ name, its query and the panel anchor are kept. Unset or not an absolute http(s) 
 URL.
 
 Page views are counted at the GoatCounter endpoint `goatCounter` (https), which the shipped
-`public/config.js` sets to `https://domain-connect.goatcounter.com/count`. Remove the line to
-turn counting off. `count.js` is bundled: `public/goatcounter/count.v5.js`, a copy of GoatCounter's
+`public/config.js` sets to `https://dcss.dc.paulonet.eu/count`: the custom domain (GoatCounter
+settings) of the GoatCounter site `domain-connect.goatcounter.com`.
+Remove the line to turn counting off. `count.js` is bundled: `public/goatcounter/count.v5.js`, a copy of GoatCounter's
 versioned script; it skips localhost. Unset or not https: nothing is loaded.
 
 Updating `count.js`: download the newest versioned script (`https://gc.zgo.at/count.vN.js`) into
