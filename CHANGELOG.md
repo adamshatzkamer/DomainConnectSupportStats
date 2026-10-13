@@ -9,7 +9,12 @@ fixes, styling and dependencies.
 ### Added
 
 - Page views counted with GoatCounter (page and card, referrer; no cookies, no personal data),
-  set in `config.js`. The methodology page says what is collected.
+  set in `config.js`.
+- Privacy and Imprint pages, linked from the footer; their texts in `content/*.md`.
+
+### Changed
+
+- The methodology page no longer holds the privacy note.
 
 ## [0.19.0] - 2026-10-11
 

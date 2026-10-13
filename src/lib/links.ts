@@ -34,6 +34,8 @@ export const links = {
     page('template', { spid: serviceProviderId, sid: serviceId }),
   /** A section of the methodology by its heading anchor (GitHub style, `8-limitations`). */
   methodology: (section?: string) => page('methodology') + (section ? `#${section}` : ''),
+  privacy: () => page('privacy'),
+  imprint: () => page('imprint'),
 };
 
 /** Anchor of the onboarding contacts in a card's contact block. */

@@ -114,6 +114,10 @@
     <p>
       <a href={links.methodology()} data-testid="methodology-link">Methodology</a>
       ·
+      <a href={links.privacy()} data-testid="privacy-link">Privacy</a>
+      ·
+      <a href={links.imprint()} data-testid="imprint-link">Imprint</a>
+      ·
       <a href="https://stats.domainconnect.org/" target="_blank" rel="noopener"
         >Templates statistics</a
       >

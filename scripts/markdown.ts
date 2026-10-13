@@ -1,5 +1,6 @@
 /**
- * The vendored METHODOLOGY.md as HTML for `methodology.html`, rendered at build time.
+ * Markdown as HTML, rendered at build time: the vendored METHODOLOGY.md (`methodology.html`) and
+ * the site's own texts in `content/` (`privacy.html`, `imprint.html`).
  */
 import { Marked, Renderer, type Tokens } from 'marked';
 
@@ -37,6 +38,6 @@ const marked = new Marked({
   },
 });
 
-export function renderMethodology(markdown: string): string {
+export function renderMarkdown(markdown: string): string {
   return marked.parse(markdown, { async: false });
 }

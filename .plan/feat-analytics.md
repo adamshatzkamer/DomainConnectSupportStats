@@ -1,14 +1,17 @@
-# feat/analytics: GoatCounter page views (#13)
+# feat/analytics: GoatCounter page views (#13), privacy and imprint pages (#39)
 
 ## Tasks
 
-- [~] `src/lib/analytics.ts`: endpoint from `DC_STATS_CONFIG.goatCounter` (https only), counted
+- [x] `src/lib/analytics.ts`: endpoint from `DC_STATS_CONFIG.goatCounter` (https only), counted
       path (page + card id), script injection; unit tests
-- [ ] Call from `mountPage`; `public/config.js` sets the endpoint
-- [ ] e2e: analytics hosts blocked in every test; pages work with them blocked; counted path
-- [ ] Methodology privacy note; REQUIREMENTS.md C-7 and §4; DEPLOYMENT.md runtime config; CLAUDE.md
-- [ ] 0.20.0, CHANGELOG
-- [ ] verify, screenshots (methodology), PR
+- [x] Call from `mountPage`; `public/config.js` sets the endpoint
+- [x] e2e: analytics hosts answered empty in every test; pages work with them blocked; counted path
+- [x] REQUIREMENTS.md C-7, F-2.22 and §4; DEPLOYMENT.md runtime config; CLAUDE.md
+- [x] `privacy.html`, `imprint.html` from `content/*.md` (build-time Markdown, `MarkdownDoc`),
+      footer links; methodology privacy note removed; docs, e2e
+- [x] 0.20.0, CHANGELOG
+- [~] verify, screenshots (methodology, privacy, imprint, footer), PR
+- [ ] Maintainer fills the imprint placeholders `[...]` before merge
 
 ## Decisions (maintainer)
 
@@ -21,6 +24,8 @@
 - On through the shipped `public/config.js` (`goatCounter`); removing the line turns it off.
   Localhost hits are skipped by `count.js`; e2e blocks the hosts.
 - Version: minor (0.20.0).
+- Privacy notice is its own page linked from the footer, done with #39 (imprint) in this PR; both
+  texts are editable Markdown files; imprint has placeholders for personal data.
 
 ## Findings
 

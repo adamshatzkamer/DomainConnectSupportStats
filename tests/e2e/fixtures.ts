@@ -62,6 +62,8 @@ export const PAGES = [
   'service-provider',
   'template',
   'leaderboards',
+  'privacy',
+  'imprint',
 ] as const;
 
 /** The page-level error state: plain text, no file URL. */
