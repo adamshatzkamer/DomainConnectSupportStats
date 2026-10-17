@@ -274,10 +274,15 @@
       {#if templates}
         <Panel id="templates" title={templates.title} context={providerName}>
           <DataTable
-            table={templates}
+            table={{
+              ...templates,
+              columns: templates.columns.map((c) =>
+                c.key === 'served_version' ? { ...c, header: 'SERVED' } : c,
+              ),
+            }}
             keys={['service_provider_name', 'service_name', 'served_version', 'since']}
             customKeys={['service_provider_name', 'service_name', 'served_version']}
-            phoneKeys={['service_provider_name', 'service_name', 'served_version', 'since']}
+            phoneKeys={['service_provider_name', 'service_name', 'served_version']}
             searchable
             pageSize={20}
             cell={templateCell}

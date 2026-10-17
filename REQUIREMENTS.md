@@ -130,7 +130,7 @@ lowest and highest template support across its deployments with probe answers (F
 deployments table as F-1b (without the stack column); served templates (F-2.22) summed over its
 deployments.
 DNS provider card supported templates: service provider, template, served (F-2.22), supported
-since; all four at phone width; newest `since` first by default. "Supported since" is when a probe
+since; phone width without supported since; newest `since` first by default. "Supported since" is when a probe
 first saw support of the template; new versions and gaps don't move it; a footnote says so (also
 on the template card supporters).
 

@@ -16,11 +16,16 @@
 {#if s.text === null}
   <span class="muted" title={s.title}>Not recorded yet</span>
 {:else}
-  <span class={s.tone ? `badge badge-${s.tone}` : undefined} title={s.title}>{s.text}</span>
+  <span title={s.title}>
+    {s.base}
+    {#if s.match}
+      <span class="badge {s.tone ? `badge-${s.tone}` : 'badge-muted'}">{s.match}</span>
+    {/if}
+  </span>
 {/if}
 
 <style>
-  span {
-    white-space: nowrap;
+  .badge {
+    white-space: normal;
   }
 </style>

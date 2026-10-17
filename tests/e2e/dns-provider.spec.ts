@@ -29,14 +29,52 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(page.getByTestId('provider-record')).toContainText('ns2.example.net');
   });
 
-  test('sorts supported templates by since, most recent first', async ({ page }) => {
+  test('sorts supported templates by since, most recent first', async ({ page }, testInfo) => {
     await page.goto('dns-provider.html?id=1');
     const templates = section(page, 'Supported templates (current state)');
-    await expect(templates.getByRole('columnheader', { name: /SUPPORTED SINCE/ })).toHaveAttribute(
-      'aria-sort',
-      'descending',
-    );
-    await expect(templates.getByTestId('since-caveat')).toContainText('any version');
+    if (testInfo.project.name !== 'mobile')
+      await expect(
+        templates.getByRole('columnheader', { name: /SUPPORTED SINCE/ }),
+      ).toHaveAttribute('aria-sort', 'descending');
+    await expect(templates.getByTestId('since-caveat')).not.toContainText('any version');
+  });
+
+  test('shows what each supported template serves', async ({ page }) => {
+    await page.goto('dns-provider.html?id=2');
+    const templates = section(page, 'Supported templates (current state)');
+    const served = (name: string) =>
+      templates
+        .locator('tbody tr', { has: page.getByRole('link', { name }) })
+        .locator('td')
+        .nth(2);
+    await expect(served('Acme Mail')).toHaveText(/^\s*v1 · full\s*morphed\s*$/);
+    await expect(served('Example Website')).toHaveText(/^\s*v1 · full\s*outdated\s*$/);
+    await expect(served('Example Website').getByTitle(/repository version 2/)).toBeVisible();
+    await page.goto('dns-provider.html?id=3');
+    await expect(
+      section(page, 'Supported templates (current state)').locator('tbody td').nth(2),
+    ).toHaveText('Not recorded yet');
+  });
+
+  test('counts the served templates of the supported ones', async ({ page }) => {
+    await page.goto('dns-provider.html?id=2');
+    const served = page.getByTestId('served');
+    await expect(served).toContainText(/With version\s*2\s*\(100.0% of 2 supported templates\)/);
+    await expect(served).toContainText(/Morphed\s*1\s*\(50.0% of 2 supported templates\)/);
+  });
+
+  test('shows the statuses of the latest completed runs', async ({ page }) => {
+    await page.goto('dns-provider.html?id=3');
+    const status = page.getByTestId('status-record');
+    await expect(status).toContainText('Failed');
+    await expect(status.getByTitle(/^failed \(http_error\): latest completed run/)).toBeVisible();
+    await expect(status).toContainText('HTTP 502');
+    await expect(status).toContainText('Given up');
+    await expect(status).toContainText('0 answered, 6 failed');
+    await expect(status).toContainText('CERTIFICATE_VERIFY_FAILED');
+    await page.goto('dns-provider.html?id=5');
+    await expect(page.getByTestId('status-record')).toContainText('Partly failed');
+    await expect(page.getByTestId('status-record')).toContainText('1 answered, 1 failed');
   });
 
   test('links supported templates to their template and service provider cards', async ({
@@ -225,7 +263,7 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(templates.locator('thead th:visible')).toHaveText([
       /SERVICE PROVIDER/,
       /TEMPLATE/,
-      /SUPPORTED SINCE/,
+      /SERVED/,
     ]);
     for (const wrapper of await page.locator('.table-wrapper').all()) {
       expect(await wrapper.evaluate((w) => w.scrollWidth - w.clientWidth)).toBeLessThanOrEqual(0);

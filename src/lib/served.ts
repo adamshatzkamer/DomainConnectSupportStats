@@ -20,6 +20,10 @@ const MATCH_TEXT: Record<string, string> = {
 export interface ServedLabel {
   /** e.g. `v2 · full, morphed`; null when not recorded yet. */
   text: string | null;
+  /** The text without the match, e.g. `v2 · full`. */
+  base: string | null;
+  /** The match in words, e.g. `morphed`; null without one. */
+  match: string | null;
   title: string;
   tone: 'ok' | 'warn' | null;
 }
@@ -36,8 +40,11 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   const kind = str(row.response_kind);
   const match = str(row.template_match);
   const repo = num(row.repository_version) ?? repositoryVersion;
-  if (kind === null) return { text: null, title: 'Not recorded yet', tone: null };
-  const kindText = (KIND_TEXT[kind] ?? kind) + (match ? `, ${MATCH_TEXT[match] ?? match}` : '');
+  if (kind === null)
+    return { text: null, base: null, match: null, title: 'Not recorded yet', tone: null };
+  const kindText = KIND_TEXT[kind] ?? kind;
+  const base = version === null ? kindText : `v${version} · ${kindText}`;
+  const matchText = match === null ? null : (MATCH_TEXT[match] ?? match);
   const title = [
     `Served version ${version ?? 'none'}`,
     repo === null ? null : `repository version ${repo}`,
@@ -47,7 +54,9 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
     .filter((p) => p !== null)
     .join(', ');
   return {
-    text: version === null ? kindText : `v${version} · ${kindText}`,
+    text: matchText === null ? base : `${base}, ${matchText}`,
+    base,
+    match: matchText,
     title,
     tone: match === 'match' ? 'ok' : match === 'morphed' || match === 'outdated' ? 'warn' : null,
   };

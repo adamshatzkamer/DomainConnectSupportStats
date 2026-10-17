@@ -216,7 +216,12 @@
           context={templateName}
         >
           <DataTable
-            table={supporters}
+            table={{
+              ...supporters,
+              columns: supporters.columns.map((c) =>
+                c.key === 'served_version' ? { ...c, header: 'SERVED' } : c,
+              ),
+            }}
             keys={['name', 'provider_id', 'served_version', 'since', 'reach_pct']}
             customKeys={['name', 'provider_id', 'served_version', 'reach_pct']}
             phoneKeys={['name', 'served_version', 'since', 'reach_pct']}

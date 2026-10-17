@@ -8,9 +8,9 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
 
 - [x] Copy contract from Scanner `main` (dc99260, PR #284 merged): `docs/EXPORT_FORMAT.md`,
       `docs/METHODOLOGY.md`, `docs/schemas/`, `docs/examples/export/`
-- [~] `SUPPORTED_FORMAT_VERSION` = 5, manifest test, `contract/README.md`
+- [x] `SUPPORTED_FORMAT_VERSION` = 5, manifest test, `contract/README.md`
 - [x] Ask the maintainer how to replace dropped columns and what new data to show
-- [ ] Types / lib: drop removed columns (`supported_templates`, `unsupported_templates`,
+- [~] Types / lib: drop removed columns (`supported_templates`, `unsupported_templates`,
       `undetermined_templates`, `min/median/max_supported_templates_pct`, `supporting_providers`
       in `templates.json`, `versions`), read `supported_count`/`*_pct`/`undetermined_*` from the export
 - [ ] Status badges: settings `ok`/`failed` (+ `settings_error_kind`), support
@@ -52,7 +52,8 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
     providers supporting at least one template, NOT SUPP. the rest. No visible change.
   - `versions` → one "Served" column (DNS provider card supported templates, template card
     supporters): version + kind/match, e.g. `v2 · full, morphed`; repository version in the
-    hover; `null` = not recorded yet; kept at phone width.
+    hover; `null` = not recorded yet; kept at phone width. DNS provider card at phone width:
+    service provider, template, served (supported since left out: 4 columns overflowed by 50 px).
   - Template card: Version stat card detail "N of M supporters serve it" (`current_version_count`
     of `supporters`); "Served templates" record panel with the six `served` counts.
   - Status badges: OK; Failed (settings `failed`, support `error`); Partly failed (`partial`);
