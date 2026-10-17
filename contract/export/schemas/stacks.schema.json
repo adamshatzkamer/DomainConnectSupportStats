@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/stacks.schema.json",
   "title": "report.py stacks --output-mode json",
-  "description": "One table of DNS provider stacks (dns_providers grouped by provider_id; a provider declaring none belongs to no stack and is left out), at most --limit rows. Support is a distribution over the stack's probed deployments, not an average (GitHub issue #160), per template version and per template (GitHub issue #251); supported_templates and their changes count templates any deployment supports, changes replayed over full sweeps only (GitHub issue #219); domains describe the selected import, named in the note.",
+  "description": "One table of DNS provider stacks (dns_providers grouped by provider_id; a provider declaring none belongs to no stack and is left out), at most --limit rows. Support is a distribution over the stack's probed deployments, not an average (GitHub issue #160); supported_templates and their changes count templates any deployment supports, changes replayed over the full and weekly sweeps only (GitHub issues #219, #262); what the deployments' supported templates serve is summed (GitHub issue #281); domains describe the selected import, named in the note.",
   "$ref": "common.schema.json#/$defs/report",
   "properties": {
     "notes": { "$ref": "common.schema.json#/$defs/shareNotes" },
@@ -19,16 +19,17 @@
                 { "properties": { "key": { "const": "min_supported_pct" } } },
                 { "properties": { "key": { "const": "median_supported_pct" } } },
                 { "properties": { "key": { "const": "max_supported_pct" } } },
-                { "properties": { "key": { "const": "min_supported_templates_pct" } } },
-                { "properties": { "key": { "const": "median_supported_templates_pct" } } },
-                { "properties": { "key": { "const": "max_supported_templates_pct" } } },
                 { "properties": { "key": { "const": "supported_templates" } } },
                 { "properties": { "key": { "const": "supported_templates_change" } } },
                 { "properties": { "key": { "const": "supported_templates_change_90d" } } },
+                { "properties": { "key": { "const": "with_version_count" } } },
+                { "properties": { "key": { "const": "full_template_count" } } },
+                { "properties": { "key": { "const": "morphed_count" } } },
+                { "properties": { "key": { "const": "outdated_count" } } },
                 { "properties": { "key": { "const": "domains" } } },
                 { "properties": { "key": { "const": "domains_pct" } } }
               ],
-              "minItems": 14,
+              "minItems": 15,
               "items": false
             },
             "rows": {
@@ -46,7 +47,8 @@
   "$defs": {
     "row": {
       "type": "object",
-      "allOf": [{ "$ref": "common.schema.json#/$defs/templateTrendColumns" }],
+      "allOf": [{ "$ref": "common.schema.json#/$defs/templateTrendColumns" },
+                { "$ref": "common.schema.json#/$defs/servedCountColumns" }],
       "properties": {
         "name": {
           "description": "providerName of the stack's first deployment, falling back to the stack's providerId, then '?'.",
@@ -61,9 +63,6 @@
         "min_supported_pct": { "$ref": "#/$defs/deploymentSupportPct" },
         "median_supported_pct": { "$ref": "#/$defs/deploymentSupportPct" },
         "max_supported_pct": { "$ref": "#/$defs/deploymentSupportPct" },
-        "min_supported_templates_pct": { "$ref": "#/$defs/deploymentTemplateSupportPct" },
-        "median_supported_templates_pct": { "$ref": "#/$defs/deploymentTemplateSupportPct" },
-        "max_supported_templates_pct": { "$ref": "#/$defs/deploymentTemplateSupportPct" },
         "domains": {
           "description": "Sum of the deployments' domains in the selected import; null without a domain share or when no deployment has a measurement.",
           "$ref": "common.schema.json#/$defs/nullableCount"
@@ -77,20 +76,13 @@
         "min_supported_pct",
         "median_supported_pct",
         "max_supported_pct",
-        "min_supported_templates_pct",
-        "median_supported_templates_pct",
-        "max_supported_templates_pct",
         "domains",
         "domains_pct"
       ],
       "unevaluatedProperties": false
     },
-    "deploymentTemplateSupportPct": {
-      "description": "The same distribution over templates, any version counted once (GitHub issue #251): over the stack's deployments with at least one probe answer (supported_count + unsupported_count > 0), supported_templates / every stored template (the rows of report.py service-templates), as a percentage. null when no deployment has an answer.",
-      "oneOf": [{ "$ref": "common.schema.json#/$defs/boundedPercentage" }, { "type": "null" }]
-    },
     "deploymentSupportPct": {
-      "description": "Over the stack's deployments with probe combinations: supported / total combinations, as a percentage. null when no deployment has any.",
+      "description": "Over the stack's deployments with at least one answer (supported or not supported): supported / total templates, as a percentage. null when no deployment has an answer (GitHub issue #271).",
       "oneOf": [{ "$ref": "common.schema.json#/$defs/boundedPercentage" }, { "type": "null" }]
     }
   }

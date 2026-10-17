@@ -19,24 +19,25 @@
                 { "properties": { "key": { "const": "api_host" } } },
                 { "properties": { "key": { "const": "settings_status" } } },
                 { "properties": { "key": { "const": "support_status" } } },
+                { "properties": { "key": { "const": "support_answered" } } },
+                { "properties": { "key": { "const": "support_failed" } } },
                 { "properties": { "key": { "const": "total" } } },
                 { "properties": { "key": { "const": "supported_count" } } },
                 { "properties": { "key": { "const": "supported_pct" } } },
                 { "properties": { "key": { "const": "unsupported_count" } } },
                 { "properties": { "key": { "const": "unsupported_pct" } } },
-                { "properties": { "key": { "const": "pending_count" } } },
-                { "properties": { "key": { "const": "pending_pct" } } },
-                { "properties": { "key": { "const": "failed_count" } } },
-                { "properties": { "key": { "const": "failed_pct" } } },
-                { "properties": { "key": { "const": "supported_templates" } } },
+                { "properties": { "key": { "const": "undetermined_count" } } },
+                { "properties": { "key": { "const": "undetermined_pct" } } },
                 { "properties": { "key": { "const": "supported_templates_change" } } },
                 { "properties": { "key": { "const": "supported_templates_change_90d" } } },
-                { "properties": { "key": { "const": "unsupported_templates" } } },
-                { "properties": { "key": { "const": "undetermined_templates" } } },
+                { "properties": { "key": { "const": "with_version_count" } } },
+                { "properties": { "key": { "const": "full_template_count" } } },
+                { "properties": { "key": { "const": "morphed_count" } } },
+                { "properties": { "key": { "const": "outdated_count" } } },
                 { "properties": { "key": { "const": "domains" } } },
                 { "properties": { "key": { "const": "domains_pct" } } }
               ],
-              "minItems": 22,
+              "minItems": 23,
               "items": false
             },
             "rows": {
@@ -54,8 +55,7 @@
   "$defs": {
     "row": {
       "allOf": [
-        { "$ref": "#/$defs/publicRow" },
-        { "$ref": "common.schema.json#/$defs/internalSupportBucketColumns" }
+        { "$ref": "#/$defs/publicRow" }
       ],
       "unevaluatedProperties": false
     },
@@ -64,8 +64,8 @@
       "type": "object",
       "allOf": [
         { "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" },
-        { "$ref": "common.schema.json#/$defs/templateTrendColumns" },
-        { "$ref": "common.schema.json#/$defs/templateAnswerColumns" }
+        { "$ref": "common.schema.json#/$defs/templateChangeColumns" },
+        { "$ref": "common.schema.json#/$defs/servedCountColumns" }
       ],
       "properties": {
         "name": {
@@ -86,8 +86,10 @@
         },
         "settings_status": { "$ref": "common.schema.json#/$defs/settingsStatus" },
         "support_status": { "$ref": "common.schema.json#/$defs/supportStatus" },
+        "support_answered": { "$ref": "common.schema.json#/$defs/supportAnswered" },
+        "support_failed": { "$ref": "common.schema.json#/$defs/supportFailed" },
         "total": {
-          "description": "Probe combinations (template versions) on record for this provider; 0 when it has none (then every percentage is null).",
+          "description": "Every stored template when the provider can be asked (it has a template-support API, or any answer), else 0 (then every percentage is null) - never whether probes exist (GitHub issue #271).",
           "$ref": "common.schema.json#/$defs/count"
         },
         "domains": {
@@ -106,6 +108,8 @@
         "api_host",
         "settings_status",
         "support_status",
+        "support_answered",
+        "support_failed",
         "total",
         "domains",
         "domains_pct"

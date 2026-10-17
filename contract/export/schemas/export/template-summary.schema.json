@@ -2,11 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/export/template-summary.schema.json",
   "title": "export.py templates/{service_provider_id}/{service_id}.json",
-  "description": "One template's card: report.py template-summary's JSON (--service-provider-id and --service-id) for a row of templates.json, for the manifest's share_import. The report has no internal columns, so the file is exactly that report plus the release's generated_at (the manifest's) - always found (a card exists only for a listed template), so always that one template's four tables, keyed '<service provider id>/<service id>/metadata|records|supporters|history' with the ids unencoded, and only the share note.",
+  "description": "One template's card: report.py template-summary's JSON (--service-provider-id and --service-id) for a row of templates.json, for the manifest's share_import. The report has no internal columns, so the file is exactly that report plus the release's generated_at (the manifest's) - always found (a card exists only for a listed template), so always that one template's five tables, keyed '<service provider id>/<service id>/metadata|records|supporters|served|history' with the ids unencoded, and only the share note.",
   "$ref": "../common.schema.json#/$defs/exportFile",
   "properties": {
     "notes": { "allOf": [{ "$ref": "../template-summary.schema.json#/properties/notes" }, { "$ref": "../common.schema.json#/$defs/shareNotes" }] },
-    "tables": { "allOf": [{ "$ref": "../template-summary.schema.json#/properties/tables" }, { "minProperties": 4, "maxProperties": 4 }] }
+    "tables": { "allOf": [{ "$ref": "../template-summary.schema.json#/properties/tables" }, { "minProperties": 5, "maxProperties": 5 }] }
   },
   "unevaluatedProperties": false
 }

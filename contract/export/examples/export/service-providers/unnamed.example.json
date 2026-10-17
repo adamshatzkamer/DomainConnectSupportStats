@@ -5,12 +5,13 @@
 "support": {"title": "Template support (current state)", "columns": [{"key": "templates", "header": "Templates"}, {"key": "supported_templates", "header": "Supported templates"}, {"key": "supporting_dns_providers", "header": "Supporting DNS providers"}, {"key": "reach_domains", "header": "Reach (domains)"}, {"key": "reach_pct", "header": "Reach %"}], "rows": [
 {"templates": 1, "supported_templates": 0, "supporting_dns_providers": 0, "reach_domains": 0, "reach_pct": 0.0}
 ], "footer": null},
-"templates": {"title": "Templates (current state)", "columns": [{"key": "name", "header": "TEMPLATE"}, {"key": "service_id", "header": "SERVICE ID"}, {"key": "version", "header": "VERSION"}, {"key": "versions", "header": "VERSIONS"}, {"key": "added_at", "header": "ADDED"}, {"key": "updated_at", "header": "UPDATED"}, {"key": "supporting_providers", "header": "SUPPORTING"}, {"key": "reach_domains", "header": "REACH"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
-{"name": "x", "service_id": "x", "version": 1, "versions": [1], "added_at": "2022-08-08 08:08:08", "updated_at": "2022-08-08 08:08:08", "supporting_providers": 0, "reach_domains": 0, "reach_pct": 0.0}
+"templates": {"title": "Templates (current state)", "columns": [{"key": "name", "header": "TEMPLATE"}, {"key": "service_id", "header": "SERVICE ID"}, {"key": "version", "header": "VERSION"}, {"key": "added_at", "header": "ADDED"}, {"key": "updated_at", "header": "UPDATED"}, {"key": "supporting_providers", "header": "SUPPORTING"}, {"key": "reach_domains", "header": "REACH"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
+{"name": "x", "service_id": "x", "version": 1, "added_at": "2022-08-08 08:08:08", "updated_at": "2022-08-08 08:08:08", "supporting_providers": 0, "reach_domains": 0, "reach_pct": 0.0}
 ], "footer": null},
 "support_history": {"title": "Supporting DNS providers per template and support sweep", "columns": [{"key": "sweep_id", "header": "SWEEP"}, {"key": "started_at", "header": "STARTED"}, {"key": "completed_at", "header": "COMPLETED"}, {"key": "service_id", "header": "SERVICE ID"}, {"key": "supporting_providers", "header": "SUPPORTING"}], "rows": [
 {"sweep_id": 1, "started_at": "2026-03-02 02:00:00", "completed_at": "2026-03-04 17:12:09", "service_id": "x", "supporting_providers": 0},
 {"sweep_id": 4, "started_at": "2026-06-02 02:00:00", "completed_at": "2026-06-05 09:48:27", "service_id": "x", "supporting_providers": 0},
+{"sweep_id": 7, "started_at": "2026-06-14 03:00:00", "completed_at": "2026-06-14 05:37:02", "service_id": "x", "supporting_providers": 0},
 {"sweep_id": 6, "started_at": "2026-09-02 02:00:00", "completed_at": null, "service_id": "x", "supporting_providers": 0}
 ], "footer": null}
 }}

@@ -1,12 +1,9 @@
 # Measuring Domain Connect support: methodology
 
-This document describes how the published Domain Connect support statistics are obtained:
-which domains are examined, how the DNS providers behind them are identified, how support
-for each template is established, and which limits apply to the resulting figures. It is
-intended for DNS providers, service providers, journalists and other readers of the
-statistics, and assumes no knowledge of the measuring software or of the format in which
-the statistics are distributed. The terms used are defined in Section 1.1 and carry that
-meaning throughout.
+How the published Domain Connect support statistics are obtained: which domains are
+examined, how the DNS providers behind them are identified, how support for each template is
+established, and which limits apply. For readers of the statistics; no knowledge of the
+measuring software or the data format is assumed. Terms are defined in Section 1.1.
 
 ## 1. Overview
 
@@ -30,7 +27,7 @@ The published statistics combine both: the domain counts of one selected scan (t
 | Domain Connect | An open protocol that lets a service (for example, a website builder or an e-mail host) configure the DNS records of a customer's domain at the customer's DNS provider by applying a *template*. A domain advertises support through a TXT record that holds the address of its DNS provider's Domain Connect endpoint (Section 3). |
 | Service provider | A publisher of templates in the public Domain Connect Templates repository (Section 5.1), identified by a domain-like identifier. |
 | Template | One service of a service provider: a set of DNS records that a DNS provider applies on request. Identified by the service provider's identifier together with a service identifier. |
-| Template version | A numbered revision of a template. |
+| Template version | A numbered revision of a template. Support is determined per template, not per version (Section 5.2). |
 | DNS provider | One deployment of Domain Connect: an endpoint that answered the protocol's settings request (Section 4.2). Two companies running the same software are two DNS providers. |
 | Stack | All DNS providers that declare the same provider identifier, that is, deployments of the same software or company (Section 4.2). |
 | Scan | One examination of the domains of one or more zone files (Section 2), dated by its start. |
@@ -40,8 +37,8 @@ The published statistics combine both: the domain counts of one selected scan (t
 | Reference scan | The scan whose domain counts the published statistics use: by default the most recent completed scan. |
 | Reach | For a template: the attributed domains of the reference scan whose DNS providers support the template, each DNS provider counted once. It is the number of scanned domains that could apply the template at the time of publication. |
 | Support probe | One query asking a DNS provider whether it supports a template (Section 5.2). |
-| Sweep, run | A batch of support probes over a defined set of DNS providers and template versions; a *full sweep* covers all of them (Section 5.3). |
-| Current state | The outcome of the most recent conclusive probe of each combination of DNS provider and template version (Section 5.2). |
+| Sweep, run | A batch of support probes over a defined set of DNS providers and templates; a *full sweep* covers all of them (Section 5.3). |
+| Current state | The outcome of the most recent conclusive probe of each combination of DNS provider and template (Section 5.2). |
 | History | The recorded changes of support over time, from which past numbers of supported templates and supporting DNS providers are reconstructed (Section 5.2). |
 
 ## 2. Population and sampling
@@ -55,10 +52,9 @@ counted once, irrespective of the number of its name-server records. Names below
 delegated domains (subdomains) are not part of the population, because zone files do not
 list them.
 
-At the time of writing, the scanned zones are `.com`, `.net` and `.org`. The zones of each
-scan are recorded and published with that scan, together with the number of domains the zone
-files contained and the sampling percentage (Section 2.2). Scans performed before this
-information was recorded are published without it.
+The scanned zones are `.com`, `.net` and `.org`. Each scan is published with its zones, the
+number of domains the zone files contained and the sampling percentage (Section 2.2), where
+recorded; the oldest scans lack this information.
 
 ### 2.2 Census and probability sample
 
@@ -180,7 +176,7 @@ DNS provider.
 
 Settings requests and support probes are restricted to Domain Connect URLs that were
 referred to by at least a minimum number of scanned domains, summed over the scans still
-retained. At the time of writing, this minimum is 50 domains. The restriction concentrates
+retained. The minimum is 50 domains. The restriction concentrates
 the measurement on endpoints that serve a meaningful number of domains; most of the excluded
 URLs are individual installations of hosting software that serve a single domain. As a
 consequence, support by DNS providers below the threshold is not observed.
@@ -195,8 +191,11 @@ its DNS provider is not identified.
 ### 4.5 Frequency
 
 The settings of all DNS providers above the threshold are requested again once per month,
-about one week after the monthly domain scan has begun, so that DNS providers first seen in
-that scan are identified and changes of name, software or API address are detected.
+as soon as the monthly domain scan has examined every domain of its sample, so that DNS
+providers first seen in that scan are identified and changes of name, software or API
+address are detected. A scan that never examines its whole sample, for example because
+reading a zone file failed, starts no such request; nor does a scan extended later with
+further domains, since its month's request was already made.
 
 ## 5. Determination of template support
 
@@ -204,13 +203,17 @@ that scan are identified and changes of name, software or API address are detect
 
 The set of templates is the public [Domain Connect Templates
 repository](https://github.com/Domain-Connect/Templates), synchronised daily. Each template
-version is recorded with the date on which it was first published in the repository.
+is recorded with its current version, the date on which it was first published in the
+repository, and a fingerprint of its whole file: the SHA-256 hash of its JSON in canonical
+form (object keys sorted, no whitespace, characters as UTF-8), so that two templates that
+differ only in key order or formatting have the same fingerprint.
 
 ### 5.2 Support probe
 
-For each combination of a DNS provider and a template version, the DNS provider's template
-API is queried for the template, identified by its service provider and service
-identifiers, as defined by the Domain Connect specification. The answer is classified as
+For each combination of a DNS provider and a template, the DNS provider's template API is
+queried once for the template, identified by its service provider and service identifiers,
+as defined by the Domain Connect specification. The query names the template, not a
+version of it. The answer is classified as
 follows:
 
 - **Supported**: HTTP status 200.
@@ -220,20 +223,60 @@ follows:
 The identifiers are sent exactly as they appear in the repository, including upper-case
 letters, since the specification defines them as case-sensitive.
 
-The query names the template, not a version of it; the published statistics accordingly
-treat a template as supported by a DNS provider when any of its versions is.
+The specification lets a DNS provider answer *supported* with an empty body, with the
+version of the template it has deployed (`{"version": N}`), or with the full deployed
+template. The body of each *supported* answer is read up to 256 KiB and classified, then
+discarded:
+
+- **Response kind**: *full template* when the body is a JSON object with a list of
+  `records`; *version only* when it is a JSON object with a non-negative integer `version`
+  and no such list; *empty* otherwise (no body, not JSON, not an object, larger than the
+  limit, or a `version` that is not a non-negative integer).
+- **Served version**: the integer `version` of the body, if any.
+- **Template match**, for a full template only: *outdated* when its version is lower than
+  the repository's current version; otherwise *match* when its fingerprint (computed as in
+  Section 5.1) equals the repository template's, and *morphed* when it differs in any
+  part, records and metadata alike. It is not stated while the repository template's
+  fingerprint is not yet recorded.
+
+Answers recorded per template version before support was determined per template are
+merged: supported when any version was, not supported when every version was, otherwise
+not yet determined.
+
+Served version, response kind and template match always describe the most recent
+*supported* answer; an answer without a version clears the served version. A change of any
+of them is recorded with the time at which it was observed.
 
 The *current state* of a combination is the classification of its most recent conclusive
-probe, that is, the most recent probe that yielded *supported* or *not supported*. In
-addition, every change between *supported* and *not supported* is recorded with the time at
-which it was observed. These records form the published history. A change is observed at
+probe, that is, the most recent probe that yielded *supported* or *not supported*. Only the
+opposite conclusive answer changes it: neither a failed probe nor a run that has the
+combination outstanding again (Section 5.3) does, so the published figures do not move
+while a run re-examines the combinations or while a DNS provider's endpoint fails. A
+combination is *not yet determined* only until its first conclusive probe. Every change
+between *supported* and *not supported* is recorded with the time at which it was observed. These records form the published history. A change is observed at
 the time of the first probe after it occurred, so the temporal resolution of the history
 equals the probing interval of the respective combination (Section 5.3).
 
+Counts per template are given as supported, not supported and not yet determined, with
+their percentages of a total. A DNS provider's total is every template when it declares a
+template API (or already has a conclusive answer), and zero otherwise; a template's total is
+the number of such DNS providers. Not yet determined is the remainder of the total. The
+total does not depend on how far probing has progressed: a newly identified DNS provider
+starts with every template not yet determined, and the state of probes still outstanding,
+being repeated or given up on is not part of the published figures. For a stack, the share
+of templates each of its DNS providers supports is given as its lowest, median and highest
+value across the DNS providers that have answered at least one probe with *supported* or
+*not supported*.
+
+For each DNS provider, its supported templates are also counted by what they serve: with a
+version, as a full template, morphed and outdated. For a stack, these counts are summed
+over its DNS providers. For a template, its supporting DNS providers are counted the same
+way, together with those serving the repository's current version.
+
 The date from which a DNS provider supports a template ("supported since") is the first
-recorded change to *supported* of any version of the template. It is stated only while the
-template is currently supported. A new version of the template does not move it, and
-neither does an interruption: a template that was not supported for a time and then
+recorded change to *supported* of the template. It is stated only while the template is
+currently supported. A new version of the template does not move it, and neither does an
+interruption: a template that was not supported for a time and then
 supported again keeps its original date. It therefore states since when support has
 existed at all, not how long it has lasted without interruption.
 
@@ -243,20 +286,35 @@ Probes are organised in runs, each covering a defined set of combinations:
 
 | Run | Combinations | Frequency |
 |---|---|---|
-| Full sweep | Every DNS provider × every template version | Monthly, after the settings of all DNS providers have been requested again |
-| Recent templates | Every DNS provider × template versions first published in the preceding 14 days | Daily |
-| Single DNS provider | One DNS provider × every template version | On demand, for example after a provider reports a change |
-| Single template or service provider | Every DNS provider × the versions of one template, or of all templates of one service provider | On demand |
+| Full sweep | Every DNS provider × every template | Monthly, after the settings of all DNS providers have been requested again (Section 4.5) |
+| Weekly sweep | Every DNS provider supporting at least one template when the run starts × every template | Weekly (Sunday) |
+| Recent templates | Every DNS provider × templates first published in the preceding 14 days | Daily, except on the day of the weekly sweep |
+| Single DNS provider | One DNS provider × every template | On demand, for example after a provider reports a change |
+| Single template or service provider | Every DNS provider × one template, or all templates of one service provider | On demand |
 
 A full sweep re-examines every combination, including those already known to be
-supported, so that withdrawn support is detected. The daily run of recent templates
-observes the adoption of a new template during its first two weeks at daily resolution.
+supported, so that withdrawn support is detected. The weekly sweep does the same, every
+week, for the DNS providers that support at least one template: a DNS provider counts as
+supporting when the current state (Section 5.2) of any template is *supported*, so a failed
+probe does not remove it.
+It detects their adoption of older templates, new versions and withdrawals at weekly
+rather than monthly resolution. A DNS provider supporting nothing is re-examined by the
+monthly full sweep only; one that has withdrawn all its support leaves the weekly sweep
+from the next week on. The daily run of recent templates observes the adoption of a new
+template during its first two weeks at daily resolution. It does not run on the day of the
+weekly sweep, which probes the new templates on the supporting DNS providers itself, so a
+DNS provider supporting nothing is probed for a new template on six days a week rather
+than seven, and its first adoption may be observed up to a day later.
+
 Published histories count only runs that covered the subject of the history completely:
-a DNS provider's history counts full sweeps and runs for that DNS provider alone; a
-template's history counts every run that probed the template on all DNS providers,
-including the daily run of recent templates while the template is covered by it; and
-ecosystem-wide series count full sweeps only, a smaller run counting towards the preceding
-full sweep.
+a DNS provider's history counts full sweeps, runs for that DNS provider alone and the
+weekly sweeps that covered it; a template's history counts every run that probed the
+template on all DNS providers, including the daily run of recent templates while the
+template is covered by it, and the weekly sweeps; and ecosystem-wide series count full and
+weekly sweeps, a smaller run counting towards the preceding one of them. A point after a
+weekly sweep restates the state of the DNS providers it did not cover, which no probe has
+changed since the previous point; full and weekly points are not distinguished. Older
+points of these series are monthly, newer ones weekly.
 
 Each run is published with its start and completion time. A run is complete once none of
 its probes is outstanding: each has been answered, or given up on after its retries
@@ -269,23 +327,10 @@ support figures after a run in progress are its state so far.
 
 ### 5.4 Number of supported templates and its change
 
-The number of templates a DNS provider supports counts each template once, irrespective of
-the number of its supported versions. For a stack, it is the number of templates supported
-by at least one of its DNS providers.
-
-The templates a DNS provider does not support are counted the same way: a template counts
-as not supported when none of its versions is supported and the current state of every one
-of its versions is *not supported*. Every other template counts as not yet determined for
-that DNS provider, including a template whose versions disagree - for example one version
-not supported and another not yet determined - since the open version may still turn out
-to be supported. The supported, not supported and not yet determined templates of a DNS
-provider add up to the number of templates.
-
-For a stack, the share of templates each of its DNS providers supports (supported
-templates divided by the number of templates) is given as its lowest, median and highest
-value across the stack's DNS providers that have answered at least one probe with
-*supported* or *not supported*. A distribution rather than an average is given because
-support often varies widely between DNS providers of the same stack.
+The number of templates a DNS provider supports is its supported count (Section 5.2). For
+a stack, it is the number of templates supported by at least one of its DNS providers. A
+distribution rather than an average is given for a stack's share because support often
+varies widely between DNS providers of the same stack.
 
 The change of this number is derived from the recorded history (Section 5.2), not from
 repeated current-state counts. The history is replayed up to the start of each run, and
@@ -293,9 +338,10 @@ the number of supported templates after a run is compared with the number after 
 earlier run. Two intervals are published:
 
 - **Latest run:** the difference between the most recent run and the preceding one. For a
-  DNS provider, these are the runs that covered all of its templates (full sweeps and runs
-  for that DNS provider alone); for a stack, full sweeps only, since only these cover all
-  of its DNS providers at once.
+  DNS provider, these are the runs that covered all of its templates (full sweeps, runs
+  for that DNS provider alone and the weekly sweeps that covered it); for a stack, full
+  and weekly sweeps, a DNS provider the weekly sweep did not cover keeping its state.
+  For most points this is a change over one week; older points cover one month.
 - **About 90 days:** the difference between the most recent run and the newest run that
   started at least 90 days before it.
 
@@ -309,17 +355,35 @@ difference between history and current state described in Section 8.
 
 ### 6.1 Status values
 
-The outcome of the most recent settings request and of the most recent support probe of
-each DNS provider is published as a status, together with the error message of the last
-failure and the time of the last successful contact.
+Each DNS provider's settings and support statuses describe its latest **completed** run,
+after every repetition of Section 6.2, never a single request. A request that fails while
+its run is still repeating it changes nothing that is published; until a run completes,
+the DNS provider keeps the statuses of the previous one.
 
-| Status | Request | Meaning |
-|---|---|---|
-| `ok` | settings, support | The endpoint answered conclusively: a usable settings answer, or a support answer of *supported* or *not supported*. |
-| `http_error` | settings | The endpoint answered, but the answer was unusable: an HTTP status other than 200, a body that is not valid JSON, or a missing or invalid `urlAPI`. |
-| `error` | support | The endpoint answered with an HTTP status other than 200 or 404 (including an overload answer, Section 6.2), or no answer was obtained (connection failure). |
-| `connection_error` | settings | No answer was obtained (time-out, refused or reset connection, or a protocol error), or the endpoint answered that it is overloaded (Section 6.2). Such failures are presumed transient. |
-| `dead` | settings, support | The endpoint is considered unreachable for the current run (Section 6.3). |
+The **settings status** is the outcome of the latest settings run that finished with one of
+the DNS provider's Domain Connect addresses, with the error message when it failed and the
+time of the last successful settings answer:
+
+| Status | Meaning |
+|---|---|
+| `ok` | One of its addresses gave a usable settings answer in that run, possibly after repetitions. |
+| `failed` | None did. The kind of failure is published with it: `http_error` (the endpoint answered, but every repetition gave an unusable answer: an HTTP status other than 200, a body that is not valid JSON, or a missing or invalid `urlAPI`) or `dead` (the endpoint was abandoned, Section 6.3). |
+
+The **support status** summarises the latest completed support sweep that probed the DNS
+provider. The number of its probes that ended with an answer (*supported* or *not
+supported*) and the number that failed after their repetitions (an HTTP status other than
+200 or 404, or no answer) are published with it, as is the error message of a failed probe
+and the completion time of the latest sweep in which a probe was answered:
+
+| Status | Meaning |
+|---|---|
+| `ok` | Every probe of the sweep was answered. |
+| `partial` | Some probes were answered, some failed. |
+| `error` | No probe was answered. |
+| `dead` | The endpoint was abandoned during the sweep (Section 6.3). |
+
+Any completed run counts, also one limited to the weekly re-check, to one DNS provider or
+to new templates (Section 5.3); the published numbers of probes show how much it covered.
 
 ### 6.2 Repetition after failures
 
@@ -362,7 +426,7 @@ abandoned, in two cases:
   all.
 
 The status `dead` is not final. The next run that covers the DNS provider contacts it
-again, and a conclusive answer restores the status `ok`. Support recorded before an
+again, and once that run completes, its answers replace the status. Support recorded before an
 endpoint became unreachable is retained in the history but not counted in the current
 state, which counts only conclusive answers.
 
@@ -383,10 +447,10 @@ endpoint (Section 6.2); a rate-limit header never makes requests faster than the
 Every request identifies the measurement by its HTTP `User-Agent` header, which names the
 software and its public project page and carries an identifier of the measuring process.
 
-In absolute terms, a full sweep sends each DNS provider one request per template version,
-of the order of 1,400 requests per month at the time of writing, spread over at least
-several minutes. The daily run of recent templates sends each DNS provider one request per
-template version published in the preceding 14 days, typically a few requests per day. One
+In absolute terms, a full sweep sends each DNS provider one request per template,
+of the order of 1,400 requests per month, spread over at least several minutes. The weekly sweep sends the same number to each supporting DNS provider
+once a week. The daily run of recent templates sends each DNS provider one request per
+template published in the preceding 14 days, typically a few requests per day. One
 settings request per Domain Connect URL is sent per month, apart from the repetitions
 described in Section 6.2. The domain scan itself contacts only public DNS resolvers, not
 the DNS providers.
@@ -408,14 +472,12 @@ the DNS providers.
   particular domain or account is not tested.
 - **History versus current state.** Domain counts refer to the reference scan, which
   may be several weeks old, whereas support refers to the time of publication. The history
-  replays observed changes; a DNS provider whose latest probes failed keeps its last
-  observed support in the history, while the current state counts only conclusive answers.
-  The latest point of a history, and a change derived from it (Section 5.4), may therefore
-  disagree with the corresponding current value.
-- **Temporal resolution.** Changes of support are dated by the probe that observed them,
-  that is, to within one month for established templates and within one day for templates
-  in their first 14 days.
+  and the current state rest on the same conclusive probes (Section 5.2): a DNS provider
+  whose latest probes failed keeps its last observed answers in both.
+- **Temporal resolution.** Changes of support are dated by the probe that observed them:
+  within one week for DNS providers supporting a template, one month for the others, and
+  one day for templates in their first 14 days.
 - **Current stacks.** Stack membership is the current one, also when applied to past
   scans and sweeps (Section 4.2).
-- **Status lag.** The status of a DNS provider describes its most recent contact, which for
-  a rarely examined provider may be several weeks old.
+- **Status lag.** The status of a DNS provider describes its latest completed run, which
+  may be several weeks old (Section 6.1).

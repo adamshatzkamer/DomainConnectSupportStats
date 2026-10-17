@@ -25,13 +25,19 @@
                 { "properties": { "key": { "const": "support_probe_jobs_in_cooldown" } } },
                 { "properties": { "key": { "const": "dns_providers" } } },
                 { "properties": { "key": { "const": "scan_pending_support_sweep" } } },
+                { "properties": { "key": { "const": "weekly_sweep_id" } } },
+                { "properties": { "key": { "const": "weekly_sweep_started_at" } } },
+                { "properties": { "key": { "const": "weekly_sweep_completed_at" } } },
+                { "properties": { "key": { "const": "weekly_sweep_outstanding_jobs" } } },
+                { "properties": { "key": { "const": "weekly_sweep_dns_providers" } } },
+                { "properties": { "key": { "const": "weekly_sweep_jobs" } } },
                 { "properties": { "key": { "const": "templates_last_synced_at" } } },
                 { "properties": { "key": { "const": "templates_last_synced_commit" } } },
                 { "properties": { "key": { "const": "service_providers" } } },
                 { "properties": { "key": { "const": "services" } } },
                 { "properties": { "key": { "const": "support" } } }
               ],
-              "minItems": 17,
+              "minItems": 23,
               "items": false
             },
             "rows": { "$ref": "common.schema.json#/$defs/oneRow", "items": { "$ref": "#/$defs/row" } },
@@ -80,6 +86,30 @@
           "description": "Id of the newest processed settings scan (settings_job_generator_runs) not yet followed by a support sweep; null when there is none.",
           "oneOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }]
         },
+        "weekly_sweep_id": {
+          "description": "The newest weekly support sweep (a support_probe_job_generator_runs row with supported_only = 1, GitHub issue #262): every template on the DNS providers supporting one when it started. Null before the first one, as are the other weekly_sweep_* values.",
+          "oneOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "weekly_sweep_started_at": {
+          "description": "When the newest weekly sweep was enqueued.",
+          "$ref": "common.schema.json#/$defs/nullableTimestamp"
+        },
+        "weekly_sweep_completed_at": {
+          "description": "When the newest weekly sweep's last queued job left the queue; null while jobs remain.",
+          "$ref": "common.schema.json#/$defs/nullableTimestamp"
+        },
+        "weekly_sweep_outstanding_jobs": {
+          "description": "The newest weekly sweep's jobs still queued (pending or processing); 0 once completed.",
+          "$ref": "common.schema.json#/$defs/nullableCount"
+        },
+        "weekly_sweep_dns_providers": {
+          "description": "DNS providers the newest weekly sweep covers.",
+          "$ref": "common.schema.json#/$defs/nullableCount"
+        },
+        "weekly_sweep_jobs": {
+          "description": "Jobs the newest weekly sweep enqueued (new and re-stamped).",
+          "$ref": "common.schema.json#/$defs/nullableCount"
+        },
         "templates_last_synced_at": {
           "description": "Last successful templates sync; null if templates were never synced.",
           "$ref": "common.schema.json#/$defs/nullableTimestamp"
@@ -105,6 +135,12 @@
         "support_probe_jobs_in_cooldown",
         "dns_providers",
         "scan_pending_support_sweep",
+        "weekly_sweep_id",
+        "weekly_sweep_started_at",
+        "weekly_sweep_completed_at",
+        "weekly_sweep_outstanding_jobs",
+        "weekly_sweep_dns_providers",
+        "weekly_sweep_jobs",
         "templates_last_synced_at",
         "templates_last_synced_commit",
         "service_providers",

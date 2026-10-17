@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/export/dns-provider-summary.schema.json",
   "title": "export.py dns-providers/{dns_provider_id}.json",
-  "description": "One DNS provider's card: report.py dns-provider-summary's JSON (--dns-provider-id) for a row of dns-providers.json, for the manifest's share_import, redacted - the provider record leaves out its pipeline bookkeeping (dns_provider_key, throttle_key, last_checked_at, settings_last_checked_at, support_last_checked_at) and the support table the internal pending/failed buckets. Always found (a card exists only for a listed id), so always all seven tables and only the share note. Like every export file, it starts with the release's generated_at (the manifest's).",
+  "description": "One DNS provider's card: report.py dns-provider-summary's JSON (--dns-provider-id) for a row of dns-providers.json, for the manifest's share_import, redacted - the provider record leaves out its pipeline bookkeeping (dns_provider_key, throttle_key, last_checked_at). Always found (a card exists only for a listed id), so always all seven tables and only the share note. Like every export file, it starts with the release's generated_at (the manifest's).",
   "$ref": "../common.schema.json#/$defs/exportFile",
   "properties": {
     "notes": { "$ref": "../common.schema.json#/$defs/shareNotes" },
@@ -38,14 +38,17 @@
             { "properties": { "key": { "const": "control_panel_url" } } },
             { "properties": { "key": { "const": "nameservers" } } },
             { "properties": { "key": { "const": "first_seen_at" } } },
-            { "properties": { "key": { "const": "settings_last_status" } } },
+            { "properties": { "key": { "const": "settings_status" } } },
+            { "properties": { "key": { "const": "settings_error_kind" } } },
             { "properties": { "key": { "const": "settings_last_error" } } },
             { "properties": { "key": { "const": "settings_last_seen_ok_at" } } },
-            { "properties": { "key": { "const": "support_last_status" } } },
+            { "properties": { "key": { "const": "support_status" } } },
+            { "properties": { "key": { "const": "support_answered" } } },
+            { "properties": { "key": { "const": "support_failed" } } },
             { "properties": { "key": { "const": "support_last_error" } } },
             { "properties": { "key": { "const": "support_last_seen_ok_at" } } }
           ],
-          "minItems": 16,
+          "minItems": 19,
           "items": false
         },
         "rows": {
@@ -59,7 +62,7 @@
       }
     },
     "supportTable": {
-      "description": "The provider's probe combinations on record and their published support breakdown: one row. Redacted: total - supported - unsupported is not yet determined.",
+      "description": "The templates the provider can be asked about, their support breakdown and what the supported ones serve: one row.",
       "properties": {
         "title": { "type": "string" },
         "columns": {
@@ -69,11 +72,14 @@
             { "properties": { "key": { "const": "supported_pct" } } },
             { "properties": { "key": { "const": "unsupported_count" } } },
             { "properties": { "key": { "const": "unsupported_pct" } } },
-            { "properties": { "key": { "const": "supported_templates" } } },
-            { "properties": { "key": { "const": "unsupported_templates" } } },
-            { "properties": { "key": { "const": "undetermined_templates" } } }
+            { "properties": { "key": { "const": "undetermined_count" } } },
+            { "properties": { "key": { "const": "undetermined_pct" } } },
+            { "properties": { "key": { "const": "with_version_count" } } },
+            { "properties": { "key": { "const": "full_template_count" } } },
+            { "properties": { "key": { "const": "morphed_count" } } },
+            { "properties": { "key": { "const": "outdated_count" } } }
           ],
-          "minItems": 8,
+          "minItems": 11,
           "items": false
         },
         "rows": {

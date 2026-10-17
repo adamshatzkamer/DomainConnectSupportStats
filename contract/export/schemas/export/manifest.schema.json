@@ -6,8 +6,8 @@
   "type": "object",
   "properties": {
     "format_version": {
-      "description": "Bumped only by a breaking change to the export's shape or a changed meaning of a value; added files, tables or columns keep it. 2: supported_templates.since became the first support of any version (EXPORT_FORMAT.md, Versioning).",
-      "const": 2
+      "description": "Bumped only by a breaking change to the export's shape or a changed meaning of a value; added files, tables or columns keep it. 2: supported_templates.since became the first support of any version; 3: a support total became every template version that can be asked about, no longer the probes on record; 4: DNS provider settings/support statuses became results of completed runs, with new values and renamed card keys; 5: support counts became per template, no longer per stored version, and versions became what each DNS provider serves (EXPORT_FORMAT.md, Versioning).",
+      "const": 5
     },
     "generated_at": {
       "description": "When the export ran, UTC, to the second; also names the release directory (releases/YYYYMMDDTHHMMSSZ), and every other file of the release carries the same value.",
@@ -60,7 +60,7 @@
       "$ref": "#/$defs/completedSweep"
     },
     "latest_full_sweep": {
-      "description": "The full support sweep (every template on every DNS provider; the sweeps overview.json's ecosystem table lists) that completed last: when the whole ecosystem was last measured. Null when no full sweep has completed since completion times were recorded.",
+      "description": "The full support sweep (every template on every DNS provider; the weekly sweeps, which overview.json's ecosystem table lists too, re-probe the supporting DNS providers only and are never this one) that completed last: when the whole ecosystem was last measured. Null when no full sweep has completed since completion times were recorded.",
       "$ref": "#/$defs/completedSweep"
     },
     "id_encoding": {
