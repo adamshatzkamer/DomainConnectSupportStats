@@ -10,23 +10,23 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
       `docs/METHODOLOGY.md`, `docs/schemas/`, `docs/examples/export/`
 - [x] `SUPPORTED_FORMAT_VERSION` = 5, manifest test, `contract/README.md`
 - [x] Ask the maintainer how to replace dropped columns and what new data to show
-- [~] Types / lib: drop removed columns (`supported_templates`, `unsupported_templates`,
+- [x] Types / lib: drop removed columns (`supported_templates`, `unsupported_templates`,
       `undetermined_templates`, `min/median/max_supported_templates_pct`, `supporting_providers`
       in `templates.json`, `versions`), read `supported_count`/`*_pct`/`undetermined_*` from the export
-- [ ] Status badges: settings `ok`/`failed` (+ `settings_error_kind`), support
+- [x] Status badges: settings `ok`/`failed` (+ `settings_error_kind`), support
       `ok`/`partial`/`error`/`dead`, answered/failed probe counts
-- [ ] DNS providers list: per-template counts from the export, statuses, caveats
-- [ ] DNS provider card: statuses, support counts, served counts, served columns per supported template
-- [ ] Stacks list and card: distribution from `min/median/max_supported_pct`, summed served counts,
+- [x] DNS providers list: per-template counts from the export, statuses, caveats
+- [x] DNS provider card: statuses, support counts, served counts, served columns per supported template
+- [x] Stacks list and card: distribution from `min/median/max_supported_pct`, summed served counts,
       deployments table
-- [ ] Templates list: `supported_count` replaces `supporting_providers`
-- [ ] Template card: served version, response kind, match per supporter; `served` table; drop `versions`
-- [ ] Service provider card: drop `versions`
-- [ ] Leaderboards: `supported_count` replaces `supported_templates` (dns-providers rows)
-- [ ] Methodology page texts follow new METHODOLOGY.md (page bakes the file; check hand-written texts)
-- [ ] Tests (unit, component, contract, e2e) against the new example export
-- [ ] Docs (REQUIREMENTS.md, CLAUDE.md), version (minor) + CHANGELOG
-- [ ] Real-release check (data repo needs v5), screenshots, maintainer acceptance
+- [x] Templates list: `supported_count` replaces `supporting_providers`
+- [x] Template card: served version, response kind, match per supporter; `served` table; drop `versions`
+- [x] Service provider card: drop `versions`
+- [x] Leaderboards: `supported_count` replaces `supported_templates` (dns-providers rows)
+- [x] Methodology page texts follow new METHODOLOGY.md (page bakes the file; check hand-written texts)
+- [x] Tests (unit, component, contract, e2e) against the new example export
+- [x] Docs (REQUIREMENTS.md, CLAUDE.md), version (minor) + CHANGELOG
+- [~] Real-release check (data repo needs v5), screenshots, maintainer acceptance
 - [ ] Promote findings, delete this file
 
 ## Findings
@@ -39,6 +39,10 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
   `outdated_count` added; `supported_templates`, `unsupported_templates`,
   `undetermined_templates` removed. `supported_templates` stays in `stacks.json` and in
   `support_history`.
+- `npm run verify` green: 436 Vitest, 423 Playwright (share.spec "absolute image" failed once,
+  passed on rerun: 42/42).
+- Production data repo (`statsdata/providers`, 2026-10-17T05:00:03Z) is still `format_version` 2:
+  real-release check waits for the Scanner rollout (DomainConnectScanner#277).
 - Methodology anchors used by the site (`52-support-probe`, `61-status-values`, ...) still exist.
 
 ## Decisions
