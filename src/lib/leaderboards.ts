@@ -59,7 +59,7 @@ function text(row: Row | undefined, key: string): string | null {
 }
 
 function reachedDomains(row: Row): number | null {
-  const supported = num(row, 'supported_templates');
+  const supported = num(row, 'supported_count');
   if (supported === null) return null;
   return supported > 0 ? num(row, 'domains') : 0;
 }
@@ -108,7 +108,7 @@ const entrantDomains = (e: Entrant) => num(e.row, 'domains');
 const entrantName = (e: Entrant) => e.name;
 
 export function topByTemplates(list: Entrant[], size = BOARD_SIZE): Ranked<Entrant>[] {
-  return rank(list, (e) => num(e.row, 'supported_templates'), entrantDomains, entrantName, size);
+  return rank(list, (e) => num(e.row, 'supported_count'), entrantDomains, entrantName, size);
 }
 
 export function topByDomains(list: Entrant[], size = BOARD_SIZE): Ranked<Entrant>[] {
@@ -183,7 +183,7 @@ export function newSupporting(
         apiHost: text(row, 'api_host'),
         href: links.dnsProvider(f.dns_provider_id),
         since: f.started_at,
-        supportedTemplates: num(row, 'supported_templates'),
+        supportedTemplates: num(row, 'supported_count'),
       },
     ];
   });

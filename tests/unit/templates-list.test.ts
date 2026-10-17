@@ -10,20 +10,23 @@ const ids = (rows: Row[]) => rows.map((r) => `${r.provider_id}/${r.service_id}`)
 function withNeverProbed(): Table {
   const source = templates();
   Object.assign(source.rows.at(-1)!, {
-    total: 0,
     supported_count: 0,
-    supported_pct: null,
+    supported_pct: 0,
     unsupported_count: 0,
-    unsupported_pct: null,
+    unsupported_pct: 0,
+    undetermined_count: 5,
+    undetermined_pct: 100,
   });
   return source;
 }
 
 describe('isNeverProbed', () => {
-  it('is a template without probe combinations', () => {
-    expect(isNeverProbed({ total: 0 })).toBe(true);
-    expect(isNeverProbed({ total: 4 })).toBe(false);
-    expect(isNeverProbed({ total: null })).toBe(false);
+  it('is a template no DNS provider has answered for', () => {
+    expect(isNeverProbed({ total: 5, supported_count: 0, unsupported_count: 0 })).toBe(true);
+    expect(isNeverProbed({ total: 0, supported_count: 0, unsupported_count: 0 })).toBe(true);
+    expect(isNeverProbed({ total: 5, supported_count: 0, unsupported_count: 1 })).toBe(false);
+    expect(isNeverProbed({ total: 5, supported_count: 1, unsupported_count: 0 })).toBe(false);
+    expect(isNeverProbed({ supported_count: null, unsupported_count: 0 })).toBe(false);
     expect(isNeverProbed({})).toBe(false);
   });
 });
@@ -77,11 +80,11 @@ describe('withSupport', () => {
     expect(table.columns.map((c) => c.key)).toEqual(
       expect.arrayContaining(['supporting_dns_providers', 'not_supporting_dns_providers']),
     );
-    expect(row(table, 'exampleservice.domainconnect.org/template1')).toMatchObject({
-      supporting_dns_providers: 3,
-      supporting_dns_providers_pct: 75,
-      not_supporting_dns_providers: 1,
-      not_supporting_dns_providers_pct: 25,
+    expect(row(table, 'mail.acme.example/verify')).toMatchObject({
+      supporting_dns_providers: 2,
+      supporting_dns_providers_pct: 50,
+      not_supporting_dns_providers: 2,
+      not_supporting_dns_providers_pct: 50,
     });
     expect(row(table, 'exampleservice.domainconnect.org/template2')).toMatchObject({
       supporting_dns_providers: 0,
@@ -92,7 +95,7 @@ describe('withSupport', () => {
 
   it('leaves unknown what the row or the denominator lacks', () => {
     const source = templates();
-    source.rows.find((r) => r.service_id === 'mail')!.supporting_providers = null;
+    source.rows.find((r) => r.service_id === 'mail')!.supported_count = null;
     expect(row(withSupport(source, 4), 'mail.acme.example/mail')).toMatchObject({
       supporting_dns_providers: null,
       supporting_dns_providers_pct: null,
@@ -101,14 +104,14 @@ describe('withSupport', () => {
     expect(
       row(withSupport(templates(), null), 'exampleservice.domainconnect.org/template1'),
     ).toMatchObject({
-      supporting_dns_providers: 3,
+      supporting_dns_providers: 4,
       supporting_dns_providers_pct: null,
       not_supporting_dns_providers: null,
     });
   });
 
   it('never shows a negative count of not supporting DNS providers', () => {
-    const r = row(withSupport(templates(), 2), 'exampleservice.domainconnect.org/template1');
+    const r = row(withSupport(templates(), 3), 'exampleservice.domainconnect.org/template1');
     expect(r.not_supporting_dns_providers).toBeNull();
     expect(r.not_supporting_dns_providers_pct).toBeNull();
   });

@@ -5,10 +5,12 @@
   interface Props {
     /** A `settings_status` or `support_status` value. */
     status: CellValue;
+    /** The settings `settings_error_kind`, when known. */
+    errorKind?: CellValue;
   }
 
-  let { status }: Props = $props();
-  const badge = $derived(statusBadge(status));
+  let { status, errorKind = null }: Props = $props();
+  const badge = $derived(statusBadge(status, errorKind));
 </script>
 
 <span class="badge badge-{badge.tone}" title={badge.title}>{badge.label}</span>

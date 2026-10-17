@@ -3,73 +3,19 @@ import type { Row, Table } from '../../src/lib/data/types';
 import {
   dnsProviderList,
   isHiddenByDefault,
+  probeCounts,
   statusBadge,
-  SUPPORTED_PCT_KEY,
-  templateSupport,
-  templateTotal,
-  UNDETERMINED_PCT_KEY,
-  UNSUPPORTED_PCT_KEY,
-  withTemplateSupportColumns,
 } from '../../src/lib/dns-providers';
 import { exampleJson } from '../fixtures';
 
 const providers = () => exampleJson('dns-providers.json').tables.dns_providers as Table;
 const ids = (rows: Row[]) => rows.map((r) => r.dns_provider_id);
 
-describe('templateSupport', () => {
-  const row: Row = { supported_templates: 1, unsupported_templates: 2, undetermined_templates: 1 };
-
-  it('is each template answer as a share of the three together', () => {
-    expect(templateTotal(row)).toBe(4);
-    expect(templateSupport(row)).toEqual({
-      supportedPct: 25,
-      unsupportedPct: 50,
-      undeterminedPct: 25,
-    });
-  });
-
-  it('is unknown when a count is unknown, or there are no templates', () => {
-    const unknown = { supportedPct: null, unsupportedPct: null, undeterminedPct: null };
-    expect(templateTotal({ ...row, undetermined_templates: null })).toBeNull();
-    expect(templateSupport({ ...row, undetermined_templates: null })).toEqual(unknown);
-    expect(templateSupport({ supported_templates: 1, undetermined_templates: 1 })).toEqual(unknown);
-    expect(
-      templateSupport({
-        supported_templates: 0,
-        unsupported_templates: 0,
-        undetermined_templates: 0,
-      }),
-    ).toEqual(unknown);
-    expect(templateSupport(undefined)).toEqual(unknown);
-  });
-});
-
-describe('withTemplateSupportColumns', () => {
-  it('renames the template answers, each followed by its share', () => {
-    const columns = withTemplateSupportColumns([
-      { key: 'name', header: 'NAME' },
-      { key: 'supported_templates', header: 'TEMPLATES' },
-      { key: 'unsupported_templates', header: 'NOT SUPP. TEMPLATES' },
-      { key: 'undetermined_templates', header: 'UNDETERMINED TEMPLATES' },
-    ]);
-    expect(columns.map((c) => c.header)).toEqual([
-      'NAME',
-      'SUPPORTED',
-      'SUPPORTED %',
-      'NOT SUPP.',
-      'NOT SUPP. %',
-      'UNDETERMINED',
-      'UNDETERMINED %',
-    ]);
-  });
-});
-
 describe('isHiddenByDefault', () => {
   const visible: Row = { settings_status: 'ok', support_status: 'ok', domains: 10 };
 
   it('hides given-up, never-probed and zero-domain providers', () => {
     expect(isHiddenByDefault(visible)).toBe(false);
-    expect(isHiddenByDefault({ ...visible, settings_status: 'dead' })).toBe(true);
     expect(isHiddenByDefault({ ...visible, support_status: 'dead' })).toBe(true);
     expect(isHiddenByDefault({ ...visible, support_status: null })).toBe(true);
     expect(isHiddenByDefault({ ...visible, domains: 0 })).toBe(true);
@@ -77,8 +23,9 @@ describe('isHiddenByDefault', () => {
 
   it('keeps unmeasured domains and failing probes visible', () => {
     expect(isHiddenByDefault({ ...visible, domains: null })).toBe(false);
-    expect(isHiddenByDefault({ ...visible, settings_status: 'connection_error' })).toBe(false);
+    expect(isHiddenByDefault({ ...visible, settings_status: 'failed' })).toBe(false);
     expect(isHiddenByDefault({ ...visible, support_status: 'error' })).toBe(false);
+    expect(isHiddenByDefault({ ...visible, support_status: 'partial' })).toBe(false);
   });
 });
 
@@ -105,13 +52,10 @@ describe('dnsProviderList', () => {
     expect(dnsProviderList(providers(), { stack: 'nope', showAll: true }).table.rows).toEqual([]);
   });
 
-  it('adds the shares of the template answers, never probed included', () => {
+  it('keeps the counts and shares of the template answers as exported', () => {
     const { table } = dnsProviderList(providers(), { stack: null, showAll: true });
-    const keys = table.columns.map((c) => c.key);
-    expect(keys.indexOf(SUPPORTED_PCT_KEY)).toBe(keys.indexOf('supported_templates') + 1);
-    expect(table.rows.map((r) => r[SUPPORTED_PCT_KEY])).toEqual([60, 40, 40, 0, 0, 0]);
-    expect(table.rows.map((r) => r[UNSUPPORTED_PCT_KEY])).toEqual([20, 0, 40, 0, 0, 20]);
-    expect(table.rows.map((r) => r[UNDETERMINED_PCT_KEY])).toEqual([20, 60, 20, 100, 100, 80]);
+    expect(table.columns).toEqual(providers().columns);
+    expect(table.rows).toEqual(providers().rows);
   });
 
   it('keeps unknown columns and keys', () => {
@@ -127,22 +71,39 @@ describe('dnsProviderList', () => {
 describe('statusBadge', () => {
   it('labels statuses in plain words with a tone', () => {
     expect(statusBadge('ok')).toMatchObject({ label: 'OK', tone: 'ok' });
-    expect(statusBadge('http_error')).toMatchObject({ label: 'HTTP error', tone: 'warn' });
-    expect(statusBadge('error')).toMatchObject({ label: 'HTTP error', tone: 'warn' });
-    expect(statusBadge('connection_error')).toMatchObject({
-      label: 'Connection error',
-      tone: 'warn',
-    });
+    expect(statusBadge('partial')).toMatchObject({ label: 'Partly failed', tone: 'warn' });
+    expect(statusBadge('error')).toMatchObject({ label: 'Failed', tone: 'warn' });
+    expect(statusBadge('failed')).toMatchObject({ label: 'Failed', tone: 'warn' });
     expect(statusBadge('dead')).toMatchObject({ label: 'Given up', tone: 'muted' });
     expect(statusBadge(null)).toMatchObject({ label: 'Not checked yet', tone: 'muted' });
   });
 
-  it('carries the raw value in the hover text', () => {
-    expect(statusBadge('connection_error').title).toContain('connection_error');
+  it('labels a settings failure by its kind', () => {
+    expect(statusBadge('failed', 'dead')).toMatchObject({ label: 'Given up', tone: 'muted' });
+    expect(statusBadge('failed', 'http_error')).toMatchObject({ label: 'Failed', tone: 'warn' });
+    expect(statusBadge('failed', 'http_error').title).toContain('http_error');
+  });
+
+  it('carries the raw value and the completed run in the hover text', () => {
+    expect(statusBadge('partial').title).toBe('partial: latest completed run, may be weeks old');
     expect(statusBadge(null).title).toContain('null');
   });
 
   it('shows an unknown status as is', () => {
     expect(statusBadge('brand_new')).toMatchObject({ label: 'brand_new', tone: 'muted' });
+  });
+});
+
+describe('probeCounts', () => {
+  it('counts the answered and failed probes of the latest completed sweep', () => {
+    expect(probeCounts({ support_answered: 1, support_failed: 1 })).toBe('1 answered, 1 failed');
+    expect(probeCounts({ support_answered: 1200, support_failed: 0 })).toBe('1,200 answered');
+    expect(probeCounts({ support_answered: 0, support_failed: 6 })).toBe('0 answered, 6 failed');
+  });
+
+  it('is null without a completed sweep', () => {
+    expect(probeCounts({ support_answered: null, support_failed: null })).toBeNull();
+    expect(probeCounts({})).toBeNull();
+    expect(probeCounts(undefined)).toBeNull();
   });
 });
