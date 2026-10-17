@@ -50,6 +50,11 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(served('Acme Mail')).toHaveText(/^\s*v1 · full\s*morphed\s*$/);
     await expect(served('Example Website')).toHaveText(/^\s*v1 · full\s*outdated\s*$/);
     await expect(served('Example Website').getByTitle(/repository version 2/)).toBeVisible();
+    await expect(served('Example Website').locator('.badge')).toHaveAttribute(
+      'title',
+      "The full template's version (1) is below the repository's (2)",
+    );
+    await expect(served('Acme Mail').locator('.badge')).toHaveAttribute('title', /altered by/);
     await page.goto('dns-provider.html?id=3');
     await expect(
       section(page, 'Supported templates (current state)').locator('tbody td').nth(2),

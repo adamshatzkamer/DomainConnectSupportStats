@@ -69,6 +69,7 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
     (with version, full template, morphed, outdated; count and % of supported). Lists unchanged.
   - Stacks: bar and Median card from `min/median/max_supported_pct`, wording "across deployments
     with probe answers".
+- Maintainer accepted the screenshots (2026-10-17); the match badges get an explainer on hover.
 - Leaderboards: `supported_count` replaces `supported_templates` of `dns-providers.json` (same meaning).
 
 ## Corrections

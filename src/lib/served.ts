@@ -17,6 +17,21 @@ const MATCH_TEXT: Record<string, string> = {
   outdated: 'outdated',
 };
 
+function explainMatch(match: string, version: number | null, repo: number | null): string {
+  switch (match) {
+    case 'match':
+      return "The full template equals the repository's (key order and whitespace ignored)";
+    case 'morphed':
+      return "The full template differs from the repository's: altered by the DNS provider";
+    case 'outdated':
+      return version === null || repo === null
+        ? "The full template's version is below the repository's"
+        : `The full template's version (${version}) is below the repository's (${repo})`;
+    default:
+      return match;
+  }
+}
+
 export interface ServedLabel {
   /** e.g. `v2 · full, morphed`; null when not recorded yet. */
   text: string | null;
@@ -24,6 +39,8 @@ export interface ServedLabel {
   base: string | null;
   /** The match in words, e.g. `morphed`; null without one. */
   match: string | null;
+  /** What the match means, for its hover text; null without one. */
+  matchTitle: string | null;
   title: string;
   tone: 'ok' | 'warn' | null;
 }
@@ -41,7 +58,14 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   const match = str(row.template_match);
   const repo = num(row.repository_version) ?? repositoryVersion;
   if (kind === null)
-    return { text: null, base: null, match: null, title: 'Not recorded yet', tone: null };
+    return {
+      text: null,
+      base: null,
+      match: null,
+      matchTitle: null,
+      title: 'Not recorded yet',
+      tone: null,
+    };
   const kindText = KIND_TEXT[kind] ?? kind;
   const base = version === null ? kindText : `v${version} · ${kindText}`;
   const matchText = match === null ? null : (MATCH_TEXT[match] ?? match);
@@ -57,6 +81,7 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
     text: matchText === null ? base : `${base}, ${matchText}`,
     base,
     match: matchText,
+    matchTitle: match === null ? null : explainMatch(match, version, repo),
     title,
     tone: match === 'match' ? 'ok' : match === 'morphed' || match === 'outdated' ? 'warn' : null,
   };

@@ -57,6 +57,20 @@ describe('servedLabel', () => {
     expect(servedLabel(supporter, 3).title).toContain('repository version 3');
   });
 
+  it('explains the match', () => {
+    expect(servedLabel(full).matchTitle).toBe(
+      "The full template equals the repository's (key order and whitespace ignored)",
+    );
+    expect(servedLabel({ ...full, template_match: 'morphed' }).matchTitle).toBe(
+      "The full template differs from the repository's: altered by the DNS provider",
+    );
+    expect(servedLabel({ ...full, served_version: 1, template_match: 'outdated' }).matchTitle).toBe(
+      "The full template's version (1) is below the repository's (2)",
+    );
+    expect(servedLabel({ ...full, template_match: 'brand_new' }).matchTitle).toBe('brand_new');
+    expect(servedLabel({ ...full, template_match: null }).matchTitle).toBeNull();
+  });
+
   it('shows an unknown response kind or match as is', () => {
     expect(servedLabel({ served_version: 1, response_kind: 'brand_new' }).text).toBe(
       'v1 · brand_new',

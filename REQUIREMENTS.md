@@ -313,7 +313,7 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
   `max_supported_pct`, over its deployments with at least one probe answer.
 - F-2.22 Served templates: per supported (DNS provider, template) pair, one cell: served version,
   response kind and match, e.g. `v2 · full, morphed` (`match` green, `morphed`/`outdated` orange);
-  the hover text gives the raw values and the repository version; "Not recorded yet" while
+  the hover text gives the raw values and the repository version, the match badge's what the match means; "Not recorded yet" while
   `response_kind` is `null`. Counts per DNS provider and stack (with version, full template,
   morphed, outdated) and per template (also current version) show on the cards only, in a "Served
   templates" panel, each with its share: of the DNS provider's supported templates, of the

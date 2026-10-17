@@ -19,7 +19,9 @@
   <span title={s.title}>
     {s.base}
     {#if s.match}
-      <span class="badge {s.tone ? `badge-${s.tone}` : 'badge-muted'}">{s.match}</span>
+      <span class="badge {s.tone ? `badge-${s.tone}` : 'badge-muted'}" title={s.matchTitle}
+        >{s.match}</span
+      >
     {/if}
   </span>
 {/if}
