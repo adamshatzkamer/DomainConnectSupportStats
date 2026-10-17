@@ -64,7 +64,7 @@ src/lib/components/        shared UI: Layout (header/nav/footer), DataTable, Tim
                            NotFound, LoadError, Notes, CardTitle, Panel, ShareMenu,
                            RegistryContact, Registry, RegistryTerm, ContactList, ExternalLink, StatusBadge,
                            Board, NewSupporters, Unavailable, DomainShare, Timestamp,
-                           MarkdownDoc
+                           MarkdownDoc, Served, ServedCounts
 src/lib/data/              the contract in code: types, id encoding, manifest paths, loader
                            (ExportClient), table lookup, data and registry base URL config,
                            derived data types
@@ -207,8 +207,9 @@ Pushing `.github/workflows/` changes needs a token with the `workflow` scope.
 - `src/lib/registry/entry.ts`: `parseEntry()` (registry entry, unknown values as `null`), `parseSource()`
 - `src/lib/registry/schema.ts`: `label()` (schema title, description), `enumTexts()`, `FEATURE_GROUPS`/`FEATURES` from the schema
 - `src/lib/registry/load.ts`: `RegistryClient` (entry, logo URL, `registry.json` once), `entryFileUrl()`
-- `src/lib/dns-providers.ts`: DNS providers list (stack filter, rows hidden by default, shares of the template answers, status badges)
-- `src/lib/templates-list.ts`: templates list (service provider filter, never-probed rows hidden by default, `withSupport()` support columns from `supporting_providers`)
+- `src/lib/dns-providers.ts`: DNS providers list (stack filter, rows hidden by default, status badges, `probeCounts()`)
+- `src/lib/templates-list.ts`: templates list (service provider filter, never-probed rows hidden by default, `withSupport()` support columns from `supported_count`)
+- `src/lib/served.ts`: what supporting DNS providers serve: `servedLabel()` (version, response kind, match), `servedCounts()`, `templateServedCounts()`, `supportedPairs()`; shown by `Served.svelte`, `ServedCounts.svelte`
 - `src/lib/domains.ts`: domain figures' hover text (`scanLabel`, `shareScan`, `domainsTitle`, `ofScanned`)
 - `src/lib/supporting.ts`: DNS providers supporting at least one template (overview `ecosystem`), shares of them, `templateCount()`
 - `src/lib/overview-facts.ts`: `overviewFacts()`: scan and supporting DNS providers for pages other than the overview

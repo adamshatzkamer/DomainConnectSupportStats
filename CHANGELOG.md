@@ -4,6 +4,22 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.22.0] - 2026-10-17
+
+### Added
+
+- What each supporting DNS provider serves (version, full template, morphed or outdated) on the
+  DNS provider and template cards, and counted per DNS provider, stack and template.
+- DNS provider card: settings and support status, errors and last-OK times.
+- Support status shows the answered and failed probes of the latest completed sweep.
+
+### Changed
+
+- Reads export `format_version` 5: support counts templates, statuses describe the latest
+  completed run (new values: failed, partly failed).
+- A stack's support range leaves out deployments without probe answers.
+- A template counts as never probed while no DNS provider has answered for it.
+
 ## [0.21.2] - 2026-10-13
 
 ### Changed
