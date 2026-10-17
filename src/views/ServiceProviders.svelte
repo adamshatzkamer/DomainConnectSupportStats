@@ -97,8 +97,9 @@
         />
         <ul class="caveats" data-testid="caveats">
           <li>
-            Templates count every version of a template once. Supported: templates at least one DNS
-            provider supports (<a href={links.methodology('52-support-probe')}>methodology 5.2</a>).
+            Supported: templates at least one DNS provider supports (<a
+              href={links.methodology('52-support-probe')}>methodology 5.2</a
+            >).
           </li>
           <li>DNS providers: those supporting at least one of its templates, each counted once.</li>
           <li>

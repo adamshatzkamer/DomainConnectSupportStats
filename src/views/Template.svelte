@@ -7,6 +7,8 @@
   import LoadError from '../lib/components/LoadError.svelte';
   import NotFound from '../lib/components/NotFound.svelte';
   import Notes from '../lib/components/Notes.svelte';
+  import Served from '../lib/components/Served.svelte';
+  import ServedCounts from '../lib/components/ServedCounts.svelte';
   import StatCard from '../lib/components/StatCard.svelte';
   import { scannerStart } from '../lib/data/config';
   import TimeChart from '../lib/components/TimeChart.svelte';
@@ -33,12 +35,15 @@
   import DomainShare from '../lib/components/DomainShare.svelte';
   import { NO_FACTS, overviewFacts, type OverviewFacts } from '../lib/overview-facts';
   import { ofSupporting } from '../lib/supporting';
+  import { templateServedCounts } from '../lib/served';
 
   const spid = textParam(window.location.search, 'spid');
   const sid = textParam(window.location.search, 'sid');
   const client = defaultClient();
   let manifest = $state<Manifest | null>(null);
   let facts = $state<OverviewFacts>(NO_FACTS);
+  /** The template's version in the Templates repository, for the supporters' served versions. */
+  let repositoryVersion = $state<number | null>(null);
 
   /** The card, or null when a parameter is missing or the template has no card (404). */
   const loading: Promise<ExportFile | null> = client.manifest().then((m) => {
@@ -47,8 +52,9 @@
     void overviewFacts(client, m).then((f) => (facts = f));
     return client.file('template', { service_provider_id: spid, service_id: sid }).then(
       (file) => {
-        const name = text(oneRecord(findTable(file, 'metadata')), 'name');
-        document.title = pageTitle(name ?? 'Unnamed template', 'Template');
+        const metadata = oneRecord(findTable(file, 'metadata'));
+        repositoryVersion = num(metadata, 'version');
+        document.title = pageTitle(text(metadata, 'name') ?? 'Unnamed template', 'Template');
         return file;
       },
       (e: unknown) => {
@@ -76,11 +82,6 @@
     const v = row?.[key];
     return typeof v === 'string' ? v : null;
   }
-
-  function versionList(row: Row | undefined): string {
-    const v = row?.versions;
-    return Array.isArray(v) ? v.join(', ') : UNKNOWN;
-  }
 </script>
 
 {#snippet supporterCell(column: Column, row: Row)}
@@ -92,6 +93,8 @@
   {:else if column.key === 'provider_id'}
     {@const s = text(row, 'provider_id')}
     {#if s}<a href={links.stack(s)}>{s}</a>{:else}{UNKNOWN}{/if}
+  {:else if column.key === 'served_version'}
+    <Served {row} {repositoryVersion} />
   {:else if column.key === 'reach_pct'}
     <DomainShare pct={num(row, 'reach_pct')} domains={num(row, 'domains')} scan={facts.scan} />
   {/if}
@@ -113,6 +116,7 @@
       {@const templateName = text(metadata, 'name') ?? 'Unnamed template'}
       {@const logoUrl = safeUrl(text(metadata, 'logo_url'))}
       {@const total = supporters?.footer}
+      {@const served = oneRecord(findTable(file, 'served'))}
 
       <CardTitle
         kind="Template"
@@ -132,7 +136,7 @@
           label="Supporting DNS providers"
           detail={supporters && facts.supportingDnsProviders !== null
             ? `${formatPct(ofSupporting(supporters.rows.length, facts.supportingDnsProviders))} of ${formatCount(facts.supportingDnsProviders)} with at least 1 template`
-            : 'any version, in the latest probes'}
+            : 'in the latest probes'}
         />
         <StatCard
           value={formatPct(num(total, 'reach_pct'))}
@@ -145,7 +149,9 @@
         <StatCard
           value={num(metadata, 'version') === null ? UNKNOWN : `${num(metadata, 'version')}`}
           label="Version"
-          detail={`stored versions: ${versionList(metadata)}`}
+          detail={served
+            ? `${formatCount(num(served, 'current_version_count'))} of ${formatCount(num(served, 'supporters'))} supporters serve it`
+            : 'in the Templates repository'}
         />
       </section>
 
@@ -211,21 +217,28 @@
         >
           <DataTable
             table={supporters}
-            keys={['name', 'provider_id', 'versions', 'since', 'reach_pct']}
-            customKeys={['name', 'provider_id', 'reach_pct']}
-            phoneKeys={['name', 'since', 'reach_pct']}
+            keys={['name', 'provider_id', 'served_version', 'since', 'reach_pct']}
+            customKeys={['name', 'provider_id', 'served_version', 'reach_pct']}
+            phoneKeys={['name', 'served_version', 'since', 'reach_pct']}
             searchable
             pageSize={20}
             cell={supporterCell}
             emptyText="No DNS provider supports it in the latest probes"
           />
           <p class="caveat" data-testid="since-caveat">
-            Supported since: when a probe first saw the DNS provider support any version of the
-            template. New versions and gaps in support don't move it (<a
+            Supported since: when a probe first saw the DNS provider support the template. New
+            versions and gaps in support don't move it (<a
               href={links.methodology('52-support-probe')}>methodology 5.2</a
             >).
           </p>
         </Panel>
+      {/if}
+
+      {#if served}
+        <ServedCounts
+          counts={templateServedCounts(served)}
+          of={`of ${formatCount(num(served, 'supporters'))} supporters`}
+        />
       {/if}
 
       {#if records}

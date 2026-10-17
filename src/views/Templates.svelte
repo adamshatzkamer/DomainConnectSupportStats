@@ -146,9 +146,9 @@
         />
         <ul class="caveats" data-testid="caveats">
           <li>
-            Supported: DNS providers supporting any version of the template; not supported: the
-            other DNS providers supporting at least one template ({formatCount(total)}), including
-            those not yet determined. Both as a share of those {formatCount(total)} (<a
+            Supported: DNS providers supporting the template; not supported: the other DNS providers
+            supporting at least one template ({formatCount(total)}), including those not yet
+            determined. Both as a share of those {formatCount(total)} (<a
               href={links.methodology('52-support-probe')}>methodology 5.2</a
             >).
           </li>

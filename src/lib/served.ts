@@ -96,3 +96,11 @@ export function templateServedCounts(served: Row | undefined): ServedCount[] {
     num(served?.supporters),
   );
 }
+
+/** Supported templates summed over a stack's deployments: the denominator of its served counts; null when one is unknown. */
+export function supportedPairs(deployments: Row[]): number | null {
+  return deployments.reduce<number | null>((sum, r) => {
+    const n = num(r.supported_count);
+    return sum === null || n === null ? null : sum + n;
+  }, 0);
+}

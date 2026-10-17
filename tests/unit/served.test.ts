@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Row, Table } from '../../src/lib/data/types';
 import { findTable, oneRecord } from '../../src/lib/data/tables';
-import { servedCounts, servedLabel, templateServedCounts } from '../../src/lib/served';
+import {
+  servedCounts,
+  servedLabel,
+  supportedPairs,
+  templateServedCounts,
+} from '../../src/lib/served';
 import { exampleJson } from '../fixtures';
 
 describe('servedLabel', () => {
@@ -44,9 +49,12 @@ describe('servedLabel', () => {
     expect(servedLabel(full).title).toBe(
       'Served version 2, repository version 2, response template, match match',
     );
-    expect(servedLabel({ ...full, repository_version: undefined }, 3).title).toContain(
-      'repository version 3',
-    );
+    const supporter: Row = {
+      served_version: 2,
+      response_kind: 'template',
+      template_match: 'match',
+    };
+    expect(servedLabel(supporter, 3).title).toContain('repository version 3');
   });
 
   it('shows an unknown response kind or match as is', () => {
@@ -90,5 +98,14 @@ describe('templateServedCounts', () => {
     ]);
     const supporters = served?.supporters as number;
     expect(counts.every((c) => c.pct === (c.count! / supporters) * 100)).toBe(true);
+  });
+});
+
+describe('supportedPairs', () => {
+  it("sums the deployments' supported templates", () => {
+    const deployments = findTable(exampleJson('stacks/plesk.com.json'), 'deployments')!.rows;
+    expect(supportedPairs(deployments)).toBe(3);
+    expect(supportedPairs([])).toBe(0);
+    expect(supportedPairs([...deployments, { supported_count: null }])).toBeNull();
   });
 });

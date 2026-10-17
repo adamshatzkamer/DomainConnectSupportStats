@@ -134,8 +134,8 @@
         testid="board-templates"
       >
         <p class="muted about">
-          Templates supported now by each DNS provider, each counted once whatever its versions.
-          Every deployment of a stack ranks on its own.
+          Templates supported now by each DNS provider. Every deployment of a stack ranks on its
+          own.
         </p>
         <Board
           caption="DNS providers by templates supported"
