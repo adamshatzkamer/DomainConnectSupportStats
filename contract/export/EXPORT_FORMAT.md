@@ -1025,7 +1025,7 @@ shown indented; data files are shown as written.
 {
   "format_version": 5,
   "generated_at": "2026-10-01T00:00:00Z",
-  "schema_version": 21,
+  "schema_version": 22,
   "share_import": {
     "import_id": 1780272000,
     "status": "completed",
