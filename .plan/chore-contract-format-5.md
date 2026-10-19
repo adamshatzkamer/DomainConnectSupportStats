@@ -43,6 +43,11 @@ shows the new meaning of the counts, the new statuses and what each DNS provider
   passed on rerun: 42/42).
 - Production data repo (`statsdata/providers`, 2026-10-17T05:00:03Z) is still `format_version` 2:
   real-release check waits for the Scanner rollout (DomainConnectScanner#277).
+- Scanner release `2026-10-19.01-22` (8b7c9d5, schema 22): contract differs from dc99260 only in
+  the example's informational `schema_version` (21 → 22); copied.
+- Data release 2026-10-19T05:00:02Z is `format_version` 1, `schema_version` 16 (10-17 and 10-18
+  were 2); Deploy 39204919184 refused it (`/format_version must be equal to constant`), Pages
+  keeps the 10-18 data. It ran before the Scanner tag was published (10:22 UTC).
 - Methodology anchors used by the site (`52-support-probe`, `61-status-values`, ...) still exist.
 
 ## Decisions
