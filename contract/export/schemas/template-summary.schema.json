@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/template-summary.schema.json",
   "title": "report.py template-summary --output-mode json",
-  "description": "Every template of --service-provider-id (only --service-id when given), ordered by service id, each as four tables in turn - metadata, records, supporting DNS providers, support history - keyed '<service provider id>/<service id>/metadata|records|supporters|history'. No tables, and a second note, when no template matches. Support is current state; domains/reach_pct describe the selected import (--import-id, default the newest completed one), named in the first note.",
+  "description": "Every template of --service-provider-id (only --service-id when given), ordered by service id, each as five tables in turn - metadata, records, supporting DNS providers, what they serve, support history - keyed '<service provider id>/<service id>/metadata|records|supporters|served|history'. No tables, and a second note, when no template matches. Support is current state; domains/reach_pct describe the selected import (--import-id, default the newest completed one), named in the first note.",
   "$ref": "common.schema.json#/$defs/report",
   "properties": {
     "notes": {
@@ -17,6 +17,7 @@
         "^[^/]+/[^/]+/metadata$": { "$ref": "#/$defs/metadataTable" },
         "^[^/]+/[^/]+/records$": { "$ref": "#/$defs/recordsTable" },
         "^[^/]+/[^/]+/supporters$": { "$ref": "#/$defs/supportersTable" },
+        "^[^/]+/[^/]+/served$": { "$ref": "#/$defs/servedTable" },
         "^[^/]+/[^/]+/history$": { "$ref": "#/$defs/historyTable" }
       },
       "additionalProperties": false
@@ -24,7 +25,7 @@
   },
   "$defs": {
     "metadataTable": {
-      "description": "The newest stored version's services row, plus every stored version, as one record: one row, one column per field, always these fields in this order (txt/markdown show it transposed, one line per field).",
+      "description": "The template's services row as one record: one row, one column per field, always these fields in this order (txt/markdown show it transposed, one line per field).",
       "properties": {
         "title": { "type": "string" },
         "columns": {
@@ -34,7 +35,6 @@
             { "properties": { "key": { "const": "service_id" } } },
             { "properties": { "key": { "const": "name" } } },
             { "properties": { "key": { "const": "version" } } },
-            { "properties": { "key": { "const": "versions" } } },
             { "properties": { "key": { "const": "description" } } },
             { "properties": { "key": { "const": "variable_description" } } },
             { "properties": { "key": { "const": "logo_url" } } },
@@ -42,7 +42,7 @@
             { "properties": { "key": { "const": "created_at" } } },
             { "properties": { "key": { "const": "updated_at" } } }
           ],
-          "minItems": 12,
+          "minItems": 11,
           "items": false
         },
         "rows": { "$ref": "common.schema.json#/$defs/oneRow", "items": { "$ref": "#/$defs/metadataRow" } },
@@ -56,8 +56,7 @@
         "service_provider_id": { "type": "string" },
         "service_id": { "type": "string" },
         "name": { "$ref": "common.schema.json#/$defs/nullableString" },
-        "version": { "description": "The newest stored version, the one described here.", "type": "integer", "minimum": 0 },
-        "versions": { "description": "Every stored version, newest first.", "allOf": [{ "$ref": "common.schema.json#/$defs/versions" }], "minItems": 1 },
+        "version": { "description": "The template's version in the Domain Connect Templates repository now.", "type": "integer", "minimum": 0 },
         "description": { "description": "Free text from the template; may span several lines.", "$ref": "common.schema.json#/$defs/nullableString" },
         "variable_description": { "$ref": "common.schema.json#/$defs/nullableString" },
         "logo_url": { "$ref": "common.schema.json#/$defs/nullableString" },
@@ -71,7 +70,6 @@
         "service_id",
         "name",
         "version",
-        "versions",
         "description",
         "variable_description",
         "logo_url",
@@ -97,7 +95,7 @@
       }
     },
     "supportersTable": {
-      "description": "DNS providers currently supporting any version of the template - as many as there are rows.",
+      "description": "DNS providers currently supporting the template, with what their latest 200 served (GitHub issue #281) - as many as there are rows.",
       "properties": {
         "title": { "type": "string" },
         "columns": {
@@ -106,12 +104,14 @@
             { "properties": { "key": { "const": "dns_provider_id" } } },
             { "properties": { "key": { "const": "provider_id" } } },
             { "properties": { "key": { "const": "api_host" } } },
-            { "properties": { "key": { "const": "versions" } } },
+            { "properties": { "key": { "const": "served_version" } } },
+            { "properties": { "key": { "const": "response_kind" } } },
+            { "properties": { "key": { "const": "template_match" } } },
             { "properties": { "key": { "const": "since" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "reach_pct" } } }
           ],
-          "minItems": 8,
+          "minItems": 10,
           "items": false
         },
         "rows": {
@@ -135,19 +135,18 @@
                 "description": "Host of the provider's urlAPI; null when it declares none.",
                 "$ref": "common.schema.json#/$defs/nullableString"
               },
-              "versions": {
-                "description": "Template versions this provider supports, ascending.",
-                "allOf": [{ "$ref": "common.schema.json#/$defs/versions" }],
-                "minItems": 1
-              },
+              "served_version": { "$ref": "common.schema.json#/$defs/servedVersion" },
+              "response_kind": { "$ref": "common.schema.json#/$defs/responseKind" },
+              "template_match": { "$ref": "common.schema.json#/$defs/templateMatch" },
               "since": {
-                "description": "When this provider first supported any version of the template (support_history), as report.py dns-provider-summary's supported_templates since: version changes and gaps do not restart it. null if the event log has no record of it.",
+                "description": "When this provider first supported the template (support_history), as report.py dns-provider-summary's supported_templates since: gaps do not restart it. null if the event log has no record of it.",
                 "$ref": "common.schema.json#/$defs/nullableTimestamp"
               },
               "domains": { "$ref": "common.schema.json#/$defs/nullableCount" },
               "reach_pct": { "$ref": "common.schema.json#/$defs/nullablePercentage" }
             },
-            "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "since", "domains", "reach_pct"],
+            "required": ["name", "dns_provider_id", "provider_id", "api_host", "served_version", "response_kind",
+                         "template_match", "since", "domains", "reach_pct"],
             "additionalProperties": false
           }
         },
@@ -159,14 +158,52 @@
             "dns_provider_id": { "type": "null" },
             "provider_id": { "type": "null" },
             "api_host": { "type": "null" },
-            "versions": { "type": "null" },
+            "served_version": { "type": "null" },
+            "response_kind": { "type": "null" },
+            "template_match": { "type": "null" },
             "since": { "type": "null" },
             "domains": { "$ref": "common.schema.json#/$defs/nullableCount" },
             "reach_pct": { "$ref": "common.schema.json#/$defs/nullablePercentage" }
           },
-          "required": ["name", "dns_provider_id", "provider_id", "api_host", "versions", "since", "domains", "reach_pct"],
+          "required": ["name", "dns_provider_id", "provider_id", "api_host", "served_version", "response_kind",
+                       "template_match", "since", "domains", "reach_pct"],
           "additionalProperties": false
         }
+      }
+    },
+    "servedTable": {
+      "description": "What the supporters' latest 200s served, counted (GitHub issue #281): one row (txt/markdown show it transposed).",
+      "properties": {
+        "title": { "type": "string" },
+        "columns": {
+          "prefixItems": [
+            { "properties": { "key": { "const": "supporters" } } },
+            { "properties": { "key": { "const": "with_version_count" } } },
+            { "properties": { "key": { "const": "current_version_count" } } },
+            { "properties": { "key": { "const": "full_template_count" } } },
+            { "properties": { "key": { "const": "morphed_count" } } },
+            { "properties": { "key": { "const": "outdated_count" } } }
+          ],
+          "minItems": 6,
+          "items": false
+        },
+        "rows": {
+          "$ref": "common.schema.json#/$defs/oneRow",
+          "items": {
+            "type": "object",
+            "allOf": [{ "$ref": "common.schema.json#/$defs/servedCountColumns" }],
+            "properties": {
+              "supporters": { "description": "Supporting DNS providers: the supporters table's rows.", "$ref": "common.schema.json#/$defs/count" },
+              "current_version_count": {
+                "description": "Supporters whose answer named the repository's version (served_version = metadata version).",
+                "$ref": "common.schema.json#/$defs/count"
+              }
+            },
+            "required": ["supporters", "current_version_count"],
+            "unevaluatedProperties": false
+          }
+        },
+        "footer": { "type": "null" }
       }
     },
     "historyTable": {

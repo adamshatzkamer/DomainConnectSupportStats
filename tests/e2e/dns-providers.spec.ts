@@ -19,21 +19,28 @@ test.describe('DNS providers list (dns-providers.html)', () => {
       cloudflare.getByTitle('4,000 of 12K scanned domains in the partial scan of 01-06-2026'),
     ).toHaveText('33.3%');
     await expect(page.getByTestId('caveats')).toContainText('share of every template (5)');
-    await expect(page.getByTestId('caveats')).toContainText('last attempt');
+    await expect(page.getByTestId('caveats')).toContainText('latest completed run');
   });
 
   test('shows statuses as badges with the raw value on hover', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile', 'status columns hidden at phone width');
     await page.goto('dns-providers.html?all=1');
     const plesk3 = page.locator('tbody tr').nth(3);
-    await expect(plesk3.locator('.badge', { hasText: 'HTTP error' })).toHaveAttribute(
+    await expect(plesk3.locator('.badge', { hasText: 'Failed' })).toHaveAttribute(
       'title',
-      /^http_error/,
+      /^failed: latest completed run/,
     );
+    await expect(plesk3).toContainText('0 answered, 6 failed');
     await expect(plesk3.locator('.badge', { hasText: 'Given up' })).toHaveAttribute(
       'title',
       /^dead/,
     );
+    const ionos = page.locator('tbody tr', { hasText: 'IONOS' });
+    await expect(ionos.locator('.badge', { hasText: 'Partly failed' })).toHaveAttribute(
+      'title',
+      /^partial/,
+    );
+    await expect(ionos).toContainText('1 answered, 1 failed');
     const small = page.locator('tbody tr', { hasText: 'Small Registrar' });
     await expect(small.locator('.badge', { hasText: 'Not checked yet' })).toHaveAttribute(
       'title',

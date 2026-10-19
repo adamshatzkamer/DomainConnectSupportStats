@@ -8,16 +8,16 @@ export interface SupportRange {
   width: number;
 }
 
-export const MIN_KEY = 'min_supported_templates_pct';
-export const MEDIAN_KEY = 'median_supported_templates_pct';
-export const MAX_KEY = 'max_supported_templates_pct';
+export const MIN_KEY = 'min_supported_pct';
+export const MEDIAN_KEY = 'median_supported_pct';
+export const MAX_KEY = 'max_supported_pct';
 
 const clamp = (v: number) => Math.min(100, Math.max(0, v));
 
 const pct = (row: Row, key: string): number | null =>
   typeof row[key] === 'number' ? (row[key] as number) : null;
 
-/** A stack's template support distribution (`*_supported_templates_pct`) as bar geometry; null when unknown. */
+/** A stack's template support distribution (`*_supported_pct`, deployments with a probe answer) as bar geometry; null when unknown. */
 export function supportRange(row: Row): SupportRange | null {
   const min = pct(row, MIN_KEY);
   const max = pct(row, MAX_KEY);

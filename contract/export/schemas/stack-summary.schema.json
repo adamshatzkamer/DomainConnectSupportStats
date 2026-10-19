@@ -41,16 +41,17 @@
             { "properties": { "key": { "const": "min_supported_pct" } } },
             { "properties": { "key": { "const": "median_supported_pct" } } },
             { "properties": { "key": { "const": "max_supported_pct" } } },
-            { "properties": { "key": { "const": "min_supported_templates_pct" } } },
-            { "properties": { "key": { "const": "median_supported_templates_pct" } } },
-            { "properties": { "key": { "const": "max_supported_templates_pct" } } },
             { "properties": { "key": { "const": "supported_templates" } } },
             { "properties": { "key": { "const": "supported_templates_change" } } },
             { "properties": { "key": { "const": "supported_templates_change_90d" } } },
+            { "properties": { "key": { "const": "with_version_count" } } },
+            { "properties": { "key": { "const": "full_template_count" } } },
+            { "properties": { "key": { "const": "morphed_count" } } },
+            { "properties": { "key": { "const": "outdated_count" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "domains_pct" } } }
           ],
-          "minItems": 14,
+          "minItems": 15,
           "items": false
         },
         "rows": { "$ref": "common.schema.json#/$defs/oneRow", "items": { "$ref": "stacks.schema.json#/$defs/row" } },
@@ -68,28 +69,29 @@
             { "properties": { "key": { "const": "api_host" } } },
             { "properties": { "key": { "const": "settings_status" } } },
             { "properties": { "key": { "const": "support_status" } } },
+            { "properties": { "key": { "const": "support_answered" } } },
+            { "properties": { "key": { "const": "support_failed" } } },
             { "properties": { "key": { "const": "total" } } },
             { "properties": { "key": { "const": "supported_count" } } },
             { "properties": { "key": { "const": "supported_pct" } } },
             { "properties": { "key": { "const": "unsupported_count" } } },
             { "properties": { "key": { "const": "unsupported_pct" } } },
-            { "properties": { "key": { "const": "pending_count" } } },
-            { "properties": { "key": { "const": "pending_pct" } } },
-            { "properties": { "key": { "const": "failed_count" } } },
-            { "properties": { "key": { "const": "failed_pct" } } },
-            { "properties": { "key": { "const": "supported_templates" } } },
+            { "properties": { "key": { "const": "undetermined_count" } } },
+            { "properties": { "key": { "const": "undetermined_pct" } } },
             { "properties": { "key": { "const": "supported_templates_change" } } },
             { "properties": { "key": { "const": "supported_templates_change_90d" } } },
-            { "properties": { "key": { "const": "unsupported_templates" } } },
-            { "properties": { "key": { "const": "undetermined_templates" } } },
+            { "properties": { "key": { "const": "with_version_count" } } },
+            { "properties": { "key": { "const": "full_template_count" } } },
+            { "properties": { "key": { "const": "morphed_count" } } },
+            { "properties": { "key": { "const": "outdated_count" } } },
             { "properties": { "key": { "const": "domains" } } },
             { "properties": { "key": { "const": "domains_pct" } } }
           ],
-          "minItems": 21,
+          "minItems": 22,
           "items": false
         },
         "rows": {
-          "description": "Ordered like report.py dns-providers: by domains (descending) when a domain share is selected, otherwise by supported templates descending. At least one row.",
+          "description": "Ordered like report.py dns-providers: by domains (descending) when a domain share is selected, otherwise by supported_count descending. At least one row.",
           "minItems": 1,
           "items": { "$ref": "#/$defs/deploymentRow" }
         },
@@ -98,8 +100,7 @@
     },
     "deploymentRow": {
       "allOf": [
-        { "$ref": "#/$defs/publicDeploymentRow" },
-        { "$ref": "common.schema.json#/$defs/internalSupportBucketColumns" }
+        { "$ref": "#/$defs/publicDeploymentRow" }
       ],
       "unevaluatedProperties": false
     },
@@ -108,8 +109,8 @@
       "type": "object",
       "allOf": [
         { "$ref": "common.schema.json#/$defs/publicSupportBucketColumns" },
-        { "$ref": "common.schema.json#/$defs/templateTrendColumns" },
-        { "$ref": "common.schema.json#/$defs/templateAnswerColumns" }
+        { "$ref": "common.schema.json#/$defs/templateChangeColumns" },
+        { "$ref": "common.schema.json#/$defs/servedCountColumns" }
       ],
       "properties": {
         "name": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/name" },
@@ -117,11 +118,13 @@
         "api_host": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/api_host" },
         "settings_status": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/settings_status" },
         "support_status": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/support_status" },
+        "support_answered": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/support_answered" },
+        "support_failed": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/support_failed" },
         "total": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/total" },
         "domains": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/domains" },
         "domains_pct": { "$ref": "dns-providers.schema.json#/$defs/publicRow/properties/domains_pct" }
       },
-      "required": ["name", "dns_provider_id", "api_host", "settings_status", "support_status", "total", "domains", "domains_pct"]
+      "required": ["name", "dns_provider_id", "api_host", "settings_status", "support_status", "support_answered", "support_failed", "total", "domains", "domains_pct"]
     },
     "coverageTable": {
       "description": "How many of the stack's deployments support each template.",
@@ -156,7 +159,7 @@
         "service_name": { "description": "Name of the newest stored version; falls back to service_id.", "type": "string" },
         "service_id": { "type": "string" },
         "supporting_deployments": {
-          "description": "Deployments whose latest probe of any version of the template said supported (the SUPPORTED rule of report.py dns-providers).",
+          "description": "Deployments supporting any version of the template (the SUPPORTED rule of report.py dns-providers).",
           "type": "integer",
           "minimum": 1
         },

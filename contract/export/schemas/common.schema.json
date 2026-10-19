@@ -70,54 +70,48 @@
       "enum": ["live", "snapshot"]
     },
     "settingsStatus": {
-      "description": "dns_providers.settings_last_status; null until the first settings attempt is recorded.",
-      "enum": ["ok", "http_error", "connection_error", "dead", null]
+      "description": "Outcome of the newest settings run that settled one of the provider's Domain Connect URLs (GitHub issue #272): 'ok' if one answered (possibly after retries), 'failed' once every retry was used up or the host was given up. A request still retrying changes nothing. null before the first settled run.",
+      "enum": ["ok", "failed", null]
+    },
+    "settingsErrorKind": {
+      "description": "Why the newest settled settings run failed: 'http_error' (an unusable HTTP answer, every retry used up) or 'dead' (the host was given up: unreachable for a long time, or a permanent failure such as an invalid TLS certificate). null unless settings status is 'failed'.",
+      "enum": ["http_error", "dead", null]
     },
     "supportStatus": {
-      "description": "dns_providers.support_last_status; null until the first support probe is recorded.",
-      "enum": ["ok", "error", "dead", null]
+      "description": "Outcome of the newest completed support sweep covering the provider (GitHub issue #272), from each probe's final outcome after its retries: 'ok' (every probe answered), 'partial' (some answered, some failed), 'error' (none answered) or 'dead' (the host was given up during the sweep). A sweep still running changes nothing. null before the first completed sweep.",
+      "enum": ["ok", "partial", "error", "dead", null]
     },
-    "versions": {
-      "description": "Template (service) versions.",
-      "type": "array",
-      "items": { "type": "integer", "minimum": 0 },
-      "uniqueItems": true
+    "supportAnswered": {
+      "description": "Probes of the newest completed support sweep covering the provider that ended with an answer (supported or not supported); null before the first completed sweep.",
+      "$ref": "#/$defs/nullableCount"
+    },
+    "supportFailed": {
+      "description": "Probes of the newest completed support sweep covering the provider that ended in an error after their retries; null before the first completed sweep.",
+      "$ref": "#/$defs/nullableCount"
     },
     "nullableString": {
       "type": ["string", "null"]
     },
     "publicSupportBucketColumns": {
-      "description": "The published support buckets: supported / not supported (404), each with its percentage of the row's total. total - supported - unsupported is not yet determined (pending, backed off or failed probes).",
+      "description": "The support buckets, results only (GitHub issues #265/#270/#271): supported (the latest conclusive probe answered 200) / not supported (it answered 404) - a failed or queued re-probe changes neither - and undetermined, the rest of the row's total (no conclusive answer yet: never probed, queued, retrying or failed - probe progress is report.py status's, never a result), each with its percentage of the row's total. The three counts sum to the total.",
       "type": "object",
       "properties": {
         "supported_count": { "$ref": "#/$defs/count" },
         "supported_pct": { "$ref": "#/$defs/nullableBoundedPercentage" },
         "unsupported_count": { "$ref": "#/$defs/count" },
-        "unsupported_pct": { "$ref": "#/$defs/nullableBoundedPercentage" }
+        "unsupported_pct": { "$ref": "#/$defs/nullableBoundedPercentage" },
+        "undetermined_count": { "$ref": "#/$defs/count" },
+        "undetermined_pct": { "$ref": "#/$defs/nullableBoundedPercentage" }
       },
-      "required": ["supported_count", "supported_pct", "unsupported_count", "unsupported_pct"]
+      "required": ["supported_count", "supported_pct", "unsupported_count", "unsupported_pct",
+                   "undetermined_count", "undetermined_pct"]
     },
-    "internalSupportBucketColumns": {
-      "description": "The pipeline-bookkeeping support buckets: pending or backed off / terminally failed, each with its percentage of the row's total. Internal columns: report.py shows them, the static export leaves them out.",
+    "templateChangeColumns": {
+      "description": "The change of the supported templates (GitHub issue #219), for leaderboards. A change is null, never 0, when nothing measured the reference point: no such sweep, or it started before the DNS provider (a stack: its first deployment) was first seen.",
       "type": "object",
       "properties": {
-        "pending_count": { "$ref": "#/$defs/count" },
-        "pending_pct": { "$ref": "#/$defs/nullableBoundedPercentage" },
-        "failed_count": { "$ref": "#/$defs/count" },
-        "failed_pct": { "$ref": "#/$defs/nullableBoundedPercentage" }
-      },
-      "required": ["pending_count", "pending_pct", "failed_count", "failed_pct"]
-    },
-    "templateTrendColumns": {
-      "description": "Distinct supported templates and their change (GitHub issue #219), for leaderboards. A change is null, never 0, when nothing measured the reference point: no such sweep, or it started before the DNS provider (a stack: its first deployment) was first seen.",
-      "type": "object",
-      "properties": {
-        "supported_templates": {
-          "description": "Templates (service provider, service id) supported now in any version - supported_count with versions folded.",
-          "$ref": "#/$defs/count"
-        },
         "supported_templates_change": {
-          "description": "Change in supported templates from the previous sweep to the latest one, by the support history's replay (each template's last probe answer, so a DNS provider whose probes now fail keeps what it last supported there).",
+          "description": "Change in supported templates from the previous sweep to the latest one, by the support history's replay (support confirmed by a 200 until a 404 withdraws it).",
           "type": ["integer", "null"]
         },
         "supported_templates_change_90d": {
@@ -125,22 +119,55 @@
           "type": ["integer", "null"]
         }
       },
-      "required": ["supported_templates", "supported_templates_change", "supported_templates_change_90d"]
+      "required": ["supported_templates_change", "supported_templates_change_90d"]
     },
-    "templateAnswerColumns": {
-      "description": "A DNS provider's answer per template, any version counted once (GitHub issue #252): supported_templates (supported in any version), unsupported_templates and undetermined_templates sum to every stored template - the rows of report.py service-templates / the export's templates.json.",
+    "templateTrendColumns": {
+      "description": "Distinct templates any deployment of a stack supports, and their change (templateChangeColumns).",
       "type": "object",
+      "allOf": [{ "$ref": "#/$defs/templateChangeColumns" }],
       "properties": {
-        "unsupported_templates": {
-          "description": "Templates no version of which is supported, and every stored version of which the latest probe answered not supported.",
-          "$ref": "#/$defs/count"
-        },
-        "undetermined_templates": {
-          "description": "Templates neither supported nor not supported: never probed, pending, retrying or failed, or mixed - some version answered not supported while another has no answer yet (e.g. v1 not supported, v2 pending).",
+        "supported_templates": {
+          "description": "Templates (service provider, service id) any deployment supports now, each once.",
           "$ref": "#/$defs/count"
         }
       },
-      "required": ["unsupported_templates", "undetermined_templates"]
+      "required": ["supported_templates"]
+    },
+    "servedCountColumns": {
+      "description": "What the supported templates' answers served (GitHub issue #281), per DNS provider (a stack: summed over its deployments). Each counts supported templates whose latest 200 carried it; templates supported before the provider was probed for it since are in none.",
+      "type": "object",
+      "properties": {
+        "with_version_count": {
+          "description": "Supported templates whose answer named a version (served_version not null).",
+          "$ref": "#/$defs/count"
+        },
+        "full_template_count": {
+          "description": "Supported templates answered with the full template (response_kind 'template').",
+          "$ref": "#/$defs/count"
+        },
+        "morphed_count": {
+          "description": "Full templates differing from the repository's (template_match 'morphed').",
+          "$ref": "#/$defs/count"
+        },
+        "outdated_count": {
+          "description": "Full templates with a version below the repository's (template_match 'outdated').",
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": ["with_version_count", "full_template_count", "morphed_count", "outdated_count"]
+    },
+    "servedVersion": {
+      "description": "The version the DNS provider's latest 200 named (GitHub issue #281); null when it named none, or when the provider was not probed for the template since it began to be recorded.",
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "responseKind": {
+      "description": "What the DNS provider's latest 200 carried (GitHub issue #281): 'empty' (no usable body), 'version' (its version only) or 'template' (the full template); null when not recorded yet.",
+      "enum": ["empty", "version", "template", null]
+    },
+    "templateMatch": {
+      "description": "For a full template (response_kind 'template'): 'match' (equal to the repository's, canonicalised), 'morphed' (altered), 'outdated' (its version below the repository's); null otherwise, or when the repository template is not recorded yet.",
+      "enum": ["match", "morphed", "outdated", null]
     },
     "sweepHistoryRow": {
       "description": "One support sweep (support_probe_job_generator_runs row), oldest first.",

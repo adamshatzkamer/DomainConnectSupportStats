@@ -108,13 +108,16 @@ describe('deriveEcosystem', () => {
     expect(derived.ecosystem.map((r) => [r.sweep_id, r.started_at])).toEqual([
       [1, '2026-03-02 02:00:00'],
       [4, '2026-06-02 02:00:00'],
+      [7, '2026-06-14 03:00:00'],
       [6, '2026-09-02 02:00:00'],
     ]);
-    // Sweep 1 window: DNS provider 3's support from sweep 2 counts.
+    // Sweep 1 window: DNS provider 3's support from sweep 2 counts. Weekly sweep 7 leaves out
+    // DNS provider 3: its state carries forward.
     const values = derived.ecosystem.map((r) => r.templates_per_domain);
     expect(values[0]).toBeCloseTo((3 * 33.333333 + 1 * 7.5 + 1 * 2.083333) / 100, 5);
-    expect(values[1]).toBeCloseTo((3 * 33.333333 + 2 * 7.5 + 2.083333 + 16.666667) / 100, 5);
-    expect(values[2]).toBeCloseTo((3 * 33.333333 + 2 * 7.5 + 2.083333 + 2 * 16.666667) / 100, 5);
+    expect(values[1]).toBeCloseTo((2 * 33.333333 + 2 * 7.5 + 2.083333 + 16.666667) / 100, 5);
+    expect(values[2]).toBeCloseTo((3 * 33.333333 + 2 * 7.5 + 2.083333 + 16.666667) / 100, 5);
+    expect(values[3]).toBeCloseTo((3 * 33.333333 + 2 * 7.5 + 2.083333 + 2 * 16.666667) / 100, 5);
   });
 
   it('leaves out a DNS provider without a domain share', () => {
@@ -130,6 +133,7 @@ describe('deriveEcosystem', () => {
     copy();
     edit('manifest.json', (j) => (j.share_import = null));
     expect(deriveEcosystem(dir!).ecosystem.map((r) => r.templates_per_domain)).toEqual([
+      null,
       null,
       null,
       null,

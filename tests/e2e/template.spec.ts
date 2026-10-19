@@ -23,13 +23,13 @@ test.describe('Template card (template.html)', () => {
     await expect(page.getByTestId('service-provider-link')).toHaveText('Example Service');
     const headline = page.getByTestId('headline');
     await expect(headline).toContainText(
-      /3\s*Supporting DNS providers\s*75.0% of 4 with at least 1 template/,
+      /4\s*Supporting DNS providers\s*100.0% of 4 with at least 1 template/,
     );
-    await expect(headline).not.toContainText('6,900');
+    await expect(headline).not.toContainText('7,150');
     await expect(
-      headline.getByTitle('6,900 of 12K scanned domains in the partial scan of 01-06-2026'),
-    ).toHaveText('57.5%');
-    await expect(headline).toContainText('stored versions: 2, 1');
+      headline.getByTitle('7,150 of 12K scanned domains in the partial scan of 01-06-2026'),
+    ).toHaveText('59.6%');
+    await expect(headline).toContainText(/2\s*Version\s*2 of 4 supporters serve it/);
     const about = page.getByTestId('template-record');
     await expect(about).toContainText('Now with a www CNAME.');
     await expect(about).toContainText('%ip%: the target address');
@@ -46,9 +46,9 @@ test.describe('Template card (template.html)', () => {
   test('links supporters to their DNS provider and stack cards, with a total', async ({ page }) => {
     await page.goto(CARD);
     const supporters = section(page, 'Supporting DNS providers (current state)');
-    await expect(supporters.locator('tbody tr')).toHaveCount(3);
+    await expect(supporters.locator('tbody tr')).toHaveCount(4);
     await expect(supporters.locator('tfoot')).toContainText('TOTAL');
-    await expect(supporters.locator('tfoot')).toContainText('57.5%');
+    await expect(supporters.locator('tfoot')).toContainText('59.6%');
     await expect(supporters.locator('thead')).toContainText(/supported since/i);
     await expect(supporters.getByTestId('since-caveat')).toContainText('first saw');
     const ionos = supporters.locator('tbody tr', { hasText: 'IONOS' });
@@ -106,15 +106,40 @@ test.describe('Template card (template.html)', () => {
     await expect(mx).not.toContainText('spfRules');
   });
 
+  test('shows what each supporter serves, and the counts', async ({ page }) => {
+    await page.goto(CARD);
+    const supporters = section(page, 'Supporting DNS providers (current state)');
+    const cloudflare = supporters.locator('tbody tr', { hasText: 'Cloudflare' });
+    await expect(cloudflare).toContainText(/v2 · full\s*matches/);
+    await expect(cloudflare.getByTitle(/repository version 2/)).toBeVisible();
+    await expect(supporters.locator('tbody tr', { hasText: 'IONOS' })).toContainText(
+      'v2 · version only',
+    );
+    await expect(supporters).toContainText(/v1 · full\s*outdated/);
+    await expect(supporters).toContainText('Not recorded yet');
+    const served = page.getByTestId('served');
+    await expect(served).toContainText(/Current version\s*2\s*\(50.0% of 4 supporters\)/);
+    await expect(served).toContainText(/Outdated\s*1\s*\(25.0% of 4 supporters\)/);
+  });
+
   test('draws supporters over time with the caveat when the history differs', async ({ page }) => {
+    await page.route(
+      '**/data/templates/exampleservice.domainconnect.org/template1.json',
+      async (route) => {
+        const file = await (await route.fetch()).json();
+        const history = file.tables['exampleservice.domainconnect.org/template1/history'];
+        history.rows.at(-1).supporting_providers = 5;
+        await route.fulfill({ json: file });
+      },
+    );
     await page.goto(CARD);
     const chart = section(page, 'Supporting DNS providers over time');
     await expect(
       page.getByRole('img', { name: 'Supporting DNS providers over time' }),
     ).toBeVisible();
     await expect(chart.locator('table')).toHaveCount(0);
-    await expect(page.getByTestId('history-caveat')).toContainText('counts 4 DNS providers');
-    await expect(page.getByTestId('history-caveat')).toContainText('latest probes 3');
+    await expect(page.getByTestId('history-caveat')).toContainText('counts 5 DNS providers');
+    await expect(page.getByTestId('history-caveat')).toContainText('latest probes 4');
   });
 
   test('shows a template without name, logo or supporters', async ({ page }) => {
@@ -187,7 +212,7 @@ test.describe('Template card (template.html)', () => {
     if (testInfo.project.name === 'mobile') {
       await expect(
         section(page, 'Supporting DNS providers (current state)').locator('thead th:visible'),
-      ).toHaveText([/NAME/, /SUPPORTED SINCE/, /REACH/]);
+      ).toHaveText([/NAME/, /SERVED/, /SUPPORTED SINCE/, /REACH/]);
     }
     for (const wrapper of await page.locator('.table-wrapper').all()) {
       expect(await wrapper.evaluate((w) => w.scrollWidth - w.clientWidth)).toBeLessThanOrEqual(0);

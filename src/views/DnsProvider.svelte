@@ -11,14 +11,18 @@
   import Notes from '../lib/components/Notes.svelte';
   import Registry from '../lib/components/Registry.svelte';
   import RegistryContact from '../lib/components/RegistryContact.svelte';
+  import Served from '../lib/components/Served.svelte';
+  import ServedCounts from '../lib/components/ServedCounts.svelte';
   import StatCard from '../lib/components/StatCard.svelte';
+  import StatusBadge from '../lib/components/StatusBadge.svelte';
   import TimeChart from '../lib/components/TimeChart.svelte';
   import { isBeforeScans, parseNameservers } from '../lib/cells';
   import { scannerStart } from '../lib/data/config';
   import { cardSweep } from '../lib/annotation';
   import { countView } from '../lib/analytics';
   import { defaultClient, NotFoundError } from '../lib/data/load';
-  import { templateSupport, templateTotal } from '../lib/dns-providers';
+  import { probeCounts } from '../lib/dns-providers';
+  import { servedCounts } from '../lib/served';
   import { findTable, oneRecord } from '../lib/data/tables';
   import type { Column, ExportFile, Manifest, Row } from '../lib/data/types';
   import { formatAxisPct, formatCount, formatPct, UNKNOWN } from '../lib/format';
@@ -133,6 +137,8 @@
     <a href={links.serviceProvider(spid)}>{row.service_provider_name ?? spid}</a>
   {:else if column.key === 'service_name' && spid && sid}
     <a href={links.template(spid, sid)}>{row.service_name ?? sid}</a>
+  {:else if column.key === 'served_version'}
+    <Served {row} />
   {/if}
 {/snippet}
 
@@ -151,9 +157,8 @@
       {@const share = oneRecord(findTable(file, 'share'))}
       {@const urls = findTable(file, 'urls')}
       {@const templates = findTable(file, 'supported_templates')}
-      {@const probed = text(provider, 'support_last_status') !== null}
+      {@const probed = text(provider, 'support_status') !== null}
       {@const support = oneRecord(findTable(file, 'support'))}
-      {@const templateShare = templateSupport(support)}
       {@const supportHistory = findTable(file, 'support_history')}
       {@const shareHistory = findTable(file, 'share_history')}
       {@const stack = text(provider, 'provider_id')}
@@ -182,21 +187,21 @@
 
       <section class="summary-stats" aria-label="Support and domain share" data-testid="headline">
         <StatCard
-          value={formatCount(num(support, 'supported_templates'))}
+          value={formatCount(num(support, 'supported_count'))}
           label="Supported templates"
           detail={probed
-            ? `of ${formatCount(templateTotal(support))} templates (${formatPct(templateShare.supportedPct)})`
+            ? `of ${formatCount(num(support, 'total'))} templates (${formatPct(num(support, 'supported_pct'))})`
             : 'not probed yet'}
         />
         <StatCard
-          value={formatCount(num(support, 'unsupported_templates'))}
+          value={formatCount(num(support, 'unsupported_count'))}
           label="Not supported"
-          detail={`${formatPct(templateShare.unsupportedPct)} of templates`}
+          detail={`${formatPct(num(support, 'unsupported_pct'))} of templates`}
         />
         <StatCard
-          value={formatCount(num(support, 'undetermined_templates'))}
+          value={formatCount(num(support, 'undetermined_count'))}
           label="Not yet determined"
-          detail={`${formatPct(templateShare.undeterminedPct)}: never probed, retried or failed`}
+          detail={`${formatPct(num(support, 'undetermined_pct'))}: never probed, retried or failed`}
         />
         <StatCard
           value={formatPct(num(share, 'share_pct'))}
@@ -269,10 +274,15 @@
       {#if templates}
         <Panel id="templates" title={templates.title} context={providerName}>
           <DataTable
-            table={templates}
-            keys={['service_provider_name', 'service_name', 'versions', 'since']}
-            customKeys={['service_provider_name', 'service_name']}
-            phoneKeys={['service_provider_name', 'service_name', 'since']}
+            table={{
+              ...templates,
+              columns: templates.columns.map((c) =>
+                c.key === 'served_version' ? { ...c, header: 'SERVED' } : c,
+              ),
+            }}
+            keys={['service_provider_name', 'service_name', 'served_version', 'since']}
+            customKeys={['service_provider_name', 'service_name', 'served_version']}
+            phoneKeys={['service_provider_name', 'service_name', 'served_version']}
             searchable
             pageSize={20}
             cell={templateCell}
@@ -280,12 +290,19 @@
             emptyText="No template supported in the latest probes"
           />
           <p class="caveat" data-testid="since-caveat">
-            Supported since: when a probe first saw the DNS provider support any version of the
-            template. New versions and gaps in support don't move it (<a
+            Supported since: when a probe first saw the DNS provider support the template. New
+            versions and gaps in support don't move it (<a
               href={links.methodology('52-support-probe')}>methodology 5.2</a
             >).
           </p>
         </Panel>
+      {/if}
+
+      {#if support}
+        <ServedCounts
+          counts={servedCounts(support, num(support, 'supported_count'))}
+          of={`of ${formatCount(num(support, 'supported_count'))} supported templates`}
+        />
       {/if}
 
       {#await reg then r}
@@ -305,6 +322,38 @@
           <p class="no-data">The registry entry could not be loaded.</p>
         </section>
       {/await}
+
+      <section class="panel">
+        <h2>Status</h2>
+        <dl class="record" data-testid="status-record">
+          <dt>Settings</dt>
+          <dd>
+            <StatusBadge
+              status={provider?.settings_status ?? null}
+              errorKind={provider?.settings_error_kind ?? null}
+            />
+            {#if text(provider, 'settings_last_error')}
+              <div class="muted error">{text(provider, 'settings_last_error')}</div>
+            {/if}
+          </dd>
+          <dt>Settings last OK</dt>
+          <dd><Timestamp value={text(provider, 'settings_last_seen_ok_at')} /></dd>
+          <dt>Support</dt>
+          <dd>
+            <StatusBadge status={provider?.support_status ?? null} detail={probeCounts(provider)} />
+            {#if text(provider, 'support_last_error')}
+              <div class="muted error">{text(provider, 'support_last_error')}</div>
+            {/if}
+          </dd>
+          <dt>Support last OK</dt>
+          <dd><Timestamp value={text(provider, 'support_last_seen_ok_at')} /></dd>
+        </dl>
+        <p class="caveat">
+          The latest completed settings run and support sweep, which may be weeks old (<a
+            href={links.methodology('61-status-values')}>methodology 6.1</a
+          >).
+        </p>
+      </section>
 
       <section class="panel">
         <h2>Settings</h2>
@@ -351,3 +400,10 @@
     <LoadError {error} />
   {/await}
 </Layout>
+
+<style>
+  .error {
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+  }
+</style>

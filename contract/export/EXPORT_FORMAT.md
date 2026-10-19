@@ -1,22 +1,16 @@
 # Domain Connect support statistics: the static export format
 
-This file describes the data set that `export.py` writes. It is written for the developer
-of a frontend (a static statistics site) and is meant to be enough on its own: with this
-file and one export directory you can build every page. The JSON Schemas in
-[`docs/schemas/export/`](schemas/export/) are the machine-readable contract and say the
-same thing in a form a validator can check. A complete example export of a small simulated
-database is in [`docs/examples/export/`](examples/export/). How the numbers are measured (the
-scanned zones and sampling, the identification of DNS providers, the support probes, statuses,
-request rates and limits) is described for the public in [`METHODOLOGY.md`](METHODOLOGY.md),
-which a statistics site can use as the basis of its methodology page.
+The data set `export.py` writes, for frontend developers: with this file and one export
+directory you can build every page. Machine-readable contract: the JSON Schemas in
+[`docs/schemas/export/`](schemas/export/). Complete example: [`docs/examples/export/`](examples/export/).
+How the numbers are measured: [`METHODOLOGY.md`](METHODOLOGY.md).
 
 ## Purpose and audience
 
-The data set describes how far [Domain Connect](https://www.domainconnect.org/) is
-supported across the DNS providers that host real domains. A TLD zone file (for example
-`.com`) is scanned for domains that publish a Domain Connect record. The DNS providers
-behind those records are identified, and each is probed for every published Domain Connect
-template. The export combines both:
+How far [Domain Connect](https://www.domainconnect.org/) is supported across the DNS
+providers hosting real domains. Zone files (e.g. `.com`) are scanned for domains publishing a
+Domain Connect record; the DNS providers behind them are identified and probed for every
+published template. The export holds:
 
 - **who supports what, now**: per DNS provider, per stack of DNS providers, per service
   provider and per template, which templates are supported;
@@ -24,8 +18,7 @@ template. The export combines both:
   and therefore how many domains a template can reach;
 - **how it changes**: series over the scans (imports) and over the support sweeps.
 
-It holds no per-domain data, and nothing about individual scans beyond the totals listed
-below.
+No per-domain data, and nothing about scans beyond the totals below.
 
 ## Glossary
 
@@ -36,15 +29,16 @@ below.
 | Stack | All DNS providers that declare the same `providerId` in their settings response, i.e. deployments of the same provider software or company. Keyed by `provider_id`, a string such as `plesk.com`. A DNS provider that declares no `providerId` belongs to no stack. |
 | Service provider | A publisher of templates in the [Domain Connect Templates repository](https://github.com/Domain-Connect/Templates). Keyed by `service_provider_id`, a string, usually a domain name. |
 | Template | One service of a service provider (one file in the Templates repository): a set of DNS records the DNS provider applies. Keyed by the pair (`service_provider_id`, `service_id`). |
-| Template version | A template's `version` number. The export folds versions together: a template is supported by a DNS provider when any stored version is. Columns named `versions` list the version numbers involved. |
+| Template version | A template's `version` number. `version` is the Templates repository's current one; `served_version` is the one a DNS provider's answer named (see *Served template*). Support is per template, not per version. |
 | Import, scan | One scan of one or more zone files. Keyed by `import_id`, a number (normally the scan's start time as Unix seconds, but not guaranteed). A scan may be *probe-sampled*: only a random percentage of the zone's domains is scanned, so "% of scanned domains" is a share of the sample, which estimates, but is not, a share of the whole zone. Each import's zones and sampling percentage are published with it (`zones`, `sample_percent`). |
 | Scanned domains | The domains an import actually queried (`scanned_domains`), the denominator of every domain percentage. |
-| Support sweep | One run of the support probes: every DNS provider is asked about every template version. Keyed by `sweep_id`, a number increasing with time. Smaller runs exist too (one provider only, one template only, or only recently changed templates); the history tables say which runs they count. |
-| Supported | The DNS provider's latest probe for a template version answered that it supports it (HTTP 200). |
-| Not supported | The latest probe answered that it does not (HTTP 404). |
-| Not yet determined | Neither: never probed yet, still being retried, or failed. The export does not break this down (see [Redaction](#redaction)); it is `total - supported_count - unsupported_count`. |
-| Template answer | A DNS provider's answer for a template, every version together (`supported_templates`, `unsupported_templates`, `undetermined_templates`): **supported** when any stored version is supported; **not supported** when no version is and the latest probe of every stored version said not supported; otherwise **not yet determined** - including a template with mixed versions, such as version 1 not supported and version 2 not yet determined (version 2 may still turn out supported). The three always add up to the number of templates, the rows of `templates.json`. |
-| Error | A DNS provider whose last settings request or support probe failed carries an error status and message (`settings_status`, `support_status`, `settings_last_error`, `support_last_error`). |
+| Support sweep | One run of the support probes: every DNS provider is asked about every template (a *full* sweep, monthly), or every template on the DNS providers supporting at least one template (a *weekly* sweep). Keyed by `sweep_id`, a number normally increasing with time (order by `started_at`, not by id). Smaller runs exist too (one provider only, one template only, or only recently changed templates); the history tables say which runs they count. The export never says whether a sweep was full or weekly. |
+| Supported | The latest conclusive probe of the DNS provider for a template answered that it supports it (HTTP 200). Only a later 404 changes that: a failed probe, or a sweep that has the combination queued again, leaves it supported. |
+| Not supported | The latest conclusive probe answered that it does not (HTTP 404). Only a later 200 changes that, as above. |
+| Not yet determined | Neither: no conclusive probe yet (never probed, still being retried, or failed). It is the rest of a total, `total - supported_count - unsupported_count` (`undetermined_count`); the export does not break it down (see [Redaction](#redaction)). |
+| Total | The templates a DNS provider can be asked about: every template of the Templates repository, for each DNS provider that declares a Domain Connect API (or already has an answer). It does not depend on how far probing has got: a newly found DNS provider starts with every template not yet determined, and a DNS provider without an API has a total of 0. A template's total is the DNS providers that can be asked. |
+| Served template | What a supporting DNS provider's latest 200 carried: nothing usable (`response_kind` `empty`), only the template's version (`version`), or the full template (`template`). `served_version` is the version it named (`null` when none). A full template is compared with the repository's (`template_match`): `match` (equal, ignoring key order and whitespace), `morphed` (altered by the DNS provider) or `outdated` (its version below the repository's). All three are `null` for a template supported before they were recorded, until its next probe. |
+| Provider status | Whether a DNS provider's Domain Connect endpoints answered in the latest **completed** run - its settings run and its support sweep - after retries (`settings_status`, `support_status`, with the error message when they failed). A request that fails while the run is still retrying changes nothing; see [Provider statuses](#provider-statuses). |
 | Domain share | How many of an import's scanned domains point to a DNS provider (or stack) through their Domain Connect record (`domains`), and that as a percentage of the scanned domains. |
 | Reach | For a template or service provider: the scanned domains hosted by the DNS providers that support it, each DNS provider counted once. It is how many of the scanned domains could apply the template today. |
 | Domain-share import | The one import that every domain and reach column of an export describes (see [Domain-share import](#domain-share-import)). |
@@ -112,7 +106,7 @@ The release's index, written last. One JSON object on one line.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `format_version` | integer | Version of this format, currently `2`. See [Versioning](#versioning-and-compatibility). |
+| `format_version` | integer | Version of this format, currently `5`. See [Versioning](#versioning-and-compatibility). |
 | `generated_at` | string | When the export ran, UTC, to the second, as `YYYY-MM-DDTHH:MM:SSZ` (e.g. `2026-10-01T00:00:00Z`). Every other file of the release carries the same value. Show it in the page header. |
 | `schema_version` | integer | Version of the database schema the export was read from. Informational. |
 | `share_import` | object or null | The [domain-share import](#domain-share-import). `null` when no import has share data; then every domain and reach column is `null`. |
@@ -129,7 +123,7 @@ The release's index, written last. One JSON object on one line.
 | `latest_sweep.sweep_id` | integer | The sweep. |
 | `latest_sweep.started_at` | timestamp | When it started. |
 | `latest_sweep.completed_at` | timestamp | When it completed. |
-| `latest_full_sweep` | object or null | The full support sweep (all DNS providers × all templates; the sweeps of `overview.json` `ecosystem`) that completed last: when the whole ecosystem was last measured. Same keys as `latest_sweep`; `null` likewise. It is also `latest_sweep` unless a smaller run completed after it. |
+| `latest_full_sweep` | object or null | The full support sweep (all DNS providers × all templates) that completed last: when the whole ecosystem was last measured. Never a weekly sweep, although `overview.json` `ecosystem` has rows for those too: a weekly sweep re-probes the supporting DNS providers only. Same keys as `latest_sweep`; `null` likewise. It is also `latest_sweep` unless a smaller run completed after it. |
 | `latest_full_sweep.sweep_id` | integer | The sweep. |
 | `latest_full_sweep.started_at` | timestamp | When it started. |
 | `latest_full_sweep.completed_at` | timestamp | When it completed. |
@@ -233,7 +227,6 @@ not depend on the order of keys inside a row.
 | Percentage | Number on a 0–100 scale, **not rounded** (e.g. `33.33333333333333`): round for display. |
 | Timestamp | String, UTC, `YYYY-MM-DD HH:MM:SS` (e.g. `2026-03-02 02:00:00`). A few older values may be ISO 8601 with a `T` and a UTC offset; read the first 19 characters. Only `generated_at` uses the `YYYY-MM-DDTHH:MM:SSZ` form. |
 | Id | `dns_provider_id`, `import_id`, `sweep_id`: integers. `provider_id`, `service_provider_id`, `service_id`: strings. |
-| Versions | Array of integers. |
 | `null` | Unknown or not applicable, **never** a stand-in for zero. The column tables below say what `null` means where it can occur. A domain or reach column is `null` when there is no domain-share import (`share_import` is `null`) or the import has no measurement for that entity. A percentage is `null` when its denominator is unknown or 0. |
 
 Text values (names, descriptions, error messages) come from external sources. Escape them
@@ -254,6 +247,24 @@ the two have different clocks. The history tables give the past values of both.
 Domains are attributed through the URL in each domain's Domain Connect record: a domain
 counts for the DNS provider that currently owns that URL. Each URL has one owner, so no
 domain counts twice.
+
+## Provider statuses
+
+A DNS provider's `settings_status` and `support_status` describe its latest **completed**
+run, never a single request:
+
+- **Settings**: the latest settings run that finished with one of the DNS provider's
+  Domain Connect URLs. A request that fails is retried (with another example domain, then
+  with growing pauses); only once every retry is used up, or the host is given up, does the
+  run record `failed`. `ok` when any of its URLs answered in that run.
+- **Support**: the latest support sweep that probed it and has finished. Each probe is
+  retried before it counts as failed. `support_answered` and `support_failed` count the
+  sweep's probes by their final outcome; `support_status` summarises them (`ok`, `partial`,
+  `error`, or `dead` when the host was given up during the sweep). Any finished run counts,
+  also a weekly or single-template one: the counters show how much it covered.
+
+While a run is still going, its DNS providers keep the statuses of the previous completed
+run, so a timeout during a sweep never shows up as an error in the export.
 
 ## Files
 
@@ -293,12 +304,14 @@ without data has no row.
 
 #### Table `ecosystem`
 
-"Support ecosystem per full sweep": one row per full support sweep (all DNS providers ×
-all templates), oldest first, with the support state once that sweep had run. Support seen
-by smaller runs in between counts towards the preceding full sweep. Sweeps before the
-first support was ever recorded have no row.
+"Support ecosystem per sweep": one row per full or weekly support sweep, oldest first,
+with the support state once that sweep had run. A weekly sweep re-probes the DNS providers
+supporting a template only; the others' state is carried forward from the previous row.
+Support seen by smaller runs in between counts towards the preceding row's sweep. Sweeps
+before the first recorded support have no row. Older rows are monthly, newer ones weekly:
+plot by `started_at`, not by row index (see [Time series](#time-series)).
 
-A row therefore covers a window: from its sweep's start up to the next full sweep's start
+A row therefore covers a window: from its sweep's start up to the next row's sweep's start
 (exclusive), or, for the last row, up to the export. The denominators `known_dns_providers`
 and `published_templates` count over the same window, so `supporting_dns_providers` ≤
 `known_dns_providers` and `supported_templates` ≤ `published_templates` in every row.
@@ -311,9 +324,9 @@ and `published_templates` count over the same window, so `supporting_dns_provide
 | `supporting_dns_providers` | count | DNS providers supporting at least one template. |
 | `supporting_stacks` | count | Distinct stacks among them (by each provider's current stack). |
 | `supported_templates` | count | Templates supported by at least one DNS provider. |
-| `supported_combinations` | count | Distinct (DNS provider, template) pairs with support, versions folded together. |
-| `known_dns_providers` | count | DNS providers first seen before the row's window ends (the next full sweep's start; for the last row, any time up to the export): a denominator for `supporting_dns_providers`. |
-| `published_templates` | count | Templates whose first version was published before the row's window ends (as `known_dns_providers`): a denominator for `supported_templates`. |
+| `supported_combinations` | count | Distinct (DNS provider, template) pairs with support. |
+| `known_dns_providers` | count | DNS providers first seen before the row's window ends (the next row's sweep start; for the last row, any time up to the export): a denominator for `supporting_dns_providers`. |
+| `published_templates` | count | Templates added to the Templates repository before the row's window ends (as `known_dns_providers`): a denominator for `supported_templates`. |
 
 ### `dns-providers.json` (report `dns-providers`)
 
@@ -324,8 +337,8 @@ ones with no domains in the domain-share import. Ordered by `domains` descending
 (unmeasured last); without a domain-share import, by `supported_count` descending, then
 name.
 
-The support columns count **probe combinations**: one per template version the DNS
-provider was (or is to be) probed for.
+The support columns count **templates**: every template, when the DNS provider can be asked
+(see *Total* in the [Glossary](#glossary)).
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -333,18 +346,23 @@ provider was (or is to be) probed for.
 | `dns_provider_id` | integer | The DNS provider's id: links to its card. |
 | `provider_id` | string | Its stack: links to the stack card. `null` when it declares none (no stack). |
 | `api_host` | string | Host name of its Domain Connect API. `null` when it declares none. |
-| `settings_status` | string | Outcome of the last settings request: `ok`, `http_error` (an unusable HTTP answer), `connection_error` (timeout or connection failure, may heal) or `dead` (given up: unreachable for a long time, or a permanent failure such as an invalid TLS certificate). `null` before the first attempt. |
-| `support_status` | string | Outcome of the last support probe: `ok` (a clear supported/not-supported answer), `error` (an unusable HTTP answer) or `dead` (given up, as above). `null` before the first probe. |
-| `total` | count | Probe combinations on record (template versions). |
-| `supported_count` | count | Combinations whose latest probe said supported. |
+| `settings_status` | string | Outcome of the latest settings run that finished with one of its Domain Connect URLs: `ok` (its settings answered, possibly after retries) or `failed` (every retry used up, or the host given up; the card's `settings_error_kind` says which). `null` before the first finished run. See [Provider statuses](#provider-statuses). |
+| `support_status` | string | Outcome of the latest completed support sweep that probed it, after retries: `ok` (every probe answered), `partial` (some answered, some failed), `error` (none answered) or `dead` (its host was given up during the sweep: unreachable for a long time, or a permanent failure such as an invalid TLS certificate). `null` before the first completed sweep. |
+| `support_answered` | count | Probes of that sweep answered (supported or not supported). `null` with `support_status`. |
+| `support_failed` | count | Probes of that sweep that failed after their retries. `null` with `support_status`. |
+| `total` | count | Templates it can be asked about (see *Total* in the [Glossary](#glossary)): every template, or 0 when it declares no Domain Connect API. |
+| `supported_count` | count | Templates supported (see [Glossary](#glossary)): the number of rows of its card's `supported_templates`. Rank "most templates supported" by this. |
 | `supported_pct` | percentage | `supported_count` / `total`. `null` when `total` is 0. |
-| `unsupported_count` | count | Combinations whose latest probe said not supported. |
+| `unsupported_count` | count | Templates not supported (see [Glossary](#glossary)). |
 | `unsupported_pct` | percentage | `unsupported_count` / `total`. `null` when `total` is 0. |
-| `supported_templates` | count | Templates it supports now, **any version counted once** (unlike `supported_count`): the number of rows of its card's `supported_templates`. Rank "most templates supported" by this. |
+| `undetermined_count` | count | Templates not yet determined (see [Glossary](#glossary)): `total - supported_count - unsupported_count`. |
+| `undetermined_pct` | percentage | `undetermined_count` / `total`. `null` when `total` is 0. |
 | `supported_templates_change` | integer | Change in supported templates over its latest sweep: its card's last `support_history` row's `supported_templates` minus the previous row's. `null` when there is no previous row, or the previous sweep started before the DNS provider was first seen (no measured starting point). |
 | `supported_templates_change_90d` | integer | Change in supported templates over about 90 days: its card's last `support_history` row minus the newest row whose sweep started at least 90 days before the last one's. `null` when there is no such row, or it started before the DNS provider was first seen. |
-| `unsupported_templates` | count | Templates it does not support: no version supported, and every stored version answered not supported (see *Template answer* in the [Glossary](#glossary)). |
-| `undetermined_templates` | count | Templates not yet determined: neither supported nor not supported, including mixed versions. `supported_templates + unsupported_templates + undetermined_templates` is the number of rows of `templates.json`. |
+| `with_version_count` | count | Supported templates whose latest answer named a version (`served_version` not `null` on its card). See *Served template* in the [Glossary](#glossary). |
+| `full_template_count` | count | Supported templates answered with the full template (`response_kind` `template`). |
+| `morphed_count` | count | Of those, templates that differ from the repository's (`template_match` `morphed`). |
+| `outdated_count` | count | Of those, templates with a version below the repository's (`template_match` `outdated`). |
 | `domains` | count | Domains attributed to this DNS provider in the domain-share import. `null` without a domain-share import, or when the provider has no measurement in a pruned import (it was first seen later). |
 | `domains_pct` | percentage | `domains` / the import's scanned domains. |
 
@@ -368,12 +386,15 @@ One DNS provider's card, one per row of `dns-providers.json`.
 | `control_panel_url` | string | Its control panel URL (`urlControlPanel`). `null` if none. |
 | `nameservers` | string | Its declared name servers as a JSON-encoded array **inside a string** (e.g. `"[\"ns1.example.net\"]"`): parse it a second time. `null` if none. |
 | `first_seen_at` | timestamp | When it was first identified. `null` when unknown. |
-| `settings_last_status` | string | As `settings_status` in the list. |
-| `settings_last_error` | string | The last settings request's error message. `null` when the last request succeeded or none was made. |
-| `settings_last_seen_ok_at` | timestamp | The last successful settings request. `null` if never. |
-| `support_last_status` | string | As `support_status` in the list. |
-| `support_last_error` | string | The last support probe's error message. `null` when it succeeded or none was made. |
-| `support_last_seen_ok_at` | timestamp | The last support probe with a clear answer. `null` if never. |
+| `settings_status` | string | As in the list. |
+| `settings_error_kind` | string | Why the latest finished settings run failed: `http_error` (an unusable HTTP answer, every retry used up) or `dead` (the host was given up). `null` unless `settings_status` is `failed`. |
+| `settings_last_error` | string | That run's error message. `null` unless `settings_status` is `failed`. |
+| `settings_last_seen_ok_at` | timestamp | When its settings last answered, in a finished run. `null` if never. |
+| `support_status` | string | As in the list. |
+| `support_answered` | count | As in the list. |
+| `support_failed` | count | As in the list. |
+| `support_last_error` | string | The error message of a probe that failed in that sweep. `null` when none failed. |
+| `support_last_seen_ok_at` | timestamp | When the latest completed sweep in which a probe of it was answered finished. `null` if never. |
 
 #### Table `support`
 
@@ -381,14 +402,17 @@ One DNS provider's card, one per row of `dns-providers.json`.
 
 | Key | Type | Meaning |
 |---|---|---|
-| `total` | count | Probe combinations on record. |
+| `total` | count | Templates it can be asked about, as in `dns-providers.json`. |
 | `supported_count` | count | Supported. |
 | `supported_pct` | percentage | `supported_count` / `total`; `null` when `total` is 0. |
 | `unsupported_count` | count | Not supported. |
 | `unsupported_pct` | percentage | `unsupported_count` / `total`; `null` when `total` is 0. |
-| `supported_templates` | count | Templates it supports, any version counted once (as in `dns-providers.json`). |
-| `unsupported_templates` | count | As in `dns-providers.json`. |
-| `undetermined_templates` | count | As in `dns-providers.json`. |
+| `undetermined_count` | count | Not yet determined. |
+| `undetermined_pct` | percentage | `undetermined_count` / `total`; `null` when `total` is 0. |
+| `with_version_count` | count | As in `dns-providers.json`. |
+| `full_template_count` | count | As in `dns-providers.json`. |
+| `morphed_count` | count | As in `dns-providers.json`. |
+| `outdated_count` | count | As in `dns-providers.json`. |
 
 #### Table `share`
 
@@ -417,8 +441,8 @@ currently resolve to this DNS provider, by first seen.
 
 #### Table `supported_templates`
 
-"Supported templates (current state)": every template it supports in any version, ordered
-by service provider, then template.
+"Supported templates (current state)": every template it supports, with what its latest
+answer served, ordered by service provider, then template.
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -426,13 +450,17 @@ by service provider, then template.
 | `service_provider_id` | string | Links to the service provider card (and with `service_id` to the template card). |
 | `service_name` | string | The template's name, else its id. |
 | `service_id` | string | The template's id. |
-| `versions` | versions | Supported versions, ascending. |
-| `since` | timestamp | When it first supported any version of the template: see [Supported since](#supported-since). `null` if not recorded. |
+| `served_version` | integer | The version its latest answer named; `null` when none (see *Served template* in the [Glossary](#glossary)). |
+| `repository_version` | integer | The template's version in the Templates repository now. |
+| `response_kind` | string | `empty`, `version` or `template`. `null` when not recorded yet. |
+| `template_match` | string | For `response_kind` `template`: `match`, `morphed` or `outdated`; else `null`. |
+| `since` | timestamp | When it first supported the template: see [Supported since](#supported-since). `null` if not recorded. |
 
 #### Table `support_history`
 
 "Supported templates per support sweep": one row per sweep that re-probed all of its
-templates (a full sweep, or a sweep of this DNS provider only), oldest first.
+templates (a full sweep, a sweep of this DNS provider only, or a weekly sweep while it
+supported a template), oldest first.
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -466,7 +494,8 @@ oldest first.
 
 "DNS provider stacks": every stack. DNS providers without a stack are not in any row. The
 support of a stack is given as a distribution over its deployments (min/median/max),
-because it often varies a lot between deployments of the same software. Ordered by
+because it often varies a lot between deployments of the same software; what their supported
+templates serve is summed. Ordered by
 `domains` descending; without a domain-share import, by `deployments` descending.
 
 | Key | Type | Meaning |
@@ -474,15 +503,16 @@ because it often varies a lot between deployments of the same software. Ordered 
 | `name` | string | Name of the stack's DNS provider with the lowest id, else the `provider_id`, else `?`. |
 | `provider_id` | string | The stack's id: links to its card, and to its deployments in `dns-providers.json` (rows with this `provider_id`). |
 | `deployments` | count | DNS providers in the stack, probed or not. |
-| `min_supported_pct` | percentage | Lowest `supported_pct` among its DNS providers that have probe combinations. `null` when none has any. |
+| `min_supported_pct` | percentage | Lowest `supported_pct` among its DNS providers with at least one probe answer (`supported_count + unsupported_count` above 0). `null` when none has an answer. |
 | `median_supported_pct` | percentage | Median of the same. |
 | `max_supported_pct` | percentage | Highest of the same. |
-| `min_supported_templates_pct` | percentage | The same over templates, any version counted once: lowest `supported_templates` / the number of templates (rows of `templates.json`) among its DNS providers with at least one probe answer (`supported_count + unsupported_count` above 0). `null` when none has an answer. |
-| `median_supported_templates_pct` | percentage | Median of the same. |
-| `max_supported_templates_pct` | percentage | Highest of the same. |
-| `supported_templates` | count | Templates at least one of its DNS providers supports now, any version, each counted once: the number of rows of its card's `template_coverage`. |
-| `supported_templates_change` | integer | Change in the templates any of its DNS providers supported, from the previous full sweep to the latest one, replayed like a DNS provider card's `support_history` but over full sweeps only. `null` when there is no previous full sweep, or it started before the stack's first DNS provider was first seen. |
-| `supported_templates_change_90d` | integer | The same from the newest full sweep that started at least 90 days before the latest one. `null` likewise. |
+| `supported_templates` | count | Templates at least one of its DNS providers supports now, each counted once: the number of rows of its card's `template_coverage`. |
+| `supported_templates_change` | integer | Change in the templates any of its DNS providers supported, from the previous full or weekly sweep to the latest one, replayed like a DNS provider card's `support_history` but over full and weekly sweeps only. `null` when there is no previous such sweep, or it started before the stack's first DNS provider was first seen. |
+| `supported_templates_change_90d` | integer | The same from the newest full or weekly sweep that started at least 90 days before the latest one. `null` likewise. |
+| `with_version_count` | count | Sum of its DNS providers' `with_version_count` (`dns-providers.json`). |
+| `full_template_count` | count | Sum of its DNS providers' `full_template_count`. |
+| `morphed_count` | count | Sum of its DNS providers' `morphed_count`. |
+| `outdated_count` | count | Sum of its DNS providers' `outdated_count`. |
 | `domains` | count | Sum of its DNS providers' domains in the domain-share import. `null` without one, or when no deployment has a measurement. |
 | `domains_pct` | percentage | `domains` / the import's scanned domains. |
 
@@ -502,12 +532,13 @@ One stack's card, one per row of `stacks.json`.
 | `min_supported_pct` | percentage | As in `stacks.json`. |
 | `median_supported_pct` | percentage | As in `stacks.json`. |
 | `max_supported_pct` | percentage | As in `stacks.json`. |
-| `min_supported_templates_pct` | percentage | As in `stacks.json`. |
-| `median_supported_templates_pct` | percentage | As in `stacks.json`. |
-| `max_supported_templates_pct` | percentage | As in `stacks.json`. |
 | `supported_templates` | count | As in `stacks.json`. |
 | `supported_templates_change` | integer | As in `stacks.json`. |
 | `supported_templates_change_90d` | integer | As in `stacks.json`. |
+| `with_version_count` | count | As in `stacks.json`. |
+| `full_template_count` | count | As in `stacks.json`. |
+| `morphed_count` | count | As in `stacks.json`. |
+| `outdated_count` | count | As in `stacks.json`. |
 | `domains` | count | As in `stacks.json`. |
 | `domains_pct` | percentage | As in `stacks.json`. |
 
@@ -523,16 +554,21 @@ One stack's card, one per row of `stacks.json`.
 | `api_host` | string | As in `dns-providers.json`. |
 | `settings_status` | string | As in `dns-providers.json`. |
 | `support_status` | string | As in `dns-providers.json`. |
+| `support_answered` | count | As in `dns-providers.json`. |
+| `support_failed` | count | As in `dns-providers.json`. |
 | `total` | count | As in `dns-providers.json`. |
 | `supported_count` | count | As in `dns-providers.json`. |
 | `supported_pct` | percentage | As in `dns-providers.json`. |
 | `unsupported_count` | count | As in `dns-providers.json`. |
 | `unsupported_pct` | percentage | As in `dns-providers.json`. |
-| `supported_templates` | count | As in `dns-providers.json`. |
+| `undetermined_count` | count | As in `dns-providers.json`. |
+| `undetermined_pct` | percentage | As in `dns-providers.json`. |
 | `supported_templates_change` | integer | As in `dns-providers.json`. |
 | `supported_templates_change_90d` | integer | As in `dns-providers.json`. |
-| `unsupported_templates` | count | As in `dns-providers.json`. |
-| `undetermined_templates` | count | As in `dns-providers.json`. |
+| `with_version_count` | count | As in `dns-providers.json`. |
+| `full_template_count` | count | As in `dns-providers.json`. |
+| `morphed_count` | count | As in `dns-providers.json`. |
+| `outdated_count` | count | As in `dns-providers.json`. |
 | `domains` | count | As in `dns-providers.json`. |
 | `domains_pct` | percentage | As in `dns-providers.json`. |
 
@@ -547,9 +583,9 @@ descending; then by service provider and template name.
 |---|---|---|
 | `service_provider_name` | string | The service provider's name, else its id. |
 | `service_provider_id` | string | Links to the service provider card (and the template card). |
-| `service_name` | string | The template's name (newest version), else its id. |
+| `service_name` | string | The template's name, else its id. |
 | `service_id` | string | The template's id. |
-| `supporting_deployments` | count | Its deployments supporting any version of the template. |
+| `supporting_deployments` | count | Its deployments supporting the template. |
 | `supporting_pct` | percentage | `supporting_deployments` / all its deployments (probed or not). |
 | `reach_domains` | count | Domains behind the supporting deployments in the domain-share import. `null` without one. |
 | `reach_pct` | percentage | `reach_domains` / the import's scanned domains. |
@@ -584,7 +620,7 @@ descending; ties by name, ignoring case.
 |---|---|---|
 | `name` | string | Its name, else its id. |
 | `service_provider_id` | string | Its id: links to its card, and to its templates in `templates.json` (rows whose `provider_id` is this id). |
-| `templates` | count | Its templates (all versions of one template count once). 0 without templates. |
+| `templates` | count | Its templates. 0 without templates. |
 | `supported_templates` | count | Its templates at least one DNS provider supports. |
 | `supporting_dns_providers` | count | DNS providers supporting at least one of its templates, each counted once. |
 | `first_added_at` | timestamp | When its first template was published. `null` without templates or when unknown. |
@@ -629,13 +665,12 @@ Empty for a service provider without templates.
 
 | Key | Type | Meaning |
 |---|---|---|
-| `name` | string | The newest version's name, else the id. |
+| `name` | string | The template's name, else the id. |
 | `service_id` | string | The template's id: with the card's `service_provider_id`, links to the template card. |
-| `version` | integer | Newest stored version. |
-| `versions` | versions | Every stored version, newest first. |
-| `added_at` | timestamp | When its first version was published. `null` when unknown. |
-| `updated_at` | timestamp | When its newest version last changed. `null` when unknown. |
-| `supporting_providers` | count | DNS providers supporting any version. |
+| `version` | integer | Its version in the Templates repository now. |
+| `added_at` | timestamp | When it was added to the Templates repository. `null` when unknown. |
+| `updated_at` | timestamp | When it last changed there. `null` when unknown. |
+| `supporting_providers` | count | DNS providers supporting it. |
 | `reach_domains` | count | Domains behind them. `null` without a domain-share import. |
 | `reach_pct` | percentage | `reach_domains` / the import's scanned domains. |
 
@@ -652,17 +687,18 @@ Ordered by sweep, then `service_id`. It is each template card's `history` withou
 | `started_at` | timestamp | When it started. |
 | `completed_at` | timestamp | When it completed. `null` while it runs, or if not recorded (see [sweep completion](#sweep-completion)). |
 | `service_id` | string | The template. |
-| `supporting_providers` | count | DNS providers supporting any version of it once the sweep had run. |
+| `supporting_providers` | count | DNS providers supporting it once the sweep had run. |
 
 ### `templates.json` (report `service-templates`)
 
 #### Table `service_templates`
 
-"Service templates": every template (all versions together), including templates no DNS
-provider has been probed for yet (every count 0). Ordered by `reach_domains` descending;
+"Service templates": every template, including templates no DNS provider has answered for
+yet. Ordered by `reach_domains` descending;
 without a domain-share import, by `supported_count` descending.
 
-The support columns count **probe combinations**: one per (DNS provider, template version).
+The support columns count **DNS providers**: every DNS provider that can be asked (see
+*Total* in the [Glossary](#glossary)).
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -670,26 +706,27 @@ The support columns count **probe combinations**: one per (DNS provider, templat
 | `provider_id` | string | The **service provider's** id (not a stack): links to the service provider card, and with `service_id` to the template card. |
 | `service_name` | string | The template's name, else its id. |
 | `service_id` | string | The template's id. |
-| `added_at` | timestamp | When its first version was published. `null` when unknown. |
-| `total` | count | Probe combinations on record. 0 when not probed yet. |
-| `supported_count` | count | Combinations whose latest probe said supported. |
+| `added_at` | timestamp | When it was added to the Templates repository. `null` when unknown. |
+| `total` | count | DNS providers that can be asked. 0 only when none can. |
+| `supported_count` | count | DNS providers supporting it (see [Glossary](#glossary)): as the service provider card's `templates.supporting_providers`. |
 | `supported_pct` | percentage | `supported_count` / `total`. `null` when `total` is 0. |
-| `unsupported_count` | count | Combinations whose latest probe said not supported. |
+| `unsupported_count` | count | DNS providers not supporting it (see [Glossary](#glossary)). |
 | `unsupported_pct` | percentage | `unsupported_count` / `total`. `null` when `total` is 0. |
-| `supporting_providers` | count | DNS providers supporting it in any version, each counted once (as the service provider card's `templates.supporting_providers`). |
+| `undetermined_count` | count | DNS providers not yet determined: `total - supported_count - unsupported_count`. |
+| `undetermined_pct` | percentage | `undetermined_count` / `total`. `null` when `total` is 0. |
 | `reach_domains` | count | Domains behind the DNS providers counted in `supported_count`, each counted once. `null` without a domain-share import. |
 | `reach_pct` | percentage | `reach_domains` / the import's scanned domains. |
 
 ### `templates/{service_provider_id}/{service_id}.json` (report `template-summary`)
 
-One template's card, one per row of `templates.json`. Its four table ids are prefixed with
+One template's card, one per row of `templates.json`. Its five table ids are prefixed with
 the template's raw (unencoded) ids: `<service_provider_id>/<service_id>/metadata`, and so
 on. Find them by that full id, or by the suffix after the last `/`. Each title starts with
 `<service_provider_id>/<service_id> - `.
 
 #### Table `{service_provider_id}/{service_id}/metadata`
 
-"Template metadata": the newest stored version, one record.
+"Template metadata": the template as the Templates repository holds it now, one record.
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -697,14 +734,13 @@ on. Find them by that full id, or by the suffix after the last `/`. Each title s
 | `service_provider_id` | string | Links to the service provider card. |
 | `service_id` | string | The template's id. |
 | `name` | string | The template's name. `null` if none. |
-| `version` | integer | The newest stored version, described here. |
-| `versions` | versions | Every stored version, newest first. |
+| `version` | integer | Its version in the Templates repository. |
 | `description` | string | Free text from the template; may span several lines. `null` if none. |
 | `variable_description` | string | The template's description of its variables. `null` if none. |
 | `logo_url` | string | The template's logo URL. `null` if none. |
 | `template_sha` | string | Git blob SHA of the template file in the Templates repository at the last sync. |
-| `created_at` | timestamp | When this version was added to the Templates repository (from its git history). `null` when unknown. |
-| `updated_at` | timestamp | When this version last changed there. `null` when unknown. |
+| `created_at` | timestamp | When it was added to the Templates repository (from its git history). `null` when unknown. |
+| `updated_at` | timestamp | When it last changed there. `null` when unknown. |
 
 #### Table `{service_provider_id}/{service_id}/records`
 
@@ -738,8 +774,8 @@ Values are as written in the template file, so a number may also appear as a str
 
 #### Table `{service_provider_id}/{service_id}/supporters`
 
-"Supporting DNS providers (current state)": every DNS provider currently supporting any
-version, one row each. Ordered by `domains` descending; without a domain-share import, by
+"Supporting DNS providers (current state)": every DNS provider currently supporting the
+template, with what its latest answer served, one row each. Ordered by `domains` descending; without a domain-share import, by
 name. The `footer` is a `TOTAL` row: `name` is `TOTAL`, `domains` and `reach_pct` are the
 sums (`null` without a domain-share import), every other key is `null`.
 
@@ -749,23 +785,39 @@ sums (`null` without a domain-share import), every other key is `null`.
 | `dns_provider_id` | integer | Links to the DNS provider card. |
 | `provider_id` | string | Its stack: links to the stack card. `null` if none. |
 | `api_host` | string | As in `dns-providers.json`. |
-| `versions` | versions | Versions of this template it supports, ascending. |
-| `since` | timestamp | When it first supported any version of the template, the same value as its DNS provider card's `supported_templates` `since`: see [Supported since](#supported-since). `null` if not recorded. |
+| `served_version` | integer | As in the DNS provider card's `supported_templates`. |
+| `response_kind` | string | As there. |
+| `template_match` | string | As there. |
+| `since` | timestamp | When it first supported the template, the same value as its DNS provider card's `supported_templates` `since`: see [Supported since](#supported-since). `null` if not recorded. |
 | `domains` | count | Its domains in the domain-share import. `null` without one. |
 | `reach_pct` | percentage | `domains` / the import's scanned domains. |
+
+#### Table `{service_provider_id}/{service_id}/served`
+
+"Served templates (current state)": what the supporters' latest answers served, counted, one
+record (see *Served template* in the [Glossary](#glossary)).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `supporters` | count | Supporting DNS providers: the rows of `supporters`. |
+| `with_version_count` | count | Supporters whose answer named a version. |
+| `current_version_count` | count | Supporters whose answer named the repository's version (`metadata` `version`). |
+| `full_template_count` | count | Supporters answering with the full template. |
+| `morphed_count` | count | Of those, ones differing from the repository's. |
+| `outdated_count` | count | Of those, ones with a version below the repository's. |
 
 #### Table `{service_provider_id}/{service_id}/history`
 
 "Support history": one row per sweep that re-probed the template on every DNS provider,
-oldest first. A sweep limited to recently changed templates is a row only for the
-templates it covered.
+or on every supporting one (a weekly sweep), oldest first. A sweep limited to recently
+changed templates is a row only for the templates it covered.
 
 | Key | Type | Meaning |
 |---|---|---|
 | `sweep_id` | integer | The sweep. |
 | `started_at` | timestamp | When it started. |
 | `completed_at` | timestamp | When it completed. `null` while it runs, or if not recorded (see [sweep completion](#sweep-completion)). |
-| `supporting_providers` | count | DNS providers supporting any version once the sweep had run. |
+| `supporting_providers` | count | DNS providers supporting it once the sweep had run. |
 | `change` | integer | Difference to the previous row (the first row's difference to 0). |
 
 ## Row order and completeness
@@ -832,7 +884,7 @@ found" state that links back to its list page. Every page shows the manifest's
 | Series | File / table | Time axis | One point |
 |---|---|---|---|
 | Adoption | `overview.json` `adoption` | import | DC domains among the scanned domains of one import |
-| Ecosystem support | `overview.json` `ecosystem` | full sweep | Support counts once one full sweep had run |
+| Ecosystem support | `overview.json` `ecosystem` | full or weekly sweep | Support counts once that sweep had run |
 | DNS provider support | DNS provider card `support_history` | sweep re-probing all its templates | Templates it supported |
 | DNS provider share | DNS provider card `share_history` | import | Its domains and share |
 | Stack share | stack card `share_history` | import | The stack's summed domains, share and rank |
@@ -850,6 +902,12 @@ found" state that links back to its list page. Every page shows the manifest's
   interpolate zeros; draw a gap or connect the measured points.
 - Each history row is the state **once that sweep had run**, replayed from the recorded
   changes of support, so values only change at sweeps.
+- <a id="irregular-sweeps"></a>**Sweep series are irregular.** Older points are
+  monthly, newer ones weekly, plus, for template and service provider cards, the daily runs
+  of recently changed templates. Plot by `started_at` on a date axis, never by row index.
+  "Change since the previous sweep" (`supported_templates_change`) is a change over that
+  interval, so weekly changes are smaller than monthly ones. Nothing marks a point as weekly
+  or monthly.
 - <a id="sweep-completion"></a>**Sweep completion.** Every sweep row has `started_at` and
   `completed_at`: when the last of the sweep's probes was done (answered, or given up on
   after its retries). A sweep's probes can also be handed to a later sweep that starts
@@ -868,13 +926,10 @@ found" state that links back to its list page. Every page shows the manifest's
   reach back further than the detailed data.
 - <a id="supported-since"></a>**Supported since.** `since` (DNS provider card
   `supported_templates`, template card `supporters`) is when a probe first saw the DNS
-  provider support any version of the template, and is given only for a template it
-  supports now. Version changes don't move it: supporting v1, then v2 (with v1 withdrawn
-  or not) keeps v1's date. Gaps don't move it either: a template that stopped being
-  supported and was supported again keeps its first date. It is not the length of an
-  uninterrupted run (that was its meaning in `format_version` 1). Like every history time,
-  it is when a probe observed the change, so it lags the real change by up to one probing
-  interval.
+  provider support the template, and is given only for a template it supports now. Gaps
+  don't move it: a template that stopped being supported and was supported again keeps its
+  first date. A version change doesn't move it either. Like every history time, it is
+  when a probe observed the change, up to one probing interval after the real change.
 
 ## Redaction
 
@@ -884,7 +939,7 @@ for them:
 - the raw settings response a DNS provider returned (its useful fields are the `provider`
   table's columns);
 - how far probing has got: the counts of probes still pending, being retried or failed
-  (hence `total - supported_count - unsupported_count` is "not yet determined");
+  (they are all "not yet determined", `undetermined_count`);
 - internal keys and scheduling data: row identity keys, rate-limiting keys and the
   timestamps of the last check attempts.
 
@@ -893,7 +948,7 @@ contact (`*_last_seen_ok_at`) **are** included.
 
 ## Versioning and compatibility
 
-- `format_version` (now `2`) changes only on a **breaking** change: a removed or renamed
+- `format_version` (now `5`) changes only on a **breaking** change: a removed or renamed
   file kind, table id or column key; a changed type or meaning of a value; a changed path
   template or id encoding.
 - **Additive** changes keep the version: new file kinds, tables, columns, manifest keys or
@@ -901,16 +956,31 @@ contact (`*_last_seen_ok_at`) **are** included.
   know (see [File shape](#file-shape)).
 - Titles, headers and note texts are display text, not part of the contract; they may
   change at any time.
-- **History of `format_version`:**
-  - `2`: `since` of the DNS provider card's `supported_templates` changed meaning from
-    "start of the current unbroken period of support" to "first support of any version"
-    ([Supported since](#supported-since)). Nothing else changed shape. (The template
-    card's `supporters` `since` was added in the same release.)
-  - `1`: the first published format.
-- Card URLs are stable as long as the ids are. A `dns_provider_id` is a database id that
-  is never reused (the scanner's database is upgraded in place, never rebuilt); its card
-  disappears only when two DNS providers turn out to be one and are merged, keeping one
-  id. Service provider and template ids come from the Templates repository and change
+- **Breaking changes per `format_version`:**
+  - `5`: support is per template, no longer per stored version: every support count and
+    `total` counts templates (a template's: DNS providers); `versions` columns replaced by
+    what each DNS provider serves (`served_version`, `repository_version` on the DNS
+    provider card, `response_kind`, `template_match`); `supported_templates`,
+    `unsupported_templates` and `undetermined_templates` removed from DNS provider rows and
+    cards (`supported_count` and the other counts mean the same now), `supporting_providers`
+    from `templates.json`, `min/median/max_supported_templates_pct` from stacks; columns
+    `with_version_count`, `full_template_count`, `morphed_count`, `outdated_count` and the
+    template card's `served` table added.
+  - `4`: `settings_status` / `support_status` (with their error and last-OK columns) are
+    results of completed runs ([Provider statuses](#provider-statuses)): values `failed`
+    (settings) and `partial` (support) added, `http_error`/`connection_error` no longer
+    settings statuses; columns `support_answered`, `support_failed`, `settings_error_kind`
+    added; card columns `settings_last_status` / `support_last_status` renamed to
+    `settings_status` / `support_status`.
+  - `3`: support `total` (and every `*_pct` next to it) means template versions that can be
+    asked about; `undetermined_count`/`undetermined_pct` added; a stack's
+    `min/median/max_supported_pct` leave out deployments without an answer.
+  - `2`: the DNS provider card's `supported_templates` `since` means first support of any
+    version ([Supported since](#supported-since)); the template card's `supporters` `since`
+    added.
+  - `1`: first format.
+- Card URLs are stable as long as the ids are. A `dns_provider_id` is never reused; its
+  card disappears only when two DNS providers are merged into one, keeping one id. Service provider and template ids come from the Templates repository and change
   only when a template is renamed or removed there. Stack ids are the providers' own
   `providerId`s.
 
@@ -932,19 +1002,15 @@ Limits of the data a page should footnote or surface:
   per-provider share was recorded; very old imports may lack `completed_at`,
   `dc_domains_total` or even `started_at`.
 - **History vs. current state.** The history tables replay the recorded *changes* of
-  support. A DNS provider whose latest probe failed keeps the support it last had there,
-  while current-state tables count only clear answers of the latest probe. The latest
-  history point can therefore exceed the current count (e.g. a template's last `history`
-  row vs. its `supporters` rows). The same holds for `supported_templates` (current state)
-  vs. the `supported_templates_change*` columns (history).
+  support. Both rest on the same conclusive probes: a DNS provider whose latest probe failed
+  keeps the answers it last had, in the history and in the current-state tables alike.
 - **Current stacks.** Stack attribution (`stacks`, `supporting_stacks`, stack share
   histories) uses each DNS provider's **current** stack, also for past imports and sweeps.
-- **Old sweep classification.** Sweeps limited to recently changed templates recorded
-  before that limit was stored count as full sweeps.
-- **`total` of a DNS provider without combinations is 1**, not 0 (a known defect);
-  its `supported_count` and `unsupported_count` are 0.
-- **Statuses lag.** `settings_status`/`support_status` describe the last attempt, which
-  may be days old for a DNS provider that is rarely re-checked.
+- **Old sweep classification.** Old sweeps limited to recently changed templates, whose
+  limit was not recorded, count as full sweeps.
+- **Statuses lag.** `settings_status`/`support_status` describe the latest *completed*
+  run, which may be weeks old: a monthly settings run, a weekly or monthly support sweep
+  (see [Provider statuses](#provider-statuses)).
 
 ## Examples
 
@@ -957,9 +1023,9 @@ shown indented; data files are shown as written.
 <!-- example: manifest.json -->
 ```json
 {
-  "format_version": 2,
+  "format_version": 5,
   "generated_at": "2026-10-01T00:00:00Z",
-  "schema_version": 16,
+  "schema_version": 22,
   "share_import": {
     "import_id": 1780272000,
     "status": "completed",
@@ -991,7 +1057,7 @@ shown indented; data files are shown as written.
       "report": "support-overview",
       "rows": {
         "adoption": 3,
-        "ecosystem": 3
+        "ecosystem": 4
       }
     },
     "dns_providers": {
@@ -1073,11 +1139,11 @@ One list, `stacks.json`:
 <!-- example: stacks.json -->
 ```json
 {"generated_at": "2026-10-01T00:00:00Z", "notes": ["Domain share: import completed 2026-06-01 07:00 UTC (live), 12,000 domains scanned. Support columns are current state."], "tables": {
-"stacks": {"title": "DNS provider stacks", "columns": [{"key": "name", "header": "STACK"}, {"key": "provider_id", "header": "PROVIDER ID"}, {"key": "deployments", "header": "DEPLOYMENTS"}, {"key": "min_supported_pct", "header": "MIN SUPPORT"}, {"key": "median_supported_pct", "header": "MEDIAN SUPPORT"}, {"key": "max_supported_pct", "header": "MAX SUPPORT"}, {"key": "min_supported_templates_pct", "header": "MIN TEMPLATE SUPPORT"}, {"key": "median_supported_templates_pct", "header": "MEDIAN TEMPLATE SUPPORT"}, {"key": "max_supported_templates_pct", "header": "MAX TEMPLATE SUPPORT"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
-{"name": "Cloudflare", "provider_id": "cloudflare.com", "deployments": 1, "min_supported_pct": 66.66666666666666, "median_supported_pct": 66.66666666666666, "max_supported_pct": 66.66666666666666, "min_supported_templates_pct": 60.0, "median_supported_templates_pct": 60.0, "max_supported_templates_pct": 60.0, "supported_templates": 3, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 4000, "domains_pct": 33.33333333333333},
-{"name": "IONOS", "provider_id": "ionos.com", "deployments": 1, "min_supported_pct": 50.0, "median_supported_pct": 50.0, "max_supported_pct": 50.0, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 1, "supported_templates_change_90d": 1, "domains": 2000, "domains_pct": 16.666666666666664},
-{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334},
-{"name": "Quiet Host", "provider_id": "quiet-host.example", "deployments": 1, "min_supported_pct": 0.0, "median_supported_pct": 0.0, "max_supported_pct": 0.0, "min_supported_templates_pct": 0.0, "median_supported_templates_pct": 0.0, "max_supported_templates_pct": 0.0, "supported_templates": 0, "supported_templates_change": null, "supported_templates_change_90d": null, "domains": 0, "domains_pct": 0.0}
+"stacks": {"title": "DNS provider stacks", "columns": [{"key": "name", "header": "STACK"}, {"key": "provider_id", "header": "PROVIDER ID"}, {"key": "deployments", "header": "DEPLOYMENTS"}, {"key": "min_supported_pct", "header": "MIN SUPPORT"}, {"key": "median_supported_pct", "header": "MEDIAN SUPPORT"}, {"key": "max_supported_pct", "header": "MAX SUPPORT"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "with_version_count", "header": "WITH VERSION"}, {"key": "full_template_count", "header": "FULL TEMPLATE"}, {"key": "morphed_count", "header": "MORPHED"}, {"key": "outdated_count", "header": "OUTDATED"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
+{"name": "Cloudflare", "provider_id": "cloudflare.com", "deployments": 1, "min_supported_pct": 60.0, "median_supported_pct": 60.0, "max_supported_pct": 60.0, "supported_templates": 3, "supported_templates_change": 0, "supported_templates_change_90d": 1, "with_version_count": 2, "full_template_count": 1, "morphed_count": 0, "outdated_count": 0, "domains": 4000, "domains_pct": 33.33333333333333},
+{"name": "IONOS", "provider_id": "ionos.com", "deployments": 1, "min_supported_pct": 40.0, "median_supported_pct": 40.0, "max_supported_pct": 40.0, "supported_templates": 2, "supported_templates_change": 1, "supported_templates_change_90d": 1, "with_version_count": 2, "full_template_count": 1, "morphed_count": 0, "outdated_count": 0, "domains": 2000, "domains_pct": 16.666666666666664},
+{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 20.0, "median_supported_pct": 30.0, "max_supported_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "with_version_count": 2, "full_template_count": 2, "morphed_count": 1, "outdated_count": 1, "domains": 1150, "domains_pct": 9.583333333333334},
+{"name": "Quiet Host", "provider_id": "quiet-host.example", "deployments": 1, "min_supported_pct": 0.0, "median_supported_pct": 0.0, "max_supported_pct": 0.0, "supported_templates": 0, "supported_templates_change": null, "supported_templates_change_90d": null, "with_version_count": 0, "full_template_count": 0, "morphed_count": 0, "outdated_count": 0, "domains": 0, "domains_pct": 0.0}
 ], "footer": null}
 }}
 ```
@@ -1088,16 +1154,16 @@ One card, `stacks/plesk.com.json`:
 <!-- example: stacks/plesk.com.json -->
 ```json
 {"generated_at": "2026-10-01T00:00:00Z", "notes": ["Domain share: import completed 2026-06-01 07:00 UTC (live), 12,000 domains scanned. Support columns are current state."], "tables": {
-"stack": {"title": "DNS provider stack", "columns": [{"key": "name", "header": "Stack"}, {"key": "provider_id", "header": "Provider ID"}, {"key": "deployments", "header": "Deployments"}, {"key": "min_supported_pct", "header": "Min support"}, {"key": "median_supported_pct", "header": "Median support"}, {"key": "max_supported_pct", "header": "Max support"}, {"key": "min_supported_templates_pct", "header": "Min template support"}, {"key": "median_supported_templates_pct", "header": "Median template support"}, {"key": "max_supported_templates_pct", "header": "Max template support"}, {"key": "supported_templates", "header": "Supported templates"}, {"key": "supported_templates_change", "header": "Change since previous full sweep"}, {"key": "supported_templates_change_90d", "header": "Change over 90 days"}, {"key": "domains", "header": "Domains"}, {"key": "domains_pct", "header": "% scanned"}], "rows": [
-{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 0.0, "median_supported_pct": 16.666666666666664, "max_supported_pct": 33.33333333333333, "min_supported_templates_pct": 40.0, "median_supported_templates_pct": 40.0, "max_supported_templates_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "domains": 1150, "domains_pct": 9.583333333333334}
+"stack": {"title": "DNS provider stack", "columns": [{"key": "name", "header": "Stack"}, {"key": "provider_id", "header": "Provider ID"}, {"key": "deployments", "header": "Deployments"}, {"key": "min_supported_pct", "header": "Min support"}, {"key": "median_supported_pct", "header": "Median support"}, {"key": "max_supported_pct", "header": "Max support"}, {"key": "supported_templates", "header": "Supported templates"}, {"key": "supported_templates_change", "header": "Change since previous sweep"}, {"key": "supported_templates_change_90d", "header": "Change over 90 days"}, {"key": "with_version_count", "header": "Served with version"}, {"key": "full_template_count", "header": "Served as full template"}, {"key": "morphed_count", "header": "Morphed"}, {"key": "outdated_count", "header": "Outdated"}, {"key": "domains", "header": "Domains"}, {"key": "domains_pct", "header": "% scanned"}], "rows": [
+{"name": "Plesk", "provider_id": "plesk.com", "deployments": 2, "min_supported_pct": 20.0, "median_supported_pct": 30.0, "max_supported_pct": 40.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "with_version_count": 2, "full_template_count": 2, "morphed_count": 1, "outdated_count": 1, "domains": 1150, "domains_pct": 9.583333333333334}
 ], "footer": null},
-"deployments": {"title": "Deployments", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "api_host", "header": "API HOST"}, {"key": "settings_status", "header": "SETTINGS"}, {"key": "support_status", "header": "SUPPORT"}, {"key": "total", "header": "TOTAL"}, {"key": "supported_count", "header": "SUPPORTED"}, {"key": "supported_pct", "header": "SUPPORTED %"}, {"key": "unsupported_count", "header": "NOT SUPP."}, {"key": "unsupported_pct", "header": "NOT SUPP. %"}, {"key": "supported_templates", "header": "TEMPLATES"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "unsupported_templates", "header": "NOT SUPP. TEMPLATES"}, {"key": "undetermined_templates", "header": "UNDETERMINED TEMPLATES"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
-{"name": "Plesk", "dns_provider_id": 2, "api_host": "domainconnect.plesk.com", "settings_status": "ok", "support_status": "ok", "total": 6, "supported_count": 2, "supported_pct": 33.33333333333333, "unsupported_count": 3, "unsupported_pct": 50.0, "supported_templates": 2, "supported_templates_change": 0, "supported_templates_change_90d": 0, "unsupported_templates": 2, "undetermined_templates": 1, "domains": 900, "domains_pct": 7.5},
-{"name": "Plesk", "dns_provider_id": 3, "api_host": "domainconnect.plesk.com", "settings_status": "http_error", "support_status": "dead", "total": 6, "supported_count": 0, "supported_pct": 0.0, "unsupported_count": 0, "unsupported_pct": 0.0, "supported_templates": 0, "supported_templates_change": 0, "supported_templates_change_90d": 0, "unsupported_templates": 0, "undetermined_templates": 5, "domains": 250, "domains_pct": 2.083333333333333}
+"deployments": {"title": "Deployments", "columns": [{"key": "name", "header": "NAME"}, {"key": "dns_provider_id", "header": "ID"}, {"key": "api_host", "header": "API HOST"}, {"key": "settings_status", "header": "SETTINGS"}, {"key": "support_status", "header": "SUPPORT"}, {"key": "support_answered", "header": "ANSWERED"}, {"key": "support_failed", "header": "ERRORS"}, {"key": "total", "header": "TOTAL"}, {"key": "supported_count", "header": "SUPPORTED"}, {"key": "supported_pct", "header": "SUPPORTED %"}, {"key": "unsupported_count", "header": "NOT SUPP."}, {"key": "unsupported_pct", "header": "NOT SUPP. %"}, {"key": "undetermined_count", "header": "UNDETERMINED"}, {"key": "undetermined_pct", "header": "UNDETERMINED %"}, {"key": "supported_templates_change", "header": "CHANGE"}, {"key": "supported_templates_change_90d", "header": "CHANGE 90D"}, {"key": "with_version_count", "header": "WITH VERSION"}, {"key": "full_template_count", "header": "FULL TEMPLATE"}, {"key": "morphed_count", "header": "MORPHED"}, {"key": "outdated_count", "header": "OUTDATED"}, {"key": "domains", "header": "DOMAINS"}, {"key": "domains_pct", "header": "% SCANNED"}], "rows": [
+{"name": "Plesk", "dns_provider_id": 2, "api_host": "domainconnect.plesk.com", "settings_status": "ok", "support_status": "ok", "support_answered": 2, "support_failed": 0, "total": 5, "supported_count": 2, "supported_pct": 40.0, "unsupported_count": 2, "unsupported_pct": 40.0, "undetermined_count": 1, "undetermined_pct": 20.0, "supported_templates_change": 0, "supported_templates_change_90d": 0, "with_version_count": 2, "full_template_count": 2, "morphed_count": 1, "outdated_count": 1, "domains": 900, "domains_pct": 7.5},
+{"name": "Plesk", "dns_provider_id": 3, "api_host": "domainconnect.plesk.com", "settings_status": "failed", "support_status": "dead", "support_answered": 0, "support_failed": 6, "total": 5, "supported_count": 1, "supported_pct": 20.0, "unsupported_count": 0, "unsupported_pct": 0.0, "undetermined_count": 4, "undetermined_pct": 80.0, "supported_templates_change": 0, "supported_templates_change_90d": 0, "with_version_count": 0, "full_template_count": 0, "morphed_count": 0, "outdated_count": 0, "domains": 250, "domains_pct": 2.083333333333333}
 ], "footer": null},
 "template_coverage": {"title": "Supporting deployments per template (current state)", "columns": [{"key": "service_provider_name", "header": "SERVICE PROVIDER"}, {"key": "service_provider_id", "header": "PROVIDER ID"}, {"key": "service_name", "header": "TEMPLATE"}, {"key": "service_id", "header": "SERVICE ID"}, {"key": "supporting_deployments", "header": "SUPPORTING"}, {"key": "supporting_pct", "header": "% OF DEPLOYMENTS"}, {"key": "reach_domains", "header": "REACH"}, {"key": "reach_pct", "header": "REACH %"}], "rows": [
-{"service_provider_name": "Acme Mail Inc.", "service_provider_id": "mail.acme.example", "service_name": "Acme Mail", "service_id": "mail", "supporting_deployments": 1, "supporting_pct": 50.0, "reach_domains": 900, "reach_pct": 7.5},
-{"service_provider_name": "Example Service", "service_provider_id": "exampleservice.domainconnect.org", "service_name": "Example Website", "service_id": "template1", "supporting_deployments": 1, "supporting_pct": 50.0, "reach_domains": 900, "reach_pct": 7.5}
+{"service_provider_name": "Example Service", "service_provider_id": "exampleservice.domainconnect.org", "service_name": "Example Website", "service_id": "template1", "supporting_deployments": 2, "supporting_pct": 100.0, "reach_domains": 1150, "reach_pct": 9.583333333333334},
+{"service_provider_name": "Acme Mail Inc.", "service_provider_id": "mail.acme.example", "service_name": "Acme Mail", "service_id": "mail", "supporting_deployments": 1, "supporting_pct": 50.0, "reach_domains": 900, "reach_pct": 7.5}
 ], "footer": null},
 "share_history": {"title": "Domain share per import", "columns": [{"key": "import_id", "header": "IMPORT"}, {"key": "completed_at", "header": "COMPLETED"}, {"key": "status", "header": "STATUS"}, {"key": "source", "header": "SOURCE"}, {"key": "domains", "header": "DOMAINS"}, {"key": "scanned_domains", "header": "SCANNED"}, {"key": "share_pct", "header": "SHARE"}, {"key": "change_pct", "header": "CHANGE (PP)"}, {"key": "rank", "header": "RANK"}, {"key": "stacks", "header": "STACKS"}], "rows": [
 {"import_id": 1767225600, "completed_at": null, "status": "pruned", "source": "snapshot", "domains": 1000, "scanned_domains": 9000, "share_pct": 11.11111111111111, "change_pct": null, "rank": 2, "stacks": 2},

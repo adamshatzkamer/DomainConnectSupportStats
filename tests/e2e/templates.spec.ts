@@ -14,11 +14,12 @@ async function withNeverProbed(page: import('@playwright/test').Page) {
     for (const row of file.tables.service_templates.rows) {
       if (row.service_id === 'template2') {
         Object.assign(row, {
-          total: 0,
           supported_count: 0,
-          supported_pct: null,
+          supported_pct: 0,
           unsupported_count: 0,
-          unsupported_pct: null,
+          unsupported_pct: 0,
+          undetermined_count: 5,
+          undetermined_pct: 100,
         });
       }
     }
@@ -38,12 +39,12 @@ test.describe('Templates list (templates.html)', () => {
     ]);
     const website = page.locator('tbody tr', { hasText: 'Example Website' });
     await expect(website).toContainText('template1');
-    await expect(website).toContainText(/3\s*75.0%/);
+    await expect(website).toContainText(/4\s*100.0%/);
     await expect(website).not.toContainText('of 10');
-    await expect(website).not.toContainText('6,900');
+    await expect(website).not.toContainText('7,150');
     await expect(
-      website.getByTitle('6,900 of 12K scanned domains in the partial scan of 01-06-2026'),
-    ).toHaveText('57.5%');
+      website.getByTitle('7,150 of 12K scanned domains in the partial scan of 01-06-2026'),
+    ).toHaveText('59.6%');
     await expect(page.getByText('Show all (0 hidden')).toBeVisible();
     await expect(page.getByTestId('caveats')).toContainText('supporting at least one template (4)');
   });

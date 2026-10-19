@@ -2,7 +2,7 @@ import { encodeSegment } from './encode';
 import type { FileKindName, Manifest } from './types';
 
 /** The export `format_version` this site is written for (contract/README.md "Updating"). */
-export const SUPPORTED_FORMAT_VERSION = 2;
+export const SUPPORTED_FORMAT_VERSION = 5;
 
 const PLACEHOLDER = /\{([a-z_]+)\}/g;
 

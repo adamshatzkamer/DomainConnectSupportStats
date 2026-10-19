@@ -58,7 +58,7 @@
               "items": false
             },
             "rows": {
-              "description": "One row per full support sweep (no DNS-provider, service-provider or service scope and no template-age window), oldest first. Support observed during the scoped and propagation runs in between counts towards the preceding full sweep. Full sweeps before the first support event have no row.",
+              "description": "One row per support sweep of the series, oldest first: a full sweep (every template on every DNS provider) or a weekly sweep (every template on the DNS providers supporting one when it started; the others' state is carried forward), not told apart. Support observed during the scoped and propagation runs in between counts towards the preceding sweep of the series. Sweeps before the first support event have no row.",
               "items": { "$ref": "#/$defs/ecosystemRow" }
             },
             "footer": { "type": "null" }
@@ -149,11 +149,11 @@
           "$ref": "common.schema.json#/$defs/count"
         },
         "known_dns_providers": {
-          "description": "DNS providers first seen before the next full sweep's start, any time for the last row: the same window as the support counts (current dns_providers rows).",
+          "description": "DNS providers first seen before the next series sweep's start, any time for the last row: the same window as the support counts (current dns_providers rows).",
           "$ref": "common.schema.json#/$defs/count"
         },
         "published_templates": {
-          "description": "Stored templates whose first version was added before the next full sweep's start, any time for the last row: the same window as the support counts.",
+          "description": "Stored templates whose first version was added before the next series sweep's start, any time for the last row: the same window as the support counts.",
           "$ref": "common.schema.json#/$defs/count"
         }
       },

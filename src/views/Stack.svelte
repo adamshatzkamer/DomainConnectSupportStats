@@ -24,16 +24,9 @@
   import DomainShare from '../lib/components/DomainShare.svelte';
   import { domainsTitle, importScanLabel, ofScanned, type Scan } from '../lib/domains';
   import { overviewFacts } from '../lib/overview-facts';
-  import {
-    isNeverProbed,
-    SUPPORTED_PCT_KEY,
-    UNDETERMINED_KEY,
-    UNDETERMINED_PCT_KEY,
-    UNSUPPORTED_KEY,
-    UNSUPPORTED_PCT_KEY,
-    withTemplateSupport,
-    withTemplateSupportColumns,
-  } from '../lib/dns-providers';
+  import { isNeverProbed, probeCounts } from '../lib/dns-providers';
+  import { servedCounts, supportedPairs } from '../lib/served';
+  import ServedCounts from '../lib/components/ServedCounts.svelte';
   import { MAX_KEY, MEDIAN_KEY, MIN_KEY } from '../lib/stacks';
   import { templateCount } from '../lib/supporting';
 
@@ -79,9 +72,9 @@
     'name',
     'settings_status',
     'support_status',
-    'supported_templates',
-    UNSUPPORTED_KEY,
-    UNDETERMINED_KEY,
+    'supported_count',
+    'unsupported_count',
+    'undetermined_count',
     'domains',
   ];
 
@@ -126,16 +119,14 @@
     {#if dnsId !== null}<a href={links.dnsProvider(dnsId)}>{row.name ?? UNKNOWN}</a
       >{:else}{row.name ?? UNKNOWN}{/if}
     <div class="mono muted host">{text(row, 'api_host') ?? UNKNOWN}</div>
-  {:else if column.key === 'settings_status' || column.key === 'support_status'}
-    <StatusBadge status={row[column.key] ?? null} />
-  {:else if isNeverProbed(row) && column.key === 'supported_templates'}
+  {:else if column.key === 'settings_status'}
+    <StatusBadge status={row.settings_status ?? null} />
+  {:else if column.key === 'support_status'}
+    <StatusBadge status={row.support_status ?? null} detail={probeCounts(row)} />
+  {:else if isNeverProbed(row) && column.key === 'supported_count'}
     <span class="muted count">Not probed yet</span>
-  {:else if column.key === 'supported_templates'}
-    {@render countPct(row, column.key, SUPPORTED_PCT_KEY)}
-  {:else if column.key === UNSUPPORTED_KEY}
-    {@render countPct(row, column.key, UNSUPPORTED_PCT_KEY)}
-  {:else if column.key === UNDETERMINED_KEY}
-    {@render countPct(row, column.key, UNDETERMINED_PCT_KEY)}
+  {:else if column.key === 'supported_count' || column.key === 'unsupported_count' || column.key === 'undetermined_count'}
+    {@render countPct(row, column.key, column.key.replace(/_count$/, '_pct'))}
   {:else if column.key === 'domains'}
     <DomainShare pct={num(row, 'domains_pct')} domains={num(row, 'domains')} {scan} />
   {/if}
@@ -200,7 +191,7 @@
         <StatCard
           value={formatPct(num(record, MEDIAN_KEY))}
           label="Median support"
-          detail={`${formatPct(num(record, MIN_KEY))} to ${formatPct(num(record, MAX_KEY))} of ${formatCount(templateCount(manifest))} templates across deployments`}
+          detail={`${formatPct(num(record, MIN_KEY))} to ${formatPct(num(record, MAX_KEY))} of ${formatCount(templateCount(manifest))} templates across deployments with probe answers`}
         />
         <StatCard
           value={formatPct(num(record, 'domains_pct'))}
@@ -254,14 +245,10 @@
       {#if deployments}
         <Panel id="deployments" title={deployments.title} context={text(record, 'name') ?? stackId}>
           <DataTable
-            table={{
-              ...deployments,
-              columns: withTemplateSupportColumns(deployments.columns),
-              rows: deployments.rows.map(withTemplateSupport),
-            }}
+            table={deployments}
             keys={DEPLOYMENT_KEYS}
             customKeys={DEPLOYMENT_KEYS}
-            phoneKeys={['name', 'supported_templates', 'domains']}
+            phoneKeys={['name', 'supported_count', 'domains']}
             cell={deploymentCell}
             searchable
             pageSize={20}
@@ -293,6 +280,14 @@
             emptyText="No template supported by a deployment in the latest probes"
           />
         </Panel>
+      {/if}
+
+      {#if record}
+        {@const pairs = deployments ? supportedPairs(deployments.rows) : null}
+        <ServedCounts
+          counts={servedCounts(record, pairs)}
+          of={`of ${formatCount(pairs)} supported templates, summed over deployments`}
+        />
       {/if}
 
       {#await reg then r}

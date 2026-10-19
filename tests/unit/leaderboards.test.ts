@@ -29,7 +29,7 @@ function provider(id: number, values: Row): Row {
     dns_provider_id: id,
     provider_id: null,
     api_host: `dc.dns${id}.example`,
-    supported_templates: 0,
+    supported_count: 0,
     supported_templates_change: 0,
     supported_templates_change_90d: null,
     domains: 0,
@@ -58,13 +58,14 @@ describe('entrants', () => {
   it('reaches its domains only when it supports a template', () => {
     const list = entrants(dnsProviders());
     expect(list[2]?.reachedDomains).toBe(900);
-    // Plesk deployment 3: 250 domains, no support.
-    expect(list[3]?.reachedDomains).toBe(0);
+    // Plesk deployment 3: 250 domains, 1 template.
+    expect(list[3]?.reachedDomains).toBe(250);
+    expect(entrants([provider(1, { supported_count: 0, domains: 5 })])[0]?.reachedDomains).toBe(0);
     expect(
-      entrants([provider(1, { supported_templates: 3, domains: null })])[0]?.reachedDomains,
+      entrants([provider(1, { supported_count: 3, domains: null })])[0]?.reachedDomains,
     ).toBeNull();
     expect(
-      entrants([provider(1, { supported_templates: null, domains: 5 })])[0]?.reachedDomains,
+      entrants([provider(1, { supported_count: null, domains: 5 })])[0]?.reachedDomains,
     ).toBeNull();
   });
 });
@@ -76,13 +77,14 @@ describe('topByTemplates', () => {
       [1, 'Cloudflare', 3],
       [2, 'IONOS', 2],
       [3, 'Plesk', 2],
+      [4, 'Plesk', 1],
     ]);
   });
 
   it('ranks the deployments of a stack separately', () => {
     const rows = [
-      provider(1, { name: 'Plesk', provider_id: 'plesk.com', supported_templates: 5 }),
-      provider(2, { name: 'Plesk', provider_id: 'plesk.com', supported_templates: 4 }),
+      provider(1, { name: 'Plesk', provider_id: 'plesk.com', supported_count: 5 }),
+      provider(2, { name: 'Plesk', provider_id: 'plesk.com', supported_count: 4 }),
     ];
     const ranked = topByTemplates(entrants(rows));
     expect(ranked.map((r) => [r.rank, r.entry.href, r.value])).toEqual([
@@ -93,10 +95,10 @@ describe('topByTemplates', () => {
 
   it('breaks ties of equal domains by name, ignoring case, and puts unknown domains last', () => {
     const rows = [
-      provider(1, { name: 'beta', supported_templates: 1, domains: 10 }),
-      provider(2, { name: 'Alpha', supported_templates: 1, domains: 10 }),
-      provider(3, { name: 'Aaa', supported_templates: 1, domains: null }),
-      provider(4, { name: 'Zed', supported_templates: 1, domains: 20 }),
+      provider(1, { name: 'beta', supported_count: 1, domains: 10 }),
+      provider(2, { name: 'Alpha', supported_count: 1, domains: 10 }),
+      provider(3, { name: 'Aaa', supported_count: 1, domains: null }),
+      provider(4, { name: 'Zed', supported_count: 1, domains: 20 }),
     ];
     expect(board(topByTemplates(entrants(rows)))).toEqual([
       [1, 'Zed', 1],
@@ -107,10 +109,8 @@ describe('topByTemplates', () => {
   });
 
   it('keeps the top 10 and leaves out unknown values', () => {
-    const rows = Array.from({ length: 12 }, (_, i) =>
-      provider(i + 1, { supported_templates: i + 1 }),
-    );
-    rows.push(provider(99, { supported_templates: null }));
+    const rows = Array.from({ length: 12 }, (_, i) => provider(i + 1, { supported_count: i + 1 }));
+    rows.push(provider(99, { supported_count: null }));
     const ranked = topByTemplates(entrants(rows));
     expect(ranked).toHaveLength(10);
     expect(ranked[0]?.value).toBe(12);
@@ -124,6 +124,7 @@ describe('topByDomains', () => {
       [1, 'Cloudflare', 4000],
       [2, 'IONOS', 2000],
       [3, 'Plesk', 900],
+      [4, 'Plesk', 250],
     ]);
   });
 });
@@ -166,17 +167,17 @@ describe('topReach', () => {
   it('ranks templates by reach, positive only, ties by name', () => {
     const ranked = topReach(templates(), (r) => String(r.service_name));
     expect(ranked.map((r) => [r.rank, r.entry.service_name, r.value])).toEqual([
-      [1, 'Example Website', 6900],
+      [1, 'Example Website', 7150],
       [2, 'Domain Verification', 6000],
       [3, 'Acme Mail', 4900],
     ]);
   });
 
-  it('ranks service providers by reach, ties by name', () => {
+  it('ranks service providers by reach', () => {
     const ranked = topReach(serviceProviders(), (r) => String(r.name));
     expect(ranked.map((r) => [r.rank, r.entry.name, r.value])).toEqual([
-      [1, 'Acme Mail Inc.', 6900],
-      [2, 'Example Service', 6900],
+      [1, 'Example Service', 7150],
+      [2, 'Acme Mail Inc.', 6900],
     ]);
   });
 
@@ -296,7 +297,7 @@ describe('entrantRows', () => {
 
   it('shortens large counts, the exact one in the hover text', () => {
     const rows = entrantRows(
-      topByDomains(entrants([provider(1, { supported_templates: 1, domains: 123_456 })])),
+      topByDomains(entrants([provider(1, { supported_count: 1, domains: 123_456 })])),
     );
     expect(rows[0]).toMatchObject({ value: '123.5K', title: '123,456' });
   });

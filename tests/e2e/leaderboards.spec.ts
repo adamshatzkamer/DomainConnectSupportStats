@@ -26,13 +26,26 @@ async function routeDerived(page: Page, firstSupport: [number, string][]) {
 test.describe('Leaderboards (leaderboards.html)', () => {
   test('ranks DNS providers by templates and by domains reached', async ({ page }) => {
     await page.goto('leaderboards.html');
-    await expect(names(page, 'board-templates')).toHaveText(['Cloudflare', 'IONOS', 'Plesk']);
-    const plesk = page.getByTestId('board-templates').locator('tbody tr', { hasText: 'Plesk' });
+    await expect(names(page, 'board-templates')).toHaveText([
+      'Cloudflare',
+      'IONOS',
+      'Plesk',
+      'Plesk',
+    ]);
+    const plesk = page
+      .getByTestId('board-templates')
+      .locator('tbody tr', { hasText: 'Plesk' })
+      .first();
     await expect(plesk.locator('td').nth(1)).toHaveText(
       /^\s*Plesk\s*domainconnect\.plesk\.com\s*$/,
     );
     await expect(plesk.locator('td').first()).toHaveText('3');
-    await expect(names(page, 'board-domains')).toHaveText(['Cloudflare', 'IONOS', 'Plesk']);
+    await expect(names(page, 'board-domains')).toHaveText([
+      'Cloudflare',
+      'IONOS',
+      'Plesk',
+      'Plesk',
+    ]);
     const pleskShare = page.getByTestId('board-domains').locator('tbody tr').nth(2);
     await expect(pleskShare).toContainText(/Plesk.*7.5%/s);
     await expect(
@@ -46,7 +59,7 @@ test.describe('Leaderboards (leaderboards.html)', () => {
       const row = file.tables.dns_providers.rows.find(
         (r: Record<string, unknown>) => r.dns_provider_id === 3,
       );
-      row.supported_templates = 1;
+      row.supported_count = 2;
       await route.fulfill({ json: file });
     });
     await page.goto('leaderboards.html');
@@ -60,7 +73,7 @@ test.describe('Leaderboards (leaderboards.html)', () => {
 
   test('links a DNS provider to its card', async ({ page }) => {
     await page.goto('leaderboards.html');
-    await names(page, 'board-templates').filter({ hasText: 'Plesk' }).click();
+    await names(page, 'board-templates').filter({ hasText: 'Plesk' }).first().click();
     await expect(page).toHaveURL(/dns-provider\.html\?id=2$/);
   });
 
@@ -97,7 +110,11 @@ test.describe('Leaderboards (leaderboards.html)', () => {
     await days.click();
     await expect(page).toHaveURL(/leaderboards\.html\?window=90d$/);
     await expect(days).toHaveAttribute('aria-pressed', 'true');
-    await expect(names(page, 'board-improved')).toHaveText(['Small Registrar', 'IONOS']);
+    await expect(names(page, 'board-improved')).toHaveText([
+      'Small Registrar',
+      'Cloudflare',
+      'IONOS',
+    ]);
     expect(await page.evaluate(() => 'notReloaded' in window)).toBe(true);
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
 
@@ -134,8 +151,8 @@ test.describe('Leaderboards (leaderboards.html)', () => {
       'Acme Mail',
     ]);
     await expect(names(page, 'board-service-provider-reach')).toHaveText([
-      'Acme Mail Inc.',
       'Example Service',
+      'Acme Mail Inc.',
     ]);
     await names(page, 'board-template-reach').first().click();
     await expect(page).toHaveURL(
@@ -181,7 +198,7 @@ test.describe('derived data unavailable', () => {
       }),
     );
     await page.goto('leaderboards.html');
-    await expect(names(page, 'board-templates')).toHaveCount(3);
+    await expect(names(page, 'board-templates')).toHaveCount(4);
     await expect(page.getByTestId('board-new').getByTestId('unavailable')).toHaveText(
       'Not available at the moment',
     );

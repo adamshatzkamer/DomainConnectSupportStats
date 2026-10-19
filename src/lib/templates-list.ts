@@ -6,9 +6,9 @@ import { ofSupporting } from './supporting';
  * never-probed templates hidden by default. Its `provider_id` is the service provider's id.
  */
 
-/** No probe combination on record yet: every count is 0, every share `null`. */
+/** No DNS provider has answered for it yet: none supports it, none answered not supported. */
 export function isNeverProbed(row: Row): boolean {
-  return row.total === 0;
+  return row.supported_count === 0 && row.unsupported_count === 0;
 }
 
 export interface TemplateList {
@@ -36,7 +36,7 @@ export function templateList(
 }
 
 /**
- * The list with each template's supporting DNS providers (`supporting_providers`) and the rest of
+ * The list with each template's supporting DNS providers (`supported_count`) and the rest of
  * the `total` supporting DNS providers, each also as a share of `total`. Unknown when the row
  * lacks the count, `total` is unknown, or the rest would be negative.
  */
@@ -49,7 +49,7 @@ export function withSupport(source: Table, total: number | null): Table {
       { key: 'not_supporting_dns_providers', header: 'NOT SUPP.' },
     ],
     rows: source.rows.map((row) => {
-      const n = typeof row.supporting_providers === 'number' ? row.supporting_providers : null;
+      const n = typeof row.supported_count === 'number' ? row.supported_count : null;
       const rest = n === null || total === null || n > total ? null : total - n;
       return {
         ...row,

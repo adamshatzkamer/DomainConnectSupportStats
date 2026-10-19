@@ -109,11 +109,11 @@ describe('historyDiffers', () => {
     expect(historyDiffers(history(null), 3)).toBe(false);
   });
 
-  it('flags the example template whose last sweep saw more supporters', () => {
+  it('agrees for the example template', () => {
     const file = card('exampleservice.domainconnect.org/template1');
     expect(
       historyDiffers(findTable(file, 'history')!.rows, findTable(file, 'supporters')!.rows.length),
-    ).toBe(true);
+    ).toBe(false);
   });
 });
 

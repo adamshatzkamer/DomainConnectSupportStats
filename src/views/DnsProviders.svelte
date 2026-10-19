@@ -8,15 +8,7 @@
   import { defaultClient } from '../lib/data/load';
   import { findTable } from '../lib/data/tables';
   import type { Column, Manifest, Row } from '../lib/data/types';
-  import {
-    dnsProviderList,
-    isNeverProbed,
-    SUPPORTED_PCT_KEY,
-    UNDETERMINED_KEY,
-    UNDETERMINED_PCT_KEY,
-    UNSUPPORTED_KEY,
-    UNSUPPORTED_PCT_KEY,
-  } from '../lib/dns-providers';
+  import { dnsProviderList, isNeverProbed, probeCounts } from '../lib/dns-providers';
   import { templateCount } from '../lib/supporting';
   import { formatCount, formatPct, UNKNOWN } from '../lib/format';
   import { pageTitle } from '../lib/title';
@@ -58,21 +50,12 @@
     'provider_id',
     'settings_status',
     'support_status',
-    'supported_templates',
-    UNSUPPORTED_KEY,
-    UNDETERMINED_KEY,
+    'supported_count',
+    'unsupported_count',
+    'undetermined_count',
     'domains',
   ];
-  const CUSTOM_KEYS = [
-    'name',
-    'provider_id',
-    'settings_status',
-    'support_status',
-    'supported_templates',
-    UNSUPPORTED_KEY,
-    UNDETERMINED_KEY,
-    'domains',
-  ];
+  const CUSTOM_KEYS = KEYS;
 
   function num(row: Row, key: string): number | null {
     const v = row[key];
@@ -99,16 +82,17 @@
   {:else if column.key === 'provider_id'}
     {@const s = text(row, 'provider_id')}
     {#if s}<a href={links.stack(s)}>{s}</a>{:else}{UNKNOWN}{/if}
-  {:else if column.key === 'settings_status' || column.key === 'support_status'}
-    <StatusBadge status={row[column.key] ?? null} />
-  {:else if isNeverProbed(row) && column.key === 'supported_templates'}
+  {:else if column.key === 'settings_status'}
+    <StatusBadge status={row.settings_status ?? null} />
+  {:else if column.key === 'support_status'}
+    <StatusBadge status={row.support_status ?? null} detail={probeCounts(row)} />
+  {:else if isNeverProbed(row) && column.key === 'supported_count'}
     <span class="muted count">Not probed yet</span>
-  {:else if column.key === 'supported_templates'}
-    {@render countPct(formatCount(num(row, column.key)), num(row, SUPPORTED_PCT_KEY))}
-  {:else if column.key === UNSUPPORTED_KEY}
-    {@render countPct(formatCount(num(row, column.key)), num(row, UNSUPPORTED_PCT_KEY))}
-  {:else if column.key === UNDETERMINED_KEY}
-    {@render countPct(formatCount(num(row, column.key)), num(row, UNDETERMINED_PCT_KEY))}
+  {:else if column.key === 'supported_count' || column.key === 'unsupported_count' || column.key === 'undetermined_count'}
+    {@render countPct(
+      formatCount(num(row, column.key)),
+      num(row, column.key.replace(/_count$/, '_pct')),
+    )}
   {:else if column.key === 'domains'}
     <DomainShare pct={num(row, 'domains_pct')} domains={num(row, 'domains')} {scan} />
   {/if}
@@ -143,7 +127,7 @@
           table={list.table}
           keys={KEYS}
           customKeys={CUSTOM_KEYS}
-          phoneKeys={['name', 'supported_templates', 'domains']}
+          phoneKeys={['name', 'supported_count', 'domains']}
           cell={providerCell}
           searchable
           pageSize={20}
@@ -155,11 +139,11 @@
         />
         <ul class="caveats" data-testid="caveats">
           <li>
-            Supported: templates supported in any version by the latest probes; not supported: every
-            version answered not supported; undetermined: a version without an answer yet (never
-            probed, being retried or failed). Each as a share of every template ({formatCount(
-              templateCount(manifest),
-            )}) (<a href={links.methodology('52-support-probe')}>methodology 5.2</a>).
+            Supported and not supported: the latest conclusive probe of each template; undetermined:
+            no conclusive answer yet (never probed, being retried or failed). Each as a share of
+            every template ({formatCount(templateCount(manifest))}), none without a template API (<a
+              href={links.methodology('52-support-probe')}>methodology 5.2</a
+            >).
           </li>
           <li>
             Domains: share of the scanned domains whose Domain Connect record is attributed to the
@@ -168,7 +152,8 @@
             >).
           </li>
           <li>
-            Settings and support describe the last attempt, which may be days old (<a
+            Settings and support describe the latest completed run, which may be weeks old; support
+            also counts that sweep's answered and failed probes (<a
               href={links.methodology('61-status-values')}>methodology 6.1</a
             >).
           </li>

@@ -92,8 +92,8 @@
         <ul class="caveats" data-testid="caveats">
           <li>
             Support: the share of every template ({formatCount(templateCount(manifest))}) each
-            deployment with a probe answer supports in any version; lowest and highest across the
-            stack, shown as a bar on a 0–100% scale (<a href={links.methodology('52-support-probe')}
+            deployment with a probe answer supports; lowest and highest across the stack, shown as a
+            bar on a 0–100% scale (<a href={links.methodology('52-support-probe')}
               >methodology 5.2</a
             >).
           </li>

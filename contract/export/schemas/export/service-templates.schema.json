@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/pawel-kow/DomainConnectScanner/docs/schemas/export/service-templates.schema.json",
   "title": "export.py templates.json",
-  "description": "The static export's template list: report.py service-templates' JSON with every row (no --limit), for the manifest's share_import, redacted - the internal pending/failed support buckets are left out (total - supported - unsupported is not yet determined). Each row's provider_id (the service provider) and service_id name its card, templates/{service_provider_id}/{service_id}.json. Like every export file, it starts with the release's generated_at (the manifest's).",
+  "description": "The static export's template list: report.py service-templates' JSON with every row (no --limit), for the manifest's share_import. Each row's provider_id (the service provider) and service_id name its card, templates/{service_provider_id}/{service_id}.json. Like every export file, it starts with the release's generated_at (the manifest's).",
   "$ref": "../common.schema.json#/$defs/exportFile",
   "properties": {
     "notes": { "$ref": "../common.schema.json#/$defs/shareNotes" },
@@ -23,11 +23,12 @@
                 { "properties": { "key": { "const": "supported_pct" } } },
                 { "properties": { "key": { "const": "unsupported_count" } } },
                 { "properties": { "key": { "const": "unsupported_pct" } } },
-                { "properties": { "key": { "const": "supporting_providers" } } },
+                { "properties": { "key": { "const": "undetermined_count" } } },
+                { "properties": { "key": { "const": "undetermined_pct" } } },
                 { "properties": { "key": { "const": "reach_domains" } } },
                 { "properties": { "key": { "const": "reach_pct" } } }
               ],
-              "minItems": 13,
+              "minItems": 14,
               "items": false
             },
             "rows": {

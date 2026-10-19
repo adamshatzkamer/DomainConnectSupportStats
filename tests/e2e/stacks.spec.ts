@@ -59,9 +59,9 @@ test.describe('Stacks list (stacks.html)', () => {
     await page.route('**/data/stacks.json', async (route) => {
       const file = await (await route.fetch()).json();
       Object.assign(file.tables.stacks.rows[0], {
-        min_supported_templates_pct: null,
-        median_supported_templates_pct: null,
-        max_supported_templates_pct: null,
+        min_supported_pct: null,
+        median_supported_pct: null,
+        max_supported_pct: null,
       });
       await route.fulfill({ json: file });
     });
