@@ -15,6 +15,7 @@ blob-report/
 # Derived data of the dev export (npm run derive)
 .derived/
 .derived-e2e/
+.derived-real/
 *.log
 .DS_Store
 .venv/
