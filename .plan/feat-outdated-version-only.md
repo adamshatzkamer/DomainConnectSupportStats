@@ -6,16 +6,19 @@
 ## Tasks
 
 - [x] Investigate `servedLabel` (src/lib/served.ts)
-- [~] Failing unit test for version-only outdated
-- [ ] Implement in `servedLabel`
-- [ ] Docs (REQUIREMENTS F-1a served), version, CHANGELOG
-- [ ] Verify, screenshots
+- [x] Failing unit test for version-only outdated
+- [x] Implement in `servedLabel`
+- [x] Docs (REQUIREMENTS F-2.22), version 0.22.2, CHANGELOG
+- [~] Verify, screenshots
 - [ ] Promote findings, delete this file
 
 ## Findings
 
 - Badge comes from `template_match` only (`src/lib/served.ts` `servedLabel`).
 - Example export has no version-only answer below the repository version (all `response_kind: "version"` rows serve the repository version), so e2e cannot show it; unit tests cover it.
+
+- `npm run verify` green: 437 Vitest, 423 Playwright.
+- Real release 2026-10-20T05:00:03Z: 6206 files valid. google.com/domain-verification shows Outdated for GoDaddy (1 < 3), IONOS (0 < 3), Secure Server (1 < 3); its Served templates "Outdated" stays 1 (export count).
 
 ## Decisions
 
