@@ -20,6 +20,8 @@
 - `npm run verify` green: 437 Vitest, 423 Playwright.
 - Real release 2026-10-20T05:00:03Z: 6206 files valid. google.com/domain-verification shows Outdated for GoDaddy (1 < 3), IONOS (0 < 3), Secure Server (1 < 3); its Served templates "Outdated" stays 1 (export count).
 
+- Real-release e2e: 198 passed, 5 skipped, the rest fail on example values (names, counts); no page errors or blank pages. Phone-width table overflow (DNS providers +28px, stack +103px, templates +13px) is #81.
+
 ## Decisions
 
 - Hover text reuses the `outdated` text.
