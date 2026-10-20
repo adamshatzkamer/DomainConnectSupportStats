@@ -32,7 +32,8 @@ const str = (v: CellValue | undefined): string | null => (typeof v === 'string' 
 const num = (v: CellValue | undefined): number | null => (typeof v === 'number' ? v : null);
 
 /**
- * One supported pair's served version and, when morphed or outdated, its match. The hover text
+ * One supported pair's served version and, when morphed or outdated, its match; a version-only
+ * answer below the repository version counts as outdated. The hover text
  * gives the raw values. `repositoryVersion` stands in for a row without `repository_version`
  * (template card: the metadata's `version`).
  */
@@ -43,7 +44,9 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   const repo = num(row.repository_version) ?? repositoryVersion;
   if (kind === null)
     return { version: null, badge: null, badgeTitle: null, title: 'Not recorded yet' };
-  const badge = (match && BADGE_TEXT[match]) ?? null;
+  // `template_match` is set for full-template answers only: a version-only answer is compared here.
+  const shown = match ?? (version !== null && repo !== null && version < repo ? 'outdated' : null);
+  const badge = (shown && BADGE_TEXT[shown]) ?? null;
   const title = [
     `Served version ${version ?? 'none'}`,
     repo === null ? null : `repository version ${repo}`,
@@ -55,7 +58,7 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   return {
     version: version === null ? null : String(version),
     badge,
-    badgeTitle: badge === null ? null : explainMatch(match!, version, repo),
+    badgeTitle: badge === null ? null : explainMatch(shown!, version, repo),
     title,
   };
 }

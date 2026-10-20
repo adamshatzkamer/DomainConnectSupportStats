@@ -4,6 +4,13 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.22.2] - 2026-10-20
+
+### Changed
+
+- DNS provider and template cards: the Version column also shows Outdated for a version-only
+  answer below the repository version.
+
 ## [0.22.1] - 2026-10-20
 
 ### Changed

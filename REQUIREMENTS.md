@@ -313,9 +313,10 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
   `max_supported_pct`, over its deployments with at least one probe answer.
 - F-2.22 Served templates: per supported (DNS provider, template) pair, one "Version" cell: the
   served version as is (`–` when none), and a `Morphed` or `Outdated` badge (orange, hidden at
-  phone width) when the match is one of them; the hover text gives the raw values (response kind,
+  phone width) when the match is one of them, `Outdated` also when there is no match and the
+  served version is below the repository's (a version-only answer); the hover text gives the raw values (response kind,
   match) and the repository version, the badge's what it means. Counts per DNS provider and stack
-  (with version, full template, morphed, outdated) and per template (also current version) show
+  (with version, full template, morphed, outdated: the export's counts) and per template (also current version) show
   on the cards only, in a "Served templates" panel, each with its share: of the DNS provider's supported templates, of the
   supported templates summed over the stack's deployments, of the template's supporters.
 - F-2.9 Internal ids (`dns_provider_id`, `import_id`, `sweep_id`) are not shown: no columns, titles,
