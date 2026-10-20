@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Row } from '../data/types';
+  import { UNKNOWN } from '../format';
   import { servedLabel } from '../served';
 
   interface Props {
@@ -13,21 +14,21 @@
   const s = $derived(servedLabel(row, repositoryVersion));
 </script>
 
-{#if s.text === null}
-  <span class="muted" title={s.title}>Not recorded yet</span>
-{:else}
-  <span title={s.title}>
-    {s.base}
-    {#if s.match}
-      <span class="badge {s.tone ? `badge-${s.tone}` : 'badge-muted'}" title={s.matchTitle}
-        >{s.match}</span
-      >
-    {/if}
-  </span>
-{/if}
+<span title={s.title}>
+  {s.version ?? UNKNOWN}
+  {#if s.badge}
+    <span class="badge badge-warn" title={s.badgeTitle}>{s.badge}</span>
+  {/if}
+</span>
 
 <style>
   .badge {
     white-space: normal;
+  }
+
+  @media (max-width: 480px) {
+    .badge {
+      display: none;
+    }
   }
 </style>

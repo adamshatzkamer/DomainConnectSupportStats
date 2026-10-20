@@ -2,10 +2,10 @@
 
 ## Tasks
 
-- [~] `servedLabel()`: version as is, badge only for outdated/morphed; tests
-- [ ] `Served.svelte`: badge hidden at phone width; header `VERSION` on both cards
-- [ ] e2e, REQUIREMENTS F-2.22, CHANGELOG, version 0.22.1
-- [ ] verify, draft PR, screenshots
+- [x] `servedLabel()`: version as is, badge only for outdated/morphed; tests
+- [x] `Served.svelte`: badge hidden at phone width; header `VERSION` on both cards
+- [x] e2e, REQUIREMENTS F-2.22, CHANGELOG, version 0.22.1
+- [~] verify, draft PR, screenshots
 
 ## Decisions
 

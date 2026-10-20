@@ -17,31 +17,23 @@ describe('servedLabel', () => {
     template_match: 'match',
   };
 
-  it('names the version, then the response kind and match', () => {
-    expect(servedLabel(full).text).toBe('v2 · full, matches');
-    expect(servedLabel({ ...full, template_match: 'morphed' }).text).toBe('v2 · full, morphed');
-    expect(servedLabel({ ...full, served_version: 1, template_match: 'outdated' }).text).toBe(
-      'v1 · full, outdated',
-    );
-    expect(servedLabel({ ...full, template_match: null }).text).toBe('v2 · full');
-    expect(
-      servedLabel({ served_version: 3, response_kind: 'version', template_match: null }).text,
-    ).toBe('v3 · version only');
-    expect(
-      servedLabel({ served_version: null, response_kind: 'empty', template_match: null }).text,
-    ).toBe('empty answer');
+  it('shows the version as is', () => {
+    expect(servedLabel(full).version).toBe('2');
+    expect(servedLabel({ served_version: 3, response_kind: 'version' }).version).toBe('3');
+    expect(servedLabel({ served_version: null, response_kind: 'empty' }).version).toBeNull();
   });
 
-  it('marks morphed and outdated templates', () => {
-    expect(servedLabel(full).tone).toBe('ok');
-    expect(servedLabel({ ...full, template_match: 'morphed' }).tone).toBe('warn');
-    expect(servedLabel({ ...full, template_match: 'outdated' }).tone).toBe('warn');
-    expect(servedLabel({ served_version: 3, response_kind: 'version' }).tone).toBeNull();
+  it('badges morphed and outdated templates only', () => {
+    expect(servedLabel({ ...full, template_match: 'morphed' }).badge).toBe('Morphed');
+    expect(servedLabel({ ...full, template_match: 'outdated' }).badge).toBe('Outdated');
+    expect(servedLabel(full).badge).toBeNull();
+    expect(servedLabel({ ...full, template_match: 'brand_new' }).badge).toBeNull();
+    expect(servedLabel({ served_version: 3, response_kind: 'version' }).badge).toBeNull();
   });
 
   it('is unknown before the answer was recorded', () => {
     const label = servedLabel({ served_version: null, response_kind: null, template_match: null });
-    expect(label).toMatchObject({ text: null, tone: null });
+    expect(label).toMatchObject({ version: null, badge: null });
     expect(label.title).toBe('Not recorded yet');
   });
 
@@ -57,25 +49,14 @@ describe('servedLabel', () => {
     expect(servedLabel(supporter, 3).title).toContain('repository version 3');
   });
 
-  it('explains the match', () => {
-    expect(servedLabel(full).matchTitle).toBe(
-      "The full template equals the repository's (key order and whitespace ignored)",
-    );
-    expect(servedLabel({ ...full, template_match: 'morphed' }).matchTitle).toBe(
+  it('explains the badge', () => {
+    expect(servedLabel({ ...full, template_match: 'morphed' }).badgeTitle).toBe(
       "The full template differs from the repository's: altered by the DNS provider",
     );
-    expect(servedLabel({ ...full, served_version: 1, template_match: 'outdated' }).matchTitle).toBe(
+    expect(servedLabel({ ...full, served_version: 1, template_match: 'outdated' }).badgeTitle).toBe(
       "The full template's version (1) is below the repository's (2)",
     );
-    expect(servedLabel({ ...full, template_match: 'brand_new' }).matchTitle).toBe('brand_new');
-    expect(servedLabel({ ...full, template_match: null }).matchTitle).toBeNull();
-  });
-
-  it('shows an unknown response kind or match as is', () => {
-    expect(servedLabel({ served_version: 1, response_kind: 'brand_new' }).text).toBe(
-      'v1 · brand_new',
-    );
-    expect(servedLabel({ ...full, template_match: 'brand_new' }).text).toBe('v2 · full, brand_new');
+    expect(servedLabel(full).badgeTitle).toBeNull();
   });
 });
 

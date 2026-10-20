@@ -4,6 +4,13 @@ Changes per site version. Versions follow [SemVer](https://semver.org/): major f
 parameter removed or changed incompatibly, minor for new pages, features or content, patch for
 fixes, styling and dependencies.
 
+## [0.22.1] - 2026-10-20
+
+### Changed
+
+- DNS provider and template cards: the served column is "Version": the served version and a
+  Morphed or Outdated badge (hidden at phone width); the response kind shows on hover only.
+
 ## [0.22.0] - 2026-10-17
 
 ### Added

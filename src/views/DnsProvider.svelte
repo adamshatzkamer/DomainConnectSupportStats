@@ -277,7 +277,7 @@
             table={{
               ...templates,
               columns: templates.columns.map((c) =>
-                c.key === 'served_version' ? { ...c, header: 'SERVED' } : c,
+                c.key === 'served_version' ? { ...c, header: 'VERSION' } : c,
               ),
             }}
             keys={['service_provider_name', 'service_name', 'served_version', 'since']}
