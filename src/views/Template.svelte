@@ -219,7 +219,7 @@
             table={{
               ...supporters,
               columns: supporters.columns.map((c) =>
-                c.key === 'served_version' ? { ...c, header: 'SERVED' } : c,
+                c.key === 'served_version' ? { ...c, header: 'VERSION' } : c,
               ),
             }}
             keys={['name', 'provider_id', 'served_version', 'since', 'reach_pct']}

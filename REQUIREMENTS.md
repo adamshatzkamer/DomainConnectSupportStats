@@ -129,7 +129,7 @@ Headline: supported, not supported and not yet determined templates (F-2.21), do
 lowest and highest template support across its deployments with probe answers (F-2.21);
 deployments table as F-1b (without the stack column); served templates (F-2.22) summed over its
 deployments.
-DNS provider card supported templates: service provider, template, served (F-2.22), supported
+DNS provider card supported templates: service provider, template, version (F-2.22), supported
 since; phone width without supported since; newest `since` first by default. "Supported since" is when a probe
 first saw support of the template; new versions and gaps don't move it; a footnote says so (also
 on the template card supporters).
@@ -159,8 +159,8 @@ on the template card supporters).
 4. Supporting DNS providers over time (stepped); a caveat below when the latest point differs from
    the current supporter count.
 5. Supporting DNS providers (current state): name (card link) with its API host below, stack,
-   served (F-2.22), supported since (F-1a), reach (F-2.18); `TOTAL` footer. Phone width: name,
-   served, supported since, reach.
+   version (F-2.22), supported since (F-1a), reach (F-2.18); `TOTAL` footer. Phone width: name,
+   version, supported since, reach.
    5a. Served templates (F-2.22): the `served` record's counts, each of its supporters.
 6. Records: type, host, `groupId`, `ttl`, `essential` (when declared), and every other declared
    field of the record as `key: value` in one cell, verbatim; unknown fields left out. Phone
@@ -311,12 +311,12 @@ scan of DD-MM-YYYY`: "full scan" at `sample_percent` 100, "partial scan" below, 
   DNS provider never probed (support status `null`) reads "Not probed yet" as supported; its
   other two are the export's counts. A stack's support: the export's `min_`, `median_` and
   `max_supported_pct`, over its deployments with at least one probe answer.
-- F-2.22 Served templates: per supported (DNS provider, template) pair, one cell: served version,
-  response kind and match, e.g. `v2 · full, morphed` (`match` green, `morphed`/`outdated` orange);
-  the hover text gives the raw values and the repository version, the match badge's what the match means; "Not recorded yet" while
-  `response_kind` is `null`. Counts per DNS provider and stack (with version, full template,
-  morphed, outdated) and per template (also current version) show on the cards only, in a "Served
-  templates" panel, each with its share: of the DNS provider's supported templates, of the
+- F-2.22 Served templates: per supported (DNS provider, template) pair, one "Version" cell: the
+  served version as is (`–` when none), and a `Morphed` or `Outdated` badge (orange, hidden at
+  phone width) when the match is one of them; the hover text gives the raw values (response kind,
+  match) and the repository version, the badge's what it means. Counts per DNS provider and stack
+  (with version, full template, morphed, outdated) and per template (also current version) show
+  on the cards only, in a "Served templates" panel, each with its share: of the DNS provider's supported templates, of the
   supported templates summed over the stack's deployments, of the template's supporters.
 - F-2.9 Internal ids (`dns_provider_id`, `import_id`, `sweep_id`) are not shown: no columns, titles,
   tooltips or messages. They stay in URLs and lookups. Charts speak of time only: no "import" or

@@ -39,7 +39,7 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(templates.getByTestId('since-caveat')).not.toContainText('any version');
   });
 
-  test('shows what each supported template serves', async ({ page }) => {
+  test('shows what each supported template serves', async ({ page }, testInfo) => {
     await page.goto('dns-provider.html?id=2');
     const templates = section(page, 'Supported templates (current state)');
     const served = (name: string) =>
@@ -47,8 +47,11 @@ test.describe('DNS provider card (dns-provider.html)', () => {
         .locator('tbody tr', { has: page.getByRole('link', { name }) })
         .locator('td')
         .nth(2);
-    await expect(served('Acme Mail')).toHaveText(/^\s*v1 · full\s*morphed\s*$/);
-    await expect(served('Example Website')).toHaveText(/^\s*v1 · full\s*outdated\s*$/);
+    await expect(served('Acme Mail')).toHaveText(/^\s*1\s*Morphed\s*$/);
+    await expect(served('Example Website')).toHaveText(/^\s*1\s*Outdated\s*$/);
+    await expect(served('Acme Mail').locator('.badge')).toBeVisible({
+      visible: testInfo.project.name !== 'mobile',
+    });
     await expect(served('Example Website').getByTitle(/repository version 2/)).toBeVisible();
     await expect(served('Example Website').locator('.badge')).toHaveAttribute(
       'title',
@@ -58,7 +61,7 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await page.goto('dns-provider.html?id=3');
     await expect(
       section(page, 'Supported templates (current state)').locator('tbody td').nth(2),
-    ).toHaveText('Not recorded yet');
+    ).toHaveText('–');
   });
 
   test('counts the served templates of the supported ones', async ({ page }) => {
@@ -268,7 +271,7 @@ test.describe('DNS provider card (dns-provider.html)', () => {
     await expect(templates.locator('thead th:visible')).toHaveText([
       /SERVICE PROVIDER/,
       /TEMPLATE/,
-      /SERVED/,
+      /VERSION/,
     ]);
     for (const wrapper of await page.locator('.table-wrapper').all()) {
       expect(await wrapper.evaluate((w) => w.scrollWidth - w.clientWidth)).toBeLessThanOrEqual(0);

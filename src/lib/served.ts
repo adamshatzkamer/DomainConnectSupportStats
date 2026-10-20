@@ -5,52 +5,36 @@ import type { CellValue, Row } from './data/types';
  * template's latest supported answer per DNS provider, and its counts.
  */
 
-const KIND_TEXT: Record<string, string> = {
-  empty: 'empty answer',
-  version: 'version only',
-  template: 'full',
-};
-
-const MATCH_TEXT: Record<string, string> = {
-  match: 'matches',
-  morphed: 'morphed',
-  outdated: 'outdated',
+const BADGE_TEXT: Record<string, string> = {
+  morphed: 'Morphed',
+  outdated: 'Outdated',
 };
 
 function explainMatch(match: string, version: number | null, repo: number | null): string {
-  switch (match) {
-    case 'match':
-      return "The full template equals the repository's (key order and whitespace ignored)";
-    case 'morphed':
-      return "The full template differs from the repository's: altered by the DNS provider";
-    case 'outdated':
-      return version === null || repo === null
-        ? "The full template's version is below the repository's"
-        : `The full template's version (${version}) is below the repository's (${repo})`;
-    default:
-      return match;
-  }
+  return match === 'morphed'
+    ? "The full template differs from the repository's: altered by the DNS provider"
+    : version === null || repo === null
+      ? "The full template's version is below the repository's"
+      : `The full template's version (${version}) is below the repository's (${repo})`;
 }
 
 export interface ServedLabel {
-  /** e.g. `v2 · full, morphed`; null when not recorded yet. */
-  text: string | null;
-  /** The text without the match, e.g. `v2 · full`. */
-  base: string | null;
-  /** The match in words, e.g. `morphed`; null without one. */
-  match: string | null;
-  /** What the match means, for its hover text; null without one. */
-  matchTitle: string | null;
+  /** The served version as is, e.g. `2`; null when none or not recorded yet. */
+  version: string | null;
+  /** `Morphed` or `Outdated`; null for any other match. */
+  badge: string | null;
+  /** What the badge means, for its hover text; null without one. */
+  badgeTitle: string | null;
   title: string;
-  tone: 'ok' | 'warn' | null;
 }
 
 const str = (v: CellValue | undefined): string | null => (typeof v === 'string' ? v : null);
 const num = (v: CellValue | undefined): number | null => (typeof v === 'number' ? v : null);
 
 /**
- * One supported pair's served version, response kind and match. `repositoryVersion` stands in
- * for a row without `repository_version` (template card: the metadata's `version`).
+ * One supported pair's served version and, when morphed or outdated, its match. The hover text
+ * gives the raw values. `repositoryVersion` stands in for a row without `repository_version`
+ * (template card: the metadata's `version`).
  */
 export function servedLabel(row: Row, repositoryVersion: number | null = null): ServedLabel {
   const version = num(row.served_version);
@@ -58,17 +42,8 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   const match = str(row.template_match);
   const repo = num(row.repository_version) ?? repositoryVersion;
   if (kind === null)
-    return {
-      text: null,
-      base: null,
-      match: null,
-      matchTitle: null,
-      title: 'Not recorded yet',
-      tone: null,
-    };
-  const kindText = KIND_TEXT[kind] ?? kind;
-  const base = version === null ? kindText : `v${version} · ${kindText}`;
-  const matchText = match === null ? null : (MATCH_TEXT[match] ?? match);
+    return { version: null, badge: null, badgeTitle: null, title: 'Not recorded yet' };
+  const badge = (match && BADGE_TEXT[match]) ?? null;
   const title = [
     `Served version ${version ?? 'none'}`,
     repo === null ? null : `repository version ${repo}`,
@@ -78,12 +53,10 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
     .filter((p) => p !== null)
     .join(', ');
   return {
-    text: matchText === null ? base : `${base}, ${matchText}`,
-    base,
-    match: matchText,
-    matchTitle: match === null ? null : explainMatch(match, version, repo),
+    version: version === null ? null : String(version),
+    badge,
+    badgeTitle: badge === null ? null : explainMatch(match!, version, repo),
     title,
-    tone: match === 'match' ? 'ok' : match === 'morphed' || match === 'outdated' ? 'warn' : null,
   };
 }
 

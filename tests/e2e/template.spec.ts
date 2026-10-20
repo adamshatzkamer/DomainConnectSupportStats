@@ -110,13 +110,14 @@ test.describe('Template card (template.html)', () => {
     await page.goto(CARD);
     const supporters = section(page, 'Supporting DNS providers (current state)');
     const cloudflare = supporters.locator('tbody tr', { hasText: 'Cloudflare' });
-    await expect(cloudflare).toContainText(/v2 · full\s*matches/);
-    await expect(cloudflare.getByTitle(/repository version 2/)).toBeVisible();
-    await expect(supporters.locator('tbody tr', { hasText: 'IONOS' })).toContainText(
-      'v2 · version only',
-    );
-    await expect(supporters).toContainText(/v1 · full\s*outdated/);
-    await expect(supporters).toContainText('Not recorded yet');
+    await expect(
+      cloudflare.getByTitle(/repository version 2, response template, match match/),
+    ).toHaveText(/^\s*2\s*$/);
+    await expect(
+      supporters.locator('tbody tr', { hasText: 'IONOS' }).getByTitle(/response version/),
+    ).toHaveText(/^\s*2\s*$/);
+    await expect(supporters.locator('.badge', { hasText: 'Outdated' })).toHaveCount(1);
+    await expect(supporters.getByTitle('Not recorded yet').first()).toHaveText(/^\s*–\s*$/);
     const served = page.getByTestId('served');
     await expect(served).toContainText(/Current version\s*2\s*\(50.0% of 4 supporters\)/);
     await expect(served).toContainText(/Outdated\s*1\s*\(25.0% of 4 supporters\)/);
@@ -212,7 +213,7 @@ test.describe('Template card (template.html)', () => {
     if (testInfo.project.name === 'mobile') {
       await expect(
         section(page, 'Supporting DNS providers (current state)').locator('thead th:visible'),
-      ).toHaveText([/NAME/, /SERVED/, /SUPPORTED SINCE/, /REACH/]);
+      ).toHaveText([/NAME/, /VERSION/, /SUPPORTED SINCE/, /REACH/]);
     }
     for (const wrapper of await page.locator('.table-wrapper').all()) {
       expect(await wrapper.evaluate((w) => w.scrollWidth - w.clientWidth)).toBeLessThanOrEqual(0);
