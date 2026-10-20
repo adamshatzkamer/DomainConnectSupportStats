@@ -10,12 +10,14 @@ const BADGE_TEXT: Record<string, string> = {
   outdated: 'Outdated',
 };
 
-function explainMatch(match: string, version: number | null, repo: number | null): string {
+function explainMatch(match: string | null, version: number | null, repo: number | null): string {
   return match === 'morphed'
     ? "The full template differs from the repository's: altered by the DNS provider"
-    : version === null || repo === null
-      ? "The full template's version is below the repository's"
-      : `The full template's version (${version}) is below the repository's (${repo})`;
+    : match === null
+      ? `The served version (${version}) is below the repository's (${repo})`
+      : version === null || repo === null
+        ? "The full template's version is below the repository's"
+        : `The full template's version (${version}) is below the repository's (${repo})`;
 }
 
 export interface ServedLabel {
@@ -58,7 +60,7 @@ export function servedLabel(row: Row, repositoryVersion: number | null = null): 
   return {
     version: version === null ? null : String(version),
     badge,
-    badgeTitle: badge === null ? null : explainMatch(shown!, version, repo),
+    badgeTitle: badge === null ? null : explainMatch(match, version, repo),
     title,
   };
 }

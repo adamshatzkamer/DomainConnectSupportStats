@@ -40,7 +40,7 @@ describe('servedLabel', () => {
     };
     expect(servedLabel(versionOnly).badge).toBe('Outdated');
     expect(servedLabel(versionOnly).badgeTitle).toBe(
-      "The full template's version (1) is below the repository's (3)",
+      "The served version (1) is below the repository's (3)",
     );
     const supporter: Row = { served_version: 1, response_kind: 'version', template_match: null };
     expect(servedLabel(supporter, 3).badge).toBe('Outdated');
