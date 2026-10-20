@@ -31,6 +31,24 @@ describe('servedLabel', () => {
     expect(servedLabel({ served_version: 3, response_kind: 'version' }).badge).toBeNull();
   });
 
+  it('badges a version-only answer below the repository version as outdated', () => {
+    const versionOnly: Row = {
+      served_version: 1,
+      repository_version: 3,
+      response_kind: 'version',
+      template_match: null,
+    };
+    expect(servedLabel(versionOnly).badge).toBe('Outdated');
+    expect(servedLabel(versionOnly).badgeTitle).toBe(
+      "The served version (1) is below the repository's (3)",
+    );
+    const supporter: Row = { served_version: 1, response_kind: 'version', template_match: null };
+    expect(servedLabel(supporter, 3).badge).toBe('Outdated');
+    expect(servedLabel(supporter).badge).toBeNull();
+    expect(servedLabel({ ...versionOnly, served_version: 3 }).badge).toBeNull();
+    expect(servedLabel({ ...versionOnly, served_version: null }).badge).toBeNull();
+  });
+
   it('is unknown before the answer was recorded', () => {
     const label = servedLabel({ served_version: null, response_kind: null, template_match: null });
     expect(label).toMatchObject({ version: null, badge: null });
