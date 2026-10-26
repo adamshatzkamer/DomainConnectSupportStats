@@ -130,13 +130,40 @@ function markdown(): Plugin {
   };
 }
 
+/**
+ * Makes `og:image` absolute at build time. Link-preview crawlers (Bluesky, Mastodon, LinkedIn)
+ * do not run browser scripts, so the relative `./assets/...` value written into the built HTML
+ * is ignored by many of them. When `VITE_SITE_URL` is set (the deploy URL the build knows),
+ * rewrite `og:image` to an absolute URL; keep the relative value when unset so the same build
+ * still works on github.io/<repo>/, a custom domain, or any sub-path.
+ */
+function absoluteOgImages(): Plugin {
+  const siteUrl = (process.env.VITE_SITE_URL ?? '').replace(/\/+$/, '');
+  const pattern = /(<meta property="og:image" content=")\.\/assets\/([^"]+)(")/g;
+  return {
+    name: 'absolute-og-images',
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html) => {
+        if (!siteUrl) return html;
+        return html.replace(pattern, `$1${siteUrl}/assets/$2$3`);
+      },
+    },
+  };
+}
+
 export default defineConfig({
   root: PAGES_DIR,
   publicDir: resolve(ROOT, 'public'),
   // Relative base: the same build works on github.io/<repo>/, a custom domain, or any sub-path.
   base: './',
   define: { __APP_VERSION__: JSON.stringify(version) },
-  plugins: [svelte({ configFile: resolve(ROOT, 'svelte.config.js') }), serveInputs(), markdown()],
+  plugins: [
+    svelte({ configFile: resolve(ROOT, 'svelte.config.js') }),
+    serveInputs(),
+    markdown(),
+    absoluteOgImages(),
+  ],
   // All addresses: `localhost` may resolve to `::1` only, which a devcontainer port forward
   // (IPv4) cannot reach.
   server: { host: true },

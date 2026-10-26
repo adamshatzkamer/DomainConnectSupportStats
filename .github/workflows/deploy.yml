@@ -130,6 +130,7 @@ jobs:
         run: npm run build
         env:
           CONTENT_VALUES: ${{ vars.CONTENT_VALUES }}
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
       - name: Validate and bundle the release
         run: npm run bundle:data -- "export-data/${{ vars.DATA_PATH || '.' }}" dist
       - name: Derive data from the release
